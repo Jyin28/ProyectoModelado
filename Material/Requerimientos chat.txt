@@ -1,0 +1,87 @@
+# Proyecto: Sistema inteligente de cuido y entretenimiento para bebés
+
+## 1. Contexto del cliente
+- Cliente: Alejandro Quesada, de Cartago, Costa Rica.
+- Familia: esposa, dos hijas y una tercera bebé en camino.
+- Objetivo: dispositivos que faciliten la etapa de bebé (cuido, monitoreo y entretenimiento).
+- Uso doble: para su propia hija y para vender en masa. Por eso el sistema es modular: algunos productos se venden por separado.
+# 2. Productos del sistema
+
+### 2.1 Cuna inteligente (producto principal)
+- Dimensiones de cuna estándar. El material lo proponemos nosotros.
+- Alimentación por toma corriente, sin baterías.
+- Sensores y actuadores:
+  - Sensor de movimiento (detecta cualquier movimiento). Solo se activa cuando el usuario lo habilita.
+  - Sensor de temperatura y humedad.
+  - Luz regulable (dimmer) controlada desde la aplicación.
+  - Reproductor de sonidos con audios pregrabados (no se necesita Spotify).
+  - Altavoz para que el padre le hable al bebé en vivo desde el celular. El audio es en un solo sentido: el bebé escucha al padre, el padre NO escucha al bebé.
+
+### 2.2 Figuras con luces LED encima de la cuna (tipo móvil) para entretener al bebé (se vende por separado)
+  - Luces suaves, nada epilépticas.
+  - Configurables desde la app: velocidad, tiempo de funcionamiento y encendido manual en cualquier momento.
+  - Son independientes de la luz/lámpara regulable.
+
+### 2.3 Colchón inteligente (se vende por separado)
+- Sensor de peso.
+- El monitoreo de peso se activa por un tiempo determinado (configurable).
+- Si el colchón deja de detectar peso (el bebé ya no está): suena una alarma sonora en la cuna y se envía alerta a Telegram.
+- Es responsabilidad del usuario tomar una foto en el momento en que se registra el peso de referencia, como evidencia por si alguien pone o quita objetos de la cuna.
+
+### 2.4 Kit de habitación (se vende por separado)
+- Sensor de apertura de puerta.
+- Sensor de movimiento en la habitación con temporizador; al detectar movimiento toma una foto.
+- Todo queda registrado.
+- La cámara SOLO toma fotos (no video).
+
+### 2.5 Juego interactivo (se vende por separado)
+- Panel con botones para que el bebé interactúe.
+- Si el bebé presiona el botón correcto, se le estimula con un sonido.
+- Funciona con baterías.
+
+### 2.6 Sistema inteligente de alimentación (se vende por separado)
+- Se conecta al sistema por cable.
+- Botón en la app para registrar el inicio de una toma, con temporizador.
+- Registro de cantidad de comida.
+- Recordatorios de horarios de comida.
+- Sensor de temperatura del biberón con alerta si está muy frío o muy caliente.
+
+## 3. Alertas
+- Todas las alertas se envían a Telegram.
+- Todas las alertas son silenciosas, EXCEPTO la de cambio/pérdida de peso en el colchón, que es la única ruidosa (alarma en la cuna).
+- Cada sensor tiene umbrales configurables por el usuario; si se superan, se genera una alerta.
+
+## 4. Datos, historial y nube
+- La cuna recolecta los datos localmente y luego los sube a la nube.
+- Todo se guarda en la nube.
+- Historial de actividad del bebé: movimientos, sonidos, etc., incluyendo el rango de horas en que el bebé es más activo.
+- Todos los sensores se muestran en gráficos.
+- Todo se puede exportar a Excel.
+- Los registros nunca se borran.
+- Debe contemplarse qué pasa si se va la luz o el internet (ver puntos a aclarar).
+
+## 5. Bebés, cunas y cuentas
+- Un (1) registro y una (1) cuna por bebé.
+- Si la familia ya tiene una cuna y nace otro bebé, la cuna se puede reasignar al nuevo bebé en el registro (el historial del bebé anterior se conserva).
+- Una cuna puede estar asociada a varias cuentas. Dos modelos posibles:
+  - a) Varios dueños del mismo dispositivo compartiendo UNA sola configuración, o
+  - b) Un usuario principal con subusuarios.
+
+## 6. Aplicación
+- La aplicación es gratuita.
+- Una sola interfaz.
+- Todos los dispositivos se controlan desde la aplicación: encendido/apagado, tiempos, actividades, configuración de avisos a Telegram, umbrales, etc.
+- El cliente prefiere consultar la información desde una página web.
+
+## 7. Notas técnicas (opciones que estamos considerando)
+- Opción A: sitio web hecho con herramientas de IA / vibecoding (Lovable, Antigravity, Claude).
+- Opción B: aplicación de escritorio en Python con Tkinter (si es Python, es solo para computadora).
+- Backend / nube: posiblemente servicios en Supabase.
+
+## 8. Puntos a aclarar
+1. Corte de luz o internet: ¿la cuna debe tener respaldo de energía (UPS) y guardar datos localmente para sincronizar después? ¿Debe avisar de alguna forma si pierde conexión? Respuesta: NO, se apaga el sistema
+2. Interfaz: el cliente prefiere web, pero Tkinter es de escritorio. ¿Cuál se elige? Respuesta: Sitio Web
+3. ¿El sensor de movimiento de la cuna y el del kit de habitación se activan por horario, manualmente, o ambos? Respuesta: Ambos
+4. ¿Qué modelo de cuentas se usa: dueños compartidos o usuario + subusuarios? Respuesta: Dueños compartidos
+5. Juego interactivo: ¿cómo se define el "botón correcto"? (¿secuencia, color iluminado, aleatorio?) Respuesta: color iluminado
+6. ¿Qué cuenta como "sonidos" en el historial si el sistema no tiene micrófono para escuchar al bebé? Respuesta: No detecta sonidos en el historial.
