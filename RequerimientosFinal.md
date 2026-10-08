@@ -23,7 +23,7 @@
 - Reproductor de sonidos y canciones pregrabadas. No se necesita Spotify.
 - Altavoz para que el adulto le hable al bebé en vivo desde el celular.
 - La voz viaja en un solo sentido: el bebé escucha al adulto; el adulto no escucha al bebé.
-- La voz en vivo no se guarda como grabación. Sí se puede registrar la actividad de transmisión.
+- La voz es en vivo, no se guarda como grabación. Sí se puede registrar la actividad de transmisión.
 - La cuna no incluye cámara ni detección de llanto.
 
 ### 2.2 Figuras con luces LED encima de la cuna (se venden por separado)
@@ -46,13 +46,13 @@
 - Al activarlo se guarda el peso de referencia de lo que hay sobre el colchón, incluidos el bebé y los objetos apoyados en él.
 - Se compara el peso con esa referencia y se contempla una tolerancia para los cambios producidos por el movimiento del bebé.
 - Una disminución significativa durante el monitoreo activo genera una alarma sonora local y una alerta por Telegram.
-- La alarma sonora está en el **colchón**, con un altavoz o dispositivo de ruido propio. El profesor lo aclara en el audio entre 00:24:51 y 00:25:39; esto corrige la ubicación en la cuna indicada en el TXT.
+- La alarma sonora está en el **colchón**, con un altavoz o dispositivo de ruido propio. 
 - Se registran la activación, los eventos de peso y las alertas con fecha y hora.
 - Puede alimentarse directamente cuando se utiliza solo y conectarse a la alimentación de la cuna cuando se compra el conjunto, para evitar dos cables externos.
 - Retirar objetos del colchón también puede generar una alerta, porque cambia el peso total.
 - No se exige detectar que alguien sustituya deliberadamente al bebé por un objeto de peso equivalente.
-- **Pendiente:** el TXT pide una fotografía al registrar el peso; en el audio, “foto” o “snapshot del peso” podría significar guardar la lectura numérica. Debe aclararse si se necesita una fotografía real.
-- **Pendiente:** al inicio del audio se menciona movimiento del colchón y después se resume como un sensor de peso. Falta confirmar si debe registrar movimientos derivados de la balanza además de la pérdida de peso.
+- Se registra un valor numerico del peso, no es una foto real.
+- No se necesita registrar movimientos derivados de la balanza, solo un cambio brusco de peso.
 
 ### 2.4 Kit de habitación (se vende por separado)
 
@@ -64,8 +64,8 @@
 - Las fotografías se guardan en la nube y se pueden consultar desde la aplicación.
 - La cámara solo toma fotos; no graba video.
 - Para la maqueta se puede usar un teléfono como cámara. El profesor no fija una resolución mínima.
-- **Pendiente:** confirmar si las fotografías también se envían por Telegram.
-- **Pendiente:** “cuando entra y sale” no deja claro si se debe distinguir la dirección de las personas o simplemente registrar puerta y movimiento.
+- Las fotografías no se envían por Telegram, solo una notificación de que se tomó.
+- No se necesita especificar la dirección de las personas, solo registrar si se abrió.
 
 ### 2.5 Juego interactivo (se vende por separado)
 
@@ -77,22 +77,21 @@
 - No se piden texturas diferentes para los botones.
 - Los botones del producto comercial deben ser grandes y no poder ser tragados por el bebé; las dimensiones y componentes se proponen en el diseño.
 - Funciona con baterías en el producto comercial. La maqueta académica puede alimentarse con electricidad.
-- **Pendiente:** cantidad de botones y forma de pasar al siguiente turno o cambiar el botón objetivo.
+- Son 5 botones, al presionar un boton se enciende otro aleatoriamente, continua infinitamente hasta que se apague el juguete.
 
 ### 2.6 Sistema inteligente de alimentación (se vende por separado)
 
 - Se conecta al sistema por cable, según el resumen escrito.
 - Botón en la aplicación para registrar el inicio de una toma.
-- Temporizador para medir el tiempo desde que empieza la alimentación.
+- Temporizador para medir el tiempo desde que empieza la alimentación.*
 - El adulto ingresa manualmente la cantidad ingerida; no se pide un sensor que mida automáticamente el consumo.
-- Se mencionan gramos o mililitros, sin cerrar qué unidades se utilizarán.
+- Se usarán gramos para medir la cantidad de alimento.
 - Recordatorio de la siguiente alimentación y programación de horarios recurrentes.
 - Los recordatorios llegan por Telegram.
 - Sensor de temperatura del biberón, con aviso si está muy frío o muy caliente según los límites configurados.
 - La forma concreta de medir esa temperatura queda a elección del diseño.
 - La alimentación requiere intervención del adulto. No se pide que el dispositivo suministre comida, caliente o enfríe automáticamente.
-- **Pendiente:** cómo finalizar, pausar o corregir una toma y registrar su duración final.
-- **Pendiente:** unidades, momento de ingreso de la cantidad y periodicidad exacta de los recordatorios.
+- La aplicacion web finaliza, pausa, corrige/modifica las tomas, y ajusta la periodicidad de los recordatorios y registra la duración final.
 
 ## 3. Alertas
 
@@ -104,8 +103,7 @@
 - Los sensores de valores medidos tienen umbrales configurables. Para los sensores de eventos se configuran los períodos de monitoreo y avisos correspondientes.
 - Se pueden ofrecer valores iniciales para los umbrales, pero el usuario debe poder cambiarlos.
 - No se incluyen llamadas automáticas al 911.
-- **Pendiente:** confirmar si “silenciosas” también exige que Telegram no produzca sonido en el teléfono o si se refiere únicamente a los dispositivos físicos.
-- **Pendiente:** tratamiento de muchas detecciones consecutivas y tiempo máximo aceptable para recibir una alerta.
+- Solo una notificacion por superación de tolerancia o por instancia de acción.
 
 ## 4. Datos, historial y nube
 
@@ -122,7 +120,7 @@
 - Los registros nunca se borran.
 - Los datos recientes deben poder consultarse después de guardarse en la nube.
 - El resumen de la noche se consulta desde la aplicación; no se pidió enviarlo automáticamente por Telegram.
-- **Pendiente:** frecuencia de medición y registro, agrupación de los gráficos, formato de exportación y tratamiento de fotografías en Excel.
+- **Pendiente:** frecuencia de medición y registro, agrupación de los gráficos, formato de exportación.
 
 ## 5. Bebés, cunas y cuentas
 
@@ -136,11 +134,12 @@
 - Se utiliza el modelo de **dueños compartidos con una sola configuración por dispositivo**, según la respuesta del TXT.
 - La configuración es común para todas las cuentas dueñas del dispositivo.
 - La venta independiente del colchón permite usarlo sin adquirir una cuna inteligente.
-- **Pendiente:** mecanismo para agregar o retirar dueños, vincular destinatarios de Telegram y registrar bebés que solo tienen accesorios.
+- una sección «Bebés y dispositivos» en la web, con dos opciones por dispositivo: «Administrar dueños» y «Destinatarios de Telegram» permite administrar los dispositivos.
 
 ## 6. Aplicación
 
-- Sitio web, según la respuesta recopilada en el TXT.
+- Sitio web.
+- Supabase como base de batos/ backend.
 - Aplicación gratuita con los dispositivos.
 - Una sola interfaz para controlar y consultar los módulos adquiridos.
 - Encendido y apagado, tiempos, actividades, umbrales y configuración de avisos a Telegram desde la aplicación.
@@ -152,7 +151,7 @@
 
 - El equipo puede elegir el lenguaje, dispositivos de procesamiento, plataforma de nube y herramientas de desarrollo.
 - Se han considerado herramientas de IA como Lovable, Antigravity o Claude, y Supabase para la nube. Son opciones, no requisitos impuestos por el cliente.
-- Tkinter apareció como alternativa inicial; la respuesta del TXT elige sitio web.
+- Se usara un sitio web como aplicacion.
 - La sugerencia de guardar las actividades en una sola tabla no obliga a usar ese esquema.
 - La documentación del producto comercial propone dimensiones, materiales y componentes adecuados al diseño.
 - Para la entrega académica se permite una maqueta a escala con componentes económicos que demuestren las funciones solicitadas.
@@ -175,26 +174,24 @@
 
 ### 8.2 Dudas de interpretación que siguen abiertas
 
-1. **Foto del peso:** ¿se necesita una fotografía real o basta guardar el peso inicial? El TXT y el uso de “snapshot” en el audio admiten interpretaciones distintas. Referencia: 00:15:06 a 00:15:39.
-2. **Alarma de peso:** ¿la tolerancia será una diferencia de peso o un porcentaje respecto al inicial? ¿Cómo se evitan alarmas por movimiento y cómo se detiene o restablece la alarma? Referencia: 00:16:46 a 00:18:06.
-3. **Movimiento en el colchón:** ¿solo se vigila pérdida de peso o también se registran movimientos derivados de la balanza? Referencias: 00:06:30 a 00:07:25 y 00:24:51 a 00:25:18.
-4. **Pérdida de internet:** ¿se detienen también los módulos locales o solo nube y Telegram? ¿Sigue funcionando la alarma sonora del colchón? ¿Qué ocurre con datos pendientes y con el reinicio? La respuesta del TXT agrupa electricidad e internet; la pregunta del audio no se recupera con claridad.
-5. **Entrada y salida de la habitación:** ¿hay que distinguir la dirección de las personas o basta registrar apertura de puerta y movimiento? Referencia: 00:39:51 a 00:40:30.
-6. **Avisos silenciosos:** ¿el silencio incluye la notificación de Telegram en el teléfono o únicamente las alarmas de los dispositivos? Referencia: 00:39:51 a 00:40:30.
+1. **Foto del peso:** ¿se necesita una fotografía real o basta guardar el peso inicial? El TXT y el uso de “snapshot” en el audio admiten interpretaciones distintas. Referencia: 00:15:06 a 00:15:39. R/ Se registra el valor del peso, no una foto literal.
+2. **Alarma de peso:** ¿la tolerancia será una diferencia de peso o un porcentaje respecto al inicial? ¿Cómo se evitan alarmas por movimiento y cómo se detiene o restablece la alarma? Referencia: 00:16:46 a 00:18:06. R/ La tolerancia es por porcentajes, se detiene por la app y hay un boton fisico para la alarma.
+3. **Movimiento en el colchón:** ¿solo se vigila pérdida de peso o también se registran movimientos derivados de la balanza? Referencias: 00:06:30 a 00:07:25 y 00:24:51 a 00:25:18. R/ No se registran los movimientos derivados.
+4. **Pérdida de internet:** ¿se detienen también los módulos locales o solo nube y Telegram? ¿Sigue funcionando la alarma sonora del colchón? ¿Qué ocurre con datos pendientes y con el reinicio? La respuesta del TXT agrupa electricidad e internet; la pregunta del audio no se recupera con claridad. R/ Si se pierde la coneccion se mueren todos los sistemas, incluidos los servicios de nube de telegram.
+5. **Entrada y salida de la habitación:** ¿hay que distinguir la dirección de las personas o basta registrar apertura de puerta y movimiento? Referencia: 00:39:51 a 00:40:30. R/ No se hace distinción.
+6. **Avisos silenciosos:** ¿el silencio incluye la notificación de Telegram en el teléfono o únicamente las alarmas de los dispositivos? Referencia: 00:39:51 a 00:40:30. R/ Las notificaciones no necesitan ser silenciosas.
 7. **Alimentación:** ¿se registra cantidad en gramos, mililitros o ambos? ¿Al inicio o al final? ¿Los horarios se repiten diariamente, por días de semana o de otra forma? La frase sobre periodicidad no se entiende con precisión. Referencias: 00:45:52 a 00:46:51.
-8. **Fotografías:** ¿también se envían por Telegram o solo se consultan desde la aplicación? ¿Cómo se tratan los disparos simultáneos de puerta y movimiento?
+8. **Fotografías:** ¿también se envían por Telegram o solo se consultan desde la aplicación? ¿Cómo se tratan los disparos simultáneos de puerta y movimiento? R/ No se envian las fotos, una notificacion por accion.
 
 ### 8.3 Detalles que todavía no quedaron definidos
 
-- Valores iniciales, unidades, tolerancias y frecuencia de lectura de los sensores.
-- Límites concretos de brillo y cambios de luces para las figuras LED.
-- Catálogo de audios, carga de archivos y controles de reproducción.
-- Cantidad de botones y avance entre turnos del juego.
-- Cierre, pausa y corrección de las tomas de alimentación.
-- Forma de invitar y retirar dueños y de vincular destinatarios de Telegram.
-- Datos del perfil del bebé y aplicación de la regla de una cuna por bebé cuando solo se compra un accesorio.
-- Repetición o agrupación de alertas, intervalo entre fotografías y tiempos de respuesta.
-- Presentación de gráficos y agrupación por horas.
-- Formato de exportación para Excel e inclusión de fotografías o enlaces.
-
-Las dudas y los pasajes de audio con lectura incierta están detallados en RequerimientosAudio.md.
+- Valores iniciales, unidades, tolerancias y frecuencia de lectura de los sensores. R/ Recomendaciones de ChatGPT
+- Límites concretos de brillo y cambios de luces para las figuras LED. R/ Recomendaciones de ChatGPT
+- Catálogo de audios, carga de archivos y controles de reproducción. R/ Dadas por el usuario o predeterminadas por definir
+- Cantidad de botones y avance entre turnos del juego. R/ Son 5 botones, al presionar un boton se enciende otro aleatoriamente, continua infinitamente hasta que se apague el juguete.
+- Cierre, pausa y corrección de las tomas de alimentación.*
+- Forma de invitar y retirar dueños y de vincular destinatarios de Telegram. R/ Una sección «Bebés y dispositivos» en la web, con dos opciones por dispositivo: «Administrar dueños» y «Destinatarios de Telegram» permite administrar los dispositivos.
+- Datos del perfil del bebé y aplicación de la regla de una cuna por bebé cuando solo se compra un accesorio. R/ Se pueden asignar dispositivos.
+- Repetición o agrupación de alertas, intervalo entre fotografías y tiempos de respuesta. R/ No se agrupa ninguna notificacion, una foto pór instancia, el menor tiempo de respuesta posible.
+- Presentación de gráficos y agrupación por horas.*
+- Formato de exportación para Excel e inclusión de fotografías o enlaces. R/ Para la base de datos de usara supabase
