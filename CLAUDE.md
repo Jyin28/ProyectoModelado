@@ -13,7 +13,7 @@ backend y firmware.
 
 - `src/frontend/` — aplicación web (React + TypeScript + Vite).
 - `src/firmware/` — firmware único de la Raspberry Pi Pico 2 W (pendiente).
-- `src/backend/` — backend .NET (pendiente de implementación real).
+- `src/backend/` — carpetas reservadas para código de integración. El backend del Sprint 3 se implementará en Supabase.
 - `supabase/` — backend Supabase (pendiente de implementación real).
 - `docs/Sprint3/` — alcance, equipo, entorno y validación del Sprint 3.
 - Resto de carpetas (`docs/Jira/`, `docs/Sprint1/`, `docs/Material/`,
@@ -50,11 +50,20 @@ de hardware vigentes (sensores, LED, resistencias, HX711, buzzer, audio).
 - En PowerShell, usar `npm.cmd` cuando `npm` no se reconozca como comando.
 - No hacer push ni operaciones remotas sin aprobación explícita.
 
+## Flujo por fases
+
+Parte de `development` para cada tarea y prepara un pull request hacia esa
+rama. `main` reúne las entregas estables. En cada avance, define qué se debe
+demostrar, implementa solo lo necesario y registra la prueba de cierre.
+El primer recorrido funcional es AM2301 → Supabase → web. Consulta el
+[alcance](docs/Sprint3/alcance.md) y el [reparto](docs/Sprint3/equipo.md)
+para coordinar las partes.
+
 ## Comandos habituales
 
 ```powershell
 cd src\frontend
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 npm.cmd run build
 npm.cmd run lint

@@ -12,7 +12,7 @@ Desde la raíz del repositorio:
 
 ```powershell
 cd src\frontend
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 ```
 

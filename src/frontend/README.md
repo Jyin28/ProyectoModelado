@@ -20,7 +20,7 @@ Esta fase **no** incluye:
 Desde `src/frontend`:
 
 ```powershell
-npm.cmd install
+npm.cmd ci
 ```
 
 ## Comandos
@@ -44,4 +44,4 @@ compila correctamente sin ningún valor configurado.
 ## Estado
 
 Aplicación base ejecutable. Pendiente: integración con Supabase, firmware y
-datos reales del dispositivo (ver `docs/Sprint3/validacion-base.md`).
+datos reales del dispositivo ([validación de la base](../../docs/Sprint3/validacion-base.md)).
