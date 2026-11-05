@@ -1,1 +1,13 @@
 /tmp/
+
+# Dependencias y artefactos de build (Sprint 3 — apps/web)
+node_modules/
+dist/
+dist-ssr/
+
+# Entorno local y secretos
+.env
+.env.*
+*.key
+*.pem
+!.env.example
