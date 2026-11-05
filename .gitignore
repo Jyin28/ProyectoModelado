@@ -51,15 +51,21 @@ artifacts/
 # --- Node.js / React / TypeScript ---
 node_modules/
 dist/
+dist-ssr/
 build/
 coverage/
 .vite/
 .next/
 out/
+*.local
 *.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+lerna-debug.log*
+
+# --- JetBrains IDEs ---
+.idea/
 
 # --- Python ---
 __pycache__/
