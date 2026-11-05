@@ -7,8 +7,7 @@ dist-ssr/
 
 # Entorno local y secretos
 .env
-.env.local
-.env.*.local
+.env.*
 *.key
 *.pem
 !.env.example

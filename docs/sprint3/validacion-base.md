@@ -96,6 +96,36 @@ se ha confirmado visualmente de forma automatizada.
   `Ctrl+C` en la terminal donde corre, o cerrando esa terminal.
 - No se encontraron errores de lint ni de compilación.
 
+## Corrección posterior — exclusión de archivos .env (2026-11-04)
+
+Se ajustó `.gitignore` de la raíz para excluir todas las variantes de
+archivos de entorno (`.env`, `.env.*`), manteniendo la excepción explícita
+para `.env.example`. La regla anterior solo cubría `.env`, `.env.local` y
+`.env.*.local`, y no excluía variantes como `.env.production`.
+
+Regla final:
+
+```
+.env
+.env.*
+*.key
+*.pem
+!.env.example
+```
+
+Comprobación con `git check-ignore -v` (sin crear archivos con secretos,
+solo contra rutas hipotéticas que no existen en el repositorio):
+
+| Ruta | ¿Ignorado? | Regla que aplica |
+| --- | --- | --- |
+| `apps/web/.env` | Sí | `.gitignore:9:.env` |
+| `apps/web/.env.local` | Sí | `apps/web/.gitignore:13:*.local` (gitignore anidado del scaffold de Vite; la regla raíz `.env.*` también la cubriría) |
+| `apps/web/.env.production` | Sí | `.gitignore:10:.env.*` |
+| `apps/web/.env.example` | No (puede versionarse) | ninguna (excluida explícitamente por `!.env.example`) |
+
+`git diff --check` sobre `.gitignore` tras el cambio: sin errores de
+espacios en blanco.
+
 ## Distinción explícita: base ejecutable vs. funcionalidades IoT
 
 **Implementado y verificado en esta fase (aplicación base ejecutable):**
