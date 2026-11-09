@@ -120,3 +120,7 @@ micropython-*.bin
 # --- Archivos del sistema y dependencias ---
 .DS_Store
 npm-debug.log*
+
+firmware/secrets.py
+firmware/calibration.json
+__pycache__/
