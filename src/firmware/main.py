@@ -6,12 +6,26 @@ Que hace:
   3. Avisa por consola cuando el PIR detecta movimiento.
   4. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   5. El LED interno parpadea para indicar el estado.
+  6. Mueve las secuencias de los 6 LED y, en modo demo, ejecuta comandos
+     de ejemplo sobre la lampara y las figuras (ver demo.py).
 
 Todavia NO envia nada a Internet ni usa el colchon: eso viene en los
 siguientes avances. Para detenerlo en Thonny: boton Stop (Ctrl+C).
 """
+import sys
 import time
+
+# Las carpetas del proyecto se agregan a la ruta de busqueda para poder
+# escribir "import config", "import wifi", etc. sin paquetes.
+# (figuras-led lleva guion, por eso no se puede importar como paquete.)
+for _carpeta in ("/colchon", "/cuna", "/figuras-led", "/common/communication",
+                 "/common/sensors", "/common/utilities"):
+    if _carpeta not in sys.path:
+        sys.path.append(_carpeta)
+
 import config
+import demo
+import figuras
 import indicador
 import sensores
 import wifi
@@ -19,7 +33,6 @@ import wifi
 
 def iniciar():
     """Pasos que se hacen una sola vez al arrancar."""
-
     print("=== Cuna Inteligente IoT - esqueleto ===")
     print("Dispositivo:", config.DEVICE_ID)
 
@@ -39,7 +52,6 @@ def han_pasado(inicio_ms, segundos):
 def ciclo_principal():
     """Bucle infinito: cada tarea corre cuando le toca su turno."""
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
-
     ultima_lectura = time.ticks_add(time.ticks_ms(),
                                     -config.INTERVALO_AMBIENTE_S * 1000)
     ultima_revision_wifi = time.ticks_ms()
@@ -48,28 +60,27 @@ def ciclo_principal():
     while True:
         # --- Tarea 1: temperatura y humedad ---
         if han_pasado(ultima_lectura, config.INTERVALO_AMBIENTE_S):
-
-            ### Actualizar el tiempo de la ultima lectura antes de leer sensores
             ultima_lectura = time.ticks_ms()
-
-            ### Leer sensores de ambiente
             datos = sensores.leer_ambiente()
             if datos is not None:
-
-                ### Mostrar en consola y parpadear el LED
                 temperatura, humedad = datos
                 print("Ambiente: %.1f C, %.1f %% HR" % (temperatura, humedad))
                 indicador.parpadear(1, 50)
 
         # --- Tarea 2: movimiento (solo avisa al empezar a detectar) ---
         hay = sensores.hay_movimiento()
-
-        ### Solo avisar cuando empieza a detectar movimiento, no cada vuelta del bucle
         if hay and not habia_movimiento:
             print("Movimiento detectado")
         habia_movimiento = hay
 
-        # --- Tarea 3: vigilar el WiFi ---
+        # --- Tarea 3: avanzar la secuencia de los LED (si hay una activa) ---
+        figuras.actualizar()
+
+        # --- Tarea 4: demo de comandos (se apaga con MODO_DEMO = False) ---
+        if config.MODO_DEMO:
+            demo.actualizar()
+
+        # --- Tarea 5: vigilar el WiFi ---
         if han_pasado(ultima_revision_wifi, config.REVISAR_WIFI_CADA_S):
             ultima_revision_wifi = time.ticks_ms()
             wifi.asegurar_conexion()
