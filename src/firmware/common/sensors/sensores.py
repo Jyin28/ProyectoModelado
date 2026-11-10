@@ -6,6 +6,7 @@ Funciones:
 """
 import dht
 from machine import Pin
+
 import config
 
 # AM2301 se maneja con la clase DHT22 de MicroPython.
@@ -20,7 +21,6 @@ def leer_ambiente():
     """Lee temperatura y humedad. Devuelve None si el sensor no responde."""
     try:
         _sensor_ambiente.measure()
-        ### devuelve temperatura en C y humedad relativa en % (float)
         return _sensor_ambiente.temperature(), _sensor_ambiente.humidity()
     except OSError as error:
         print("Error leyendo AM2301:", error)
