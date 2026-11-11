@@ -30,8 +30,8 @@ Comprueba estos ajustes antes del primer despliegue.
 
 El repositorio incluye la migración PostgreSQL y la función Edge `ingesta`. El flujo registra lecturas del AM2301, verifica la credencial del módulo, conserva la asignación histórica del bebé y permite leer los datos a dueños activos. El proyecto en la nube requiere aplicar la migración, configurar un dispositivo de prueba y desplegar la función antes de conectarlo con la Pico o la web.
 
-- **C, firmware.** El envío parte de la lectura que ya devuelve `sensores.leer_ambiente()`. Usa el identificador lógico y el token del módulo en `secrets.py`. Prueba la hora UTC y el HTTPS sobre el hotspot antes de usar una lectura como evidencia. [Contrato de ingesta](../src/shared/contracts/ambiente.md#pico-a-supabase)
-- **A, web.** Usa una sesión de Supabase Auth, la clave publicable y el identificador de módulo que configure B. [Consulta de la última lectura](../src/shared/contracts/ambiente.md#supabase-a-la-web)
+- **C, firmware.** El envío parte de la lectura que ya devuelve `sensores.leer_ambiente()`. Usa el identificador lógico `cuna-ambiente-01` y el token del módulo en `secrets.py`. Prueba la hora UTC y el HTTPS sobre el hotspot antes de usar una lectura como evidencia. [Contrato de ingesta](../src/shared/contracts/ambiente.md#pico-a-supabase)
+- **A, web.** Usa una sesión de Supabase Auth, la clave publicable y el módulo `cuna-ambiente-01`. El contrato indica la consulta y el mapeo al modelo web. [Consulta de la última lectura](../src/shared/contracts/ambiente.md#supabase-a-la-web)
 
 ### Preparar el proyecto de desarrollo
 
