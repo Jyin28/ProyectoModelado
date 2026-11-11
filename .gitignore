@@ -122,5 +122,6 @@ micropython-*.bin
 npm-debug.log*
 
 firmware/secrets.py
+/src/firmware/secrets.py
 firmware/calibration.json
 __pycache__/
