@@ -1,0 +1,30 @@
+.banner-conexion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.banner-conexion-icono {
+  font-weight: 700;
+}
+
+.banner-conexion[data-estado='conectado'] {
+  border-color: var(--ok);
+}
+
+.banner-conexion[data-estado='desconectado'] {
+  border-color: var(--error);
+}
+
+.banner-conexion[data-estado='sin-configurar'],
+.banner-conexion[data-estado='conectando'] {
+  border-color: var(--notice-border);
+  background: var(--notice-bg);
+}

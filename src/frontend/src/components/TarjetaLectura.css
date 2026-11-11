@@ -1,0 +1,47 @@
+.tarjeta-lectura {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 16px;
+}
+
+.tarjeta-lectura-etiqueta {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.pagina .tarjeta-lectura p {
+  margin: 4px 0 0;
+}
+
+.tarjeta-lectura-insignia {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tarjeta-lectura-valor {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tarjeta-lectura-unidad {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.tarjeta-lectura-meta {
+  font-size: 0.85rem;
+}
+
+.tarjeta-lectura[data-estado='desactualizado'] {
+  border-style: dashed;
+}
+
+.tarjeta-lectura[data-estado='desactualizado'] .tarjeta-lectura-valor {
+  opacity: 0.5;
+}
+
+.tarjeta-lectura[data-estado='sin-datos'] {
+  border-style: dotted;
+}

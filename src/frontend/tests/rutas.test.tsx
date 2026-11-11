@@ -81,11 +81,23 @@ describe('páginas sin datos', () => {
     '%s avisa que no hay datos del dispositivo',
     (ruta) => {
       renderizarEn(ruta)
-      expect(screen.getByRole('status')).toHaveTextContent(
-        'Todavía no hay datos recibidos del dispositivo.',
-      )
+      expect(
+        screen.getByText('Todavía no hay datos recibidos del dispositivo.'),
+      ).toHaveAttribute('role', 'status')
     },
   )
+
+  it('/cuna muestra Temperatura y Humedad "Sin datos" y el banner sin configurar', () => {
+    renderizarEn('/cuna')
+    for (const nombre of ['Temperatura', 'Humedad']) {
+      const tarjeta = screen.getByRole('article', { name: nombre })
+      expect(tarjeta).toHaveAttribute('data-estado', 'sin-datos')
+      expect(tarjeta).toHaveTextContent('Sin datos')
+    }
+    expect(
+      screen.getByText('Conexión con el servidor sin configurar.'),
+    ).toBeInTheDocument()
+  })
 
   it('Figuras muestra seis indicadores neutros "Sin datos"', () => {
     renderizarEn('/figuras')

@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
+import BannerConexion from './BannerConexion.tsx'
 import './Layout.css'
 
 const ENLACES = [
@@ -32,6 +33,8 @@ function Layout() {
           </ul>
         </nav>
       </header>
+
+      <BannerConexion estado="sin-configurar" />
 
       <main className="layout-contenido">
         <Outlet />

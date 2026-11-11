@@ -19,3 +19,15 @@
 .pagina a {
   color: var(--accent);
 }
+
+.rejilla-lecturas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .rejilla-lecturas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
