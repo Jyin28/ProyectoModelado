@@ -30,7 +30,16 @@ npm.cmd run dev     # Servidor de desarrollo (http://localhost:5173 por defecto)
 npm.cmd run build   # Compilación de producción (tsc -b && vite build)
 npm.cmd run lint    # Revisión estática con oxlint
 npm.cmd run preview # Sirve el build de producción localmente
+npm.cmd run test    # Pruebas automáticas (vitest run)
+npm.cmd run test:watch # Pruebas en modo observación
 ```
+
+## Pruebas
+
+Vitest con entorno jsdom y Testing Library. Los tests viven en `tests/` y el
+archivo `tests/setup.ts` registra los matchers de jest-dom. Los datos de
+ejemplo solo se usan dentro de los tests. Para correr lint, build y test
+juntos, usar el comando `/verificar` de Claude Code.
 
 En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 `npm` en lugar de `npm.cmd`.
