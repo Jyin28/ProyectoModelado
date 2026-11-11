@@ -96,6 +96,9 @@ micropython-*.bin
 !.env.example
 !.env.template
 
+# --- Claude Code (configuración local) ---
+.claude/settings.local.json
+
 # --- Certificados y claves ---
 *.pem
 *.key
