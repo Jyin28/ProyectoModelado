@@ -1,1 +1,126 @@
-/tmp/
+# ==========================================
+# SISTEMA IOT - MONITOREO Y ASISTENCIA
+# ==========================================
+
+# --- Windows ---
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Linux ---
+*~
+.directory
+
+# --- Visual Studio Code ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# --- Visual Studio ---
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- .NET / C# ---
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.log
+*.cache
+*.pdb
+*.dll
+*.exe
+*.app
+*.nupkg
+TestResults/
+artifacts/
+
+# --- Node.js / React / TypeScript ---
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.vite/
+.next/
+out/
+*.local
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- JetBrains IDEs ---
+.idea/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- MicroPython ---
+.mpy-cross/
+*.mpy
+micropython-*.bin
+*.hex
+
+# --- Variables de entorno y secretos ---
+.env
+.env.*
+!.env.example
+!.env.template
+
+# --- Certificados y claves ---
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# --- Bases de datos y archivos locales ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Archivos temporales ---
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.old
+
+# --- Archivos del sistema y dependencias ---
+.DS_Store
+npm-debug.log*
+
+firmware/secrets.py
+firmware/calibration.json
+__pycache__/
