@@ -1,8 +1,8 @@
 # src/frontend — Cuna Inteligente IoT
 
-Aplicación web mínima del Sprint 3. Muestra el nombre del proyecto y las tres
-secciones previstas (Cuna, Colchón, Figuras LED) sin conectarse todavía a
-ningún backend ni dispositivo real.
+Aplicación web mínima del Sprint 3. Tiene rutas y navegación entre las
+pantallas previstas (Cuna, Colchón, Figuras LED, Historial) sin conectarse
+todavía a ningún backend ni dispositivo real.
 
 Esta fase **no** incluye:
 
@@ -33,6 +33,30 @@ npm.cmd run preview # Sirve el build de producción localmente
 npm.cmd run test    # Pruebas automáticas (vitest run)
 npm.cmd run test:watch # Pruebas en modo observación
 ```
+
+## Rutas
+
+Enrutado con `react-router` en modo declarativo (`BrowserRouter` en
+`src/main.tsx`, rutas en `src/App.tsx`).
+
+| Ruta         | Pantalla                          | Notas                                         |
+| ------------ | --------------------------------- | --------------------------------------------- |
+| `/`          | —                                 | Redirige a `/cuna`.                           |
+| `/login`     | `pages/PaginaLogin.tsx`           | Sin formulario; integración pendiente.        |
+| `/cuna`      | `pages/PaginaCuna.tsx`            |                                               |
+| `/colchon`   | `pages/PaginaColchon.tsx`         |                                               |
+| `/figuras`   | `pages/PaginaFiguras.tsx`         | Seis indicadores neutros "Sin datos".         |
+| `/historial` | `pages/PaginaHistorial.tsx`       |                                               |
+| `*`          | `pages/PaginaNoEncontrada.tsx`    | Muestra "No encontrada".                      |
+
+Todas las rutas salvo `/login` se muestran dentro de `components/Layout.tsx`
+(encabezado, navegación y pie). En pantallas de menos de 720 px la navegación
+es una barra fija inferior.
+
+**Hosting estático:** al desplegar el `dist/`, el servidor debe redirigir
+todas las rutas a `index.html` (fallback de SPA). Sin esa regla, recargar o
+abrir directamente `/cuna` o `/figuras` devuelve 404. `npm.cmd run dev` y
+`npm.cmd run preview` ya lo hacen.
 
 ## Pruebas
 

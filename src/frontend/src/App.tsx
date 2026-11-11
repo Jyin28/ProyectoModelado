@@ -1,64 +1,26 @@
-import './App.css'
+import { Navigate, Route, Routes } from 'react-router'
+import Layout from './components/Layout.tsx'
+import PaginaColchon from './pages/PaginaColchon.tsx'
+import PaginaCuna from './pages/PaginaCuna.tsx'
+import PaginaFiguras from './pages/PaginaFiguras.tsx'
+import PaginaHistorial from './pages/PaginaHistorial.tsx'
+import PaginaLogin from './pages/PaginaLogin.tsx'
+import PaginaNoEncontrada from './pages/PaginaNoEncontrada.tsx'
 
-const FIGURAS_LED = [1, 2, 3, 4, 5, 6]
-
+// El router (BrowserRouter en main.tsx, MemoryRouter en los tests) envuelve a App.
 function App() {
   return (
-    <div className="page">
-      <header className="page-header">
-        <h1>Cuna Inteligente IoT</h1>
-        <p className="subtitle">Sprint 3 — base web verificable</p>
-      </header>
-
-      <p className="aviso" role="status">
-        Todavía no hay datos recibidos del dispositivo.
-      </p>
-
-      <main className="modulos">
-        <section className="modulo" aria-labelledby="modulo-cuna">
-          <h2 id="modulo-cuna">Cuna</h2>
-          <p>
-            Sección reservada para la información de la cuna. La conexión con
-            el dispositivo y el backend está pendiente de implementación.
-          </p>
-        </section>
-
-        <section className="modulo" aria-labelledby="modulo-colchon">
-          <h2 id="modulo-colchon">Colchón</h2>
-          <p>
-            Sección reservada para la información del colchón (presencia y
-            peso). La lectura real del sensor está pendiente de
-            implementación.
-          </p>
-        </section>
-
-        <section className="modulo" aria-labelledby="modulo-figuras">
-          <h2 id="modulo-figuras">Figuras LED</h2>
-          <p>
-            Seis indicadores visuales, uno por figura. No representan un
-            estado físico confirmado: el control real del hardware aún no
-            está implementado.
-          </p>
-          <ul className="figuras" aria-label="Indicadores de figuras LED">
-            {FIGURAS_LED.map((numero) => (
-              <li key={numero} className="figura">
-                <span className="figura-punto" aria-hidden="true" />
-                <span className="figura-etiqueta">Figura {numero}</span>
-                <span className="figura-estado">Sin datos</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </main>
-
-      <footer className="page-footer">
-        <p>
-          Aplicación base del Sprint 3. La integración con Supabase y el
-          firmware de la Raspberry Pi Pico 2 W todavía está pendiente de
-          prueba.
-        </p>
-      </footer>
-    </div>
+    <Routes>
+      <Route path="/login" element={<PaginaLogin />} />
+      <Route element={<Layout />}>
+        <Route index element={<Navigate to="/cuna" replace />} />
+        <Route path="/cuna" element={<PaginaCuna />} />
+        <Route path="/colchon" element={<PaginaColchon />} />
+        <Route path="/figuras" element={<PaginaFiguras />} />
+        <Route path="/historial" element={<PaginaHistorial />} />
+        <Route path="*" element={<PaginaNoEncontrada />} />
+      </Route>
+    </Routes>
   )
 }
 
