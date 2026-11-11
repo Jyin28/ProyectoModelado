@@ -1,16 +1,15 @@
-"""main.py - Programa principal de la Pico 2 W (version esqueleto).
+"""main.py - Programa principal de la Pico 2 W.
 
 Que hace:
   1. Se conecta al WiFi.
-  2. Cada 10 s lee temperatura y humedad y las muestra en consola.
+  2. Cada 10 s lee temperatura y humedad, las muestra y las envia si esta configurado.
   3. Avisa por consola cuando el PIR detecta movimiento.
   4. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   5. El LED interno parpadea para indicar el estado.
   6. Mueve las secuencias de los 6 LED y, en modo demo, ejecuta comandos
      de ejemplo sobre la lampara y las figuras (ver demo.py).
 
-Todavia NO envia nada a Internet ni usa el colchon: eso viene en los
-siguientes avances. Para detenerlo en Thonny: boton Stop (Ctrl+C).
+Para detenerlo en Thonny: boton Stop (Ctrl+C).
 """
 import sys
 import time
@@ -23,6 +22,7 @@ for _carpeta in ("/colchon", "/cuna", "/figuras-led", "/common/communication",
     if _carpeta not in sys.path:
         sys.path.append(_carpeta)
 
+import ambiente
 import config
 import demo
 import figuras
@@ -33,7 +33,7 @@ import wifi
 
 def iniciar():
     """Pasos que se hacen una sola vez al arrancar."""
-    print("=== Cuna Inteligente IoT - esqueleto ===")
+    print("=== Cuna Inteligente IoT ===")
     print("Dispositivo:", config.DEVICE_ID)
 
     indicador.parpadear(3, 100)          # 3 parpadeos rapidos = arrancando
@@ -49,7 +49,7 @@ def han_pasado(inicio_ms, segundos):
     return time.ticks_diff(time.ticks_ms(), inicio_ms) >= segundos * 1000
 
 
-def ciclo_principal():
+def ciclo_principal(envio=None):
     """Bucle infinito: cada tarea corre cuando le toca su turno."""
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
     ultima_lectura = time.ticks_add(time.ticks_ms(),
@@ -65,6 +65,8 @@ def ciclo_principal():
             if datos is not None:
                 temperatura, humedad = datos
                 print("Ambiente: %.1f C, %.1f %% HR" % (temperatura, humedad))
+                if envio is not None:
+                    envio.registrar(temperatura, humedad, ultima_lectura)
                 indicador.parpadear(1, 50)
 
         # --- Tarea 2: movimiento (solo avisa al empezar a detectar) ---
@@ -80,8 +82,8 @@ def ciclo_principal():
         if config.MODO_DEMO:
             demo.actualizar()
 
-        # --- Tarea 5: vigilar el WiFi ---
-        if han_pasado(ultima_revision_wifi, config.REVISAR_WIFI_CADA_S):
+        # Sin envio configurado, el ciclo principal conserva la revision del WiFi.
+        if envio is None and han_pasado(ultima_revision_wifi, config.REVISAR_WIFI_CADA_S):
             ultima_revision_wifi = time.ticks_ms()
             wifi.asegurar_conexion()
 
@@ -89,12 +91,16 @@ def ciclo_principal():
 
 
 def ejecutar():
+    envio = None
     try:
         iniciar()
-        ciclo_principal()
+        envio = ambiente.iniciar()
+        ciclo_principal(envio)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
+        if envio is not None:
+            envio.detener()
         indicador.apagar()
 
 
