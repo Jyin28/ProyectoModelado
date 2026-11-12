@@ -1,0 +1,131 @@
+.layout {
+  max-width: 960px;
+  margin: 0 auto;
+  /* Espacio inferior para que la barra fija del celular no tape el pie. */
+  padding: 16px 16px 96px;
+}
+
+.layout-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.layout-marca {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.layout-sesion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.layout-sesion-correo {
+  overflow-wrap: anywhere;
+}
+
+.layout-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-enlace {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text-muted);
+  border-radius: 8px;
+}
+
+.nav-enlace:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nav-enlace-activo {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Celular: barra inferior fija con los cuatro enlaces en columnas iguales. */
+.layout-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.layout-nav ul {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.layout-nav .nav-enlace {
+  padding: 14px 4px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  border-radius: 0;
+}
+
+.layout-nav .nav-enlace-activo {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.layout-contenido {
+  min-width: 0;
+}
+
+.layout-pie {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Escritorio: navegación horizontal dentro del encabezado. */
+@media (min-width: 720px) {
+  .layout {
+    padding-bottom: 48px;
+  }
+
+  .layout-header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .layout-nav {
+    position: static;
+    background: none;
+    border-top: none;
+  }
+
+  .layout-nav ul {
+    display: flex;
+    gap: 4px;
+  }
+
+  .layout-nav .nav-enlace {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+
+  .layout-nav .nav-enlace-activo {
+    box-shadow: none;
+    background: var(--card-bg);
+  }
+}

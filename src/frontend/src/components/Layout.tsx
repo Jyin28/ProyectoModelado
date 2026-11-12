@@ -1,0 +1,84 @@
+import { useState } from 'react'
+import { Link, NavLink, Outlet } from 'react-router'
+import { useServicios } from '../hooks/useServicios.ts'
+import { useSesion } from '../hooks/useSesion.ts'
+import BannerConexion from './BannerConexion.tsx'
+import './Layout.css'
+
+const ENLACES = [
+  { ruta: '/cuna', texto: 'Cuna' },
+  { ruta: '/colchon', texto: 'Colchón' },
+  { ruta: '/figuras', texto: 'Figuras LED' },
+  { ruta: '/historial', texto: 'Historial' },
+]
+
+function Layout() {
+  const { backendConfigurado } = useServicios()
+  const { estado, cerrarSesion } = useSesion()
+  const [cerrando, setCerrando] = useState(false)
+  const [errorCierre, setErrorCierre] = useState<string | null>(null)
+
+  async function alCerrarSesion() {
+    if (cerrando) return
+    setCerrando(true)
+    setErrorCierre(null)
+    const r = await cerrarSesion()
+    // Si salió bien, la ruta protegida redirige y este componente se desmonta.
+    if (!r.ok) {
+      setErrorCierre(r.error)
+      setCerrando(false)
+    }
+  }
+
+  return (
+    <div className="layout">
+      <header className="layout-header">
+        <Link to="/cuna" className="layout-marca">
+          Cuna Inteligente IoT
+        </Link>
+        <nav className="layout-nav" aria-label="Principal">
+          <ul>
+            {ENLACES.map(({ ruta, texto }) => (
+              <li key={ruta}>
+                <NavLink
+                  to={ruta}
+                  className={({ isActive }) =>
+                    isActive ? 'nav-enlace nav-enlace-activo' : 'nav-enlace'
+                  }
+                >
+                  {texto}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        {estado.tipo === 'autenticado' && (
+          <div className="layout-sesion">
+            <span className="layout-sesion-correo">{estado.sesion.correo}</span>
+            <button type="button" onClick={alCerrarSesion} disabled={cerrando}>
+              Cerrar sesión
+            </button>
+          </div>
+        )}
+      </header>
+      {errorCierre && <p role="alert">{errorCierre}</p>}
+
+      {/* Con backend configurado, cada pantalla informa su propia conexión. */}
+      {!backendConfigurado && <BannerConexion estado="sin-configurar" />}
+
+      <main className="layout-contenido">
+        <Outlet />
+      </main>
+
+      <footer className="layout-pie">
+        <p>
+          Aplicación base del Sprint 3. La integración con Supabase y el
+          firmware de la Raspberry Pi Pico 2 W todavía está pendiente de
+          prueba.
+        </p>
+      </footer>
+    </div>
+  )
+}
+
+export default Layout
