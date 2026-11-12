@@ -73,6 +73,7 @@ class EnvioAmbiente:
         self._movimiento = movimiento
         self._lock = _thread.allocate_lock()
         self._activo = True
+        self._wifi_conectado = False
         self._reloj_listo = False
         self._pendiente = None
         self._pendiente_movimiento = None   # como maximo un evento PIR en RAM
@@ -111,9 +112,14 @@ class EnvioAmbiente:
             }
             self._pendiente = (json.dumps(evento).encode(), medido_ms)
 
+    def esta_conectado(self):
+        with self._lock:
+            return self._wifi_conectado
+
     def detener(self):
         with self._lock:
             self._activo = False
+            self._wifi_conectado = False
             self._reloj_listo = False
             self._pendiente = None
             self._pendiente_movimiento = None
@@ -146,7 +152,10 @@ class EnvioAmbiente:
         try:
             while self._activo:
                 ahora = time.ticks_ms()
-                if not wifi.esta_conectado():
+                conectado = wifi.esta_conectado()
+                with self._lock:
+                    self._wifi_conectado = self._activo and conectado
+                if not conectado:
                     with self._lock:
                         self._reloj_listo = False
                         self._pendiente = None

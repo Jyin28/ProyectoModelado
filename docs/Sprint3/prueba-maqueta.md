@@ -27,7 +27,7 @@ se cargó a la placa.
 | Lámpara | La Pico se suscribe al canal privado. Al solicitar una intensidad en la prueba controlada, cambia la luz y la web muestra la confirmación de la Pico. Verificar apagado, nivel intermedio y pérdida de conexión. |
 | PIR | Con el monitoreo habilitado, un flanco de detección llega como evento y aparece su hora en Cuna. Con el monitoreo desactivado, una detección no crea un evento. |
 | Seis figuras LED | La demo local enciende las seis salidas y ejecuta la secuencia. Verificar cada LED y el apagado final. |
-| Colchón | Con la celda calibrada usando una pesa conocida, registrar la referencia, demostrar el filtro de tres lecturas, detener el buzzer con el botón y rearmar con una referencia nueva. |
+| Colchón | Ejecutar primero el [menú del colchón](../../src/firmware/README.md#procedimiento-de-calibración-con-pesas-conocidas) con el montaje aislado. Con la celda calibrada usando una pesa conocida, registrar la referencia, demostrar el filtro de tres lecturas, detener el buzzer con el botón y rearmar con una referencia nueva. |
 | Audio | Reproducir y detener el sonido de prueba, con volumen digital conservador y cableado verificado. Comprobar que se siguen leyendo sensores y que se mantienen los controles locales. |
 
 Las pruebas en la computadora cubren reglas y mensajes con datos de prueba.
