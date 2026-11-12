@@ -6,7 +6,8 @@ todavía a ningún backend ni dispositivo real.
 
 Esta fase **no** incluye:
 
-- Conexión a Supabase (Auth, PostgreSQL, Realtime, Storage).
+- Consultas a Supabase (Auth, PostgreSQL, Realtime, Storage). El cliente
+  está preparado, pero no se consulta ninguna tabla.
 - Lecturas reales de sensores ni control de hardware.
 - Autenticación de usuarios.
 
@@ -70,9 +71,26 @@ En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 
 ## Variables de entorno
 
-Copiar `.env.example` como `.env.local` y completar los valores cuando se
-implemente la conexión con Supabase. La aplicación de esta fase arranca y
-compila correctamente sin ningún valor configurado.
+La web lee solo dos variables, definidas en `.env.example`:
+`VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Completar los valores en `.env.local` (archivo ignorado por git; nunca se
+sube al repositorio). Reiniciar `npm.cmd run dev` después de cambiarlo.
+
+**La clave de servicio (`service_role`) nunca se usa en la web.** Solo va la
+clave publicable. La clave de servicio no debe copiarse a ningún archivo de
+`src/frontend/`.
+
+Sin `.env.local` la aplicación arranca y compila igual, y el banner muestra
+"Backend no configurado". Con las variables completas el cliente se crea
+(`src/services/supabase.ts`), pero todavía no se consulta ninguna tabla: el
+banner muestra "Integración pendiente" hasta que exista un servicio real.
+Los servicios (`src/services/tipos.ts`) usan por ahora la implementación
+`noConfigurado.ts`, que responde "Backend no configurado" sin datos.
 
 ## Estado
 

@@ -4,7 +4,7 @@ import './BannerConexion.css'
 const CONTENIDO: Record<EstadoConexion, { icono: string; texto: string }> = {
   'sin-configurar': {
     icono: '○',
-    texto: 'Conexión con el servidor sin configurar.',
+    texto: 'Backend no configurado.',
   },
   conectando: { icono: '…', texto: 'Conectando con el servidor…' },
   conectado: { icono: '✓', texto: 'Conectado con el servidor.' },
@@ -17,10 +17,13 @@ const CONTENIDO: Record<EstadoConexion, { icono: string; texto: string }> = {
 
 interface Props {
   estado: EstadoConexion
+  /** Reemplaza el texto por defecto del estado. */
+  texto?: string
 }
 
-function BannerConexion({ estado }: Props) {
-  const { icono, texto } = CONTENIDO[estado]
+function BannerConexion({ estado, texto: textoPropio }: Props) {
+  const { icono, texto: textoBase } = CONTENIDO[estado]
+  const texto = textoPropio ?? textoBase
   return (
     <p className="banner-conexion" role="status" data-estado={estado}>
       <span aria-hidden="true" className="banner-conexion-icono">

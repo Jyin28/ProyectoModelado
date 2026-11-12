@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from '../src/App.tsx'
+import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
 
 function renderizarEn(ruta: string) {
   return render(
@@ -94,9 +95,19 @@ describe('páginas sin datos', () => {
       expect(tarjeta).toHaveAttribute('data-estado', 'sin-datos')
       expect(tarjeta).toHaveTextContent('Sin datos')
     }
-    expect(
-      screen.getByText('Conexión con el servidor sin configurar.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Backend no configurado.')).toBeInTheDocument()
+  })
+
+  it('con backend configurado el banner dice "Integración pendiente"', () => {
+    render(
+      <ProveedorServicios configurado>
+        <MemoryRouter initialEntries={['/cuna']}>
+          <App />
+        </MemoryRouter>
+      </ProveedorServicios>,
+    )
+    const banner = screen.getByText('Integración pendiente.').closest('p')
+    expect(banner).toHaveAttribute('data-estado', 'desconectado')
   })
 
   it('Figuras muestra seis indicadores neutros "Sin datos"', () => {

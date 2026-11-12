@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
+import { useServicios } from '../hooks/useServicios.ts'
 import BannerConexion from './BannerConexion.tsx'
 import './Layout.css'
 
@@ -10,6 +11,7 @@ const ENLACES = [
 ]
 
 function Layout() {
+  const { backendConfigurado } = useServicios()
   return (
     <div className="layout">
       <header className="layout-header">
@@ -34,7 +36,11 @@ function Layout() {
         </nav>
       </header>
 
-      <BannerConexion estado="sin-configurar" />
+      {backendConfigurado ? (
+        <BannerConexion estado="desconectado" texto="Integración pendiente." />
+      ) : (
+        <BannerConexion estado="sin-configurar" />
+      )}
 
       <main className="layout-contenido">
         <Outlet />

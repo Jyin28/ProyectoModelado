@@ -5,7 +5,7 @@ import type { EstadoConexion } from '../src/models/conexion.ts'
 
 describe('BannerConexion', () => {
   it.each<[EstadoConexion, string]>([
-    ['sin-configurar', 'Conexión con el servidor sin configurar.'],
+    ['sin-configurar', 'Backend no configurado.'],
     ['conectando', 'Conectando con el servidor…'],
     ['conectado', 'Conectado con el servidor.'],
     [
@@ -17,5 +17,10 @@ describe('BannerConexion', () => {
     const banner = screen.getByRole('status')
     expect(banner).toHaveTextContent(texto)
     expect(banner).toHaveAttribute('data-estado', estado)
+  })
+
+  it('el texto propio reemplaza al texto por defecto', () => {
+    render(<BannerConexion estado="desconectado" texto="Integración pendiente." />)
+    expect(screen.getByRole('status')).toHaveTextContent('Integración pendiente.')
   })
 })
