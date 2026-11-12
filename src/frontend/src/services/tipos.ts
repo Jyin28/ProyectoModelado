@@ -11,6 +11,7 @@ import type {
   Modulo,
   OrdenComando,
 } from '../models/contrato.ts'
+import type { OrdenLampara } from '../models/lampara.ts'
 
 export type Resultado<T> =
   | { ok: true; datos: T }
@@ -58,6 +59,17 @@ export interface ServicioComandos {
   suscribirConfirmaciones(manejadores: Manejadores<Confirmacion>): Cancelar
 }
 
+export interface ServicioLampara {
+  /** Registra una solicitud (RPC solicitar_lampara). No prueba que la luz cambie. */
+  solicitarLampara(
+    dispositivoId: string,
+    nivel: number,
+  ): Promise<Resultado<OrdenLampara>>
+  obtenerUltimaOrdenLampara(
+    dispositivoId: string,
+  ): Promise<Resultado<OrdenLampara | null>>
+}
+
 export interface ServicioAuth {
   obtenerSesion(): Promise<Resultado<Sesion | null>>
   iniciarSesion(correo: string, contrasena: string): Promise<Resultado<Sesion>>
@@ -68,5 +80,6 @@ export interface ServicioAuth {
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
+  lampara: ServicioLampara
   auth: ServicioAuth
 }

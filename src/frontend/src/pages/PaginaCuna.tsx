@@ -1,8 +1,13 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
 import BannerConexion from '../components/BannerConexion.tsx'
+import PanelLampara from '../components/PanelLampara.tsx'
 import TarjetaLectura from '../components/TarjetaLectura.tsx'
 import { useUltimaAmbiental } from '../hooks/useUltimaAmbiental.ts'
-import { dispositivoAmbienteId } from '../services/configuracion.ts'
+import {
+  dispositivoAmbienteId,
+  dispositivoLamparaId,
+  lamparaHabilitada,
+} from '../services/configuracion.ts'
 import './paginas.css'
 
 // El ambiente se mide cada 10 s: se tolera hasta 3 periodos sin lectura nueva.
@@ -39,6 +44,9 @@ function PaginaCuna() {
             umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
           />
         </div>
+      )}
+      {lamparaHabilitada() && (
+        <PanelLampara dispositivoId={dispositivoLamparaId()} />
       )}
       {!activo && (
         <p>

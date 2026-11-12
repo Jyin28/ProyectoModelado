@@ -15,6 +15,8 @@ describe('serviciosNoConfigurados', () => {
       s.lecturas.obtenerUltimoPeso('d'),
       s.lecturas.obtenerEventosMovimiento('d', 'a'),
       s.comandos.enviarComando('figuras', orden),
+      s.lampara.solicitarLampara('d', 40),
+      s.lampara.obtenerUltimaOrdenLampara('d'),
       s.auth.obtenerSesion(),
       s.auth.iniciarSesion('a@b.c', 'x'),
       s.auth.cerrarSesion(),
