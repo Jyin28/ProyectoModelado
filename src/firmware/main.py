@@ -8,6 +8,8 @@ Que hace:
   5. El LED interno parpadea para indicar el estado.
   6. Mueve las secuencias de los 6 LED y, en modo demo, ejecuta comandos
      de ejemplo sobre la lampara y las figuras (ver demo.py).
+  7. Si config.py los habilita (apagados por defecto, sin probar en
+     hardware), atiende el colchon (boton, muestreo, alarma) y el audio local.
 
 Para detenerlo en Thonny: boton Stop (Ctrl+C).
 """
@@ -23,7 +25,10 @@ for _carpeta in ("/colchon", "/cuna", "/figuras-led", "/common/communication",
         sys.path.append(_carpeta)
 
 import ambiente
+import audio
+import comandos
 import config
+import control_colchon
 import demo
 import figuras
 import indicador
@@ -49,8 +54,36 @@ def han_pasado(inicio_ms, segundos):
     return time.ticks_diff(time.ticks_ms(), inicio_ms) >= segundos * 1000
 
 
-def ciclo_principal(envio=None):
+def preparar_perifericos():
+    """Crea colchon y audio SOLO si config.py los habilita. Un fallo no detiene el resto."""
+    colchon = None
+    reproductor = None
+    if config.COLCHON_HABILITADO:
+        try:
+            colchon = control_colchon.iniciar()
+            comandos.conectar_colchon(colchon)
+            print("Colchon: habilitado (SIN PROBAR EN HARDWARE; pines propuestos)")
+            if not config.COLCHON_REQUIERE_WIFI:
+                print("Colchon: PRUEBA CONTROLADA, no se exige WiFi para monitorear")
+        except Exception as error:
+            colchon = None
+            print("Colchon: no se pudo iniciar (%s)" % type(error).__name__)
+    if config.AUDIO_HABILITADO:
+        try:
+            reproductor = audio.iniciar()
+            comandos.conectar_audio(reproductor)
+            print("Audio: habilitado (SIN PROBAR EN HARDWARE; pines propuestos)")
+        except Exception as error:
+            reproductor = None
+            print("Audio: no se pudo iniciar (%s)" % type(error).__name__)
+    return colchon, reproductor
+
+
+def ciclo_principal(envio=None, colchon=None, reproductor=None):
     """Bucle infinito: cada tarea corre cuando le toca su turno."""
+    pausa_ms = config.PAUSA_CICLO_MS
+    if colchon is not None:
+        pausa_ms = min(pausa_ms, config.COLCHON_PAUSA_CICLO_MS)   # boton y muestreo mas agiles
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
     ultima_lectura = time.ticks_add(time.ticks_ms(),
                                     -config.INTERVALO_AMBIENTE_S * 1000)
@@ -82,25 +115,60 @@ def ciclo_principal(envio=None):
         if config.MODO_DEMO:
             demo.actualizar()
 
+        # --- Tarea 5: colchon (boton, muestreo, alarma). Un fallo lo deshabilita
+        # con el buzzer apagado y el resto sigue.
+        if colchon is not None:
+            try:
+                colchon.actualizar(time.ticks_ms(), wifi.esta_conectado())
+            except Exception as error:
+                print("Colchon: error (%s); se deshabilita" % type(error).__name__)
+                try:
+                    colchon.apagar()
+                except Exception:
+                    pass
+                colchon = None
+
+        # --- Tarea 6: audio (cierre al drenar y vigilancia). Un fallo no afecta al resto.
+        if reproductor is not None:
+            try:
+                reproductor.actualizar(time.ticks_ms())
+            except Exception as error:
+                print("Audio: error (%s)" % type(error).__name__)
+                try:
+                    reproductor.detener()
+                except Exception:
+                    pass
+                reproductor = None
+
         # Sin envio configurado, el ciclo principal conserva la revision del WiFi.
-        if envio is None and han_pasado(ultima_revision_wifi, config.REVISAR_WIFI_CADA_S):
+        # (La reconexion bloquea hasta 15 s: no se hace mientras suena la alarma.)
+        en_alarma = colchon is not None and colchon.en_alarma()
+        if (envio is None and not en_alarma
+                and han_pasado(ultima_revision_wifi, config.REVISAR_WIFI_CADA_S)):
             ultima_revision_wifi = time.ticks_ms()
             wifi.asegurar_conexion()
 
-        time.sleep_ms(config.PAUSA_CICLO_MS)
+        time.sleep_ms(pausa_ms)
 
 
 def ejecutar():
     envio = None
+    colchon = None
+    reproductor = None
     try:
         iniciar()
         envio = ambiente.iniciar()
-        ciclo_principal(envio)
+        colchon, reproductor = preparar_perifericos()
+        ciclo_principal(envio, colchon, reproductor)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
         if envio is not None:
             envio.detener()
+        if colchon is not None:
+            colchon.apagar()
+        if reproductor is not None:
+            reproductor.detener()
         indicador.apagar()
 
 
