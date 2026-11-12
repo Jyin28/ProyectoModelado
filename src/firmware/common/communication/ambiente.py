@@ -1,0 +1,191 @@
+"""Publica lecturas ambientales sin esperar por la red en el ciclo principal."""
+
+import _thread
+import binascii
+import json
+import math
+import os
+import socket
+import ssl
+import time
+
+import config
+import secrets
+import wifi
+
+_RUTA_INGESTA = "/functions/v1/ingesta"
+_CA = "/common/communication/gts-root-r4.der"
+_INTERVALO_MS = config.INTERVALO_AMBIENTE_S * 1000
+_TIMEOUT_HTTPS_S = 3
+
+
+def _uuid4():
+    aleatorio = bytearray(os.urandom(16))
+    aleatorio[6] = (aleatorio[6] & 0x0f) | 0x40
+    aleatorio[8] = (aleatorio[8] & 0x3f) | 0x80
+    hex_id = binascii.hexlify(aleatorio).decode()
+    return "-".join((hex_id[:8], hex_id[8:12], hex_id[12:16], hex_id[16:20], hex_id[20:]))
+
+
+def _post(host, autorizacion, contexto, cuerpo, timeout):
+    direcciones = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
+    if not direcciones:
+        raise OSError("Servidor sin direccion IPv4")
+    direccion = direcciones[0]
+    tcp = socket.socket(*direccion[:3])
+    conexion = tcp
+    try:
+        tcp.settimeout(timeout)
+        tcp.connect(direccion[-1])
+        conexion = contexto.wrap_socket(tcp, server_hostname=host)
+        cabecera = (
+            "POST " + _RUTA_INGESTA + " HTTP/1.1\r\n"
+            "Host: %s\r\nAuthorization: Bearer %s\r\n"
+            "Content-Type: application/json\r\nContent-Length: %d\r\n"
+            "Connection: close\r\n\r\n"
+        ) % (host, autorizacion, len(cuerpo))
+        solicitud = memoryview(cabecera.encode() + cuerpo)
+        while solicitud:
+            escritos = conexion.write(solicitud)
+            if not escritos:
+                raise OSError("Envio HTTPS interrumpido")
+            solicitud = solicitud[escritos:]
+
+        estado = conexion.readline(128).split(None, 2)
+        if len(estado) < 2 or not estado[0].startswith(b"HTTP/1.") or not estado[1].isdigit():
+            raise OSError("Respuesta HTTP invalida")
+        return int(estado[1])
+    finally:
+        conexion.close()
+
+
+class EnvioAmbiente:
+    def __init__(self, host, dispositivo, token, contexto, ntp):
+        self._host = host
+        self._dispositivo = dispositivo
+        self._token = token
+        self._contexto = contexto
+        self._ntp = ntp
+        self._lock = _thread.allocate_lock()
+        self._activo = True
+        self._reloj_listo = False
+        self._pendiente = None
+
+    def registrar(self, temperatura, humedad, medido_ms):
+        if not math.isfinite(temperatura) or not 0 <= humedad <= 100:
+            return
+        with self._lock:
+            if not self._reloj_listo:
+                return
+            utc = time.gmtime()
+            evento = {
+                "event_id": _uuid4(),
+                "device_id": self._dispositivo,
+                "tipo": "ambiente",
+                "ts": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
+                "datos": {"temperatura_c": temperatura, "humedad_pct": humedad},
+            }
+            self._pendiente = (json.dumps(evento).encode(), medido_ms)
+
+    def detener(self):
+        with self._lock:
+            self._activo = False
+            self._reloj_listo = False
+            self._pendiente = None
+
+    def _enviar(self, cuerpo, medido_ms):
+        for intento in range(2):
+            restante_ms = _INTERVALO_MS - time.ticks_diff(time.ticks_ms(), medido_ms)
+            if not self._activo or restante_ms <= 0 or not wifi.esta_conectado():
+                return
+            try:
+                estado = _post(
+                    self._host, self._token, self._contexto, cuerpo,
+                    min(_TIMEOUT_HTTPS_S, restante_ms / 1000),
+                )
+            except (OSError, ValueError, MemoryError) as error:
+                print("Ambiente: fallo HTTPS (%s)" % type(error).__name__)
+                return
+            print("Ambiente: HTTP %d" % estado)
+            if estado != 503:
+                return
+            if intento == 0:
+                time.sleep_ms(250)
+
+    def ejecutar(self):
+        ultima_revision = time.ticks_add(time.ticks_ms(), -config.REVISAR_WIFI_CADA_S * 1000)
+        ultimo_ntp = None
+        try:
+            while self._activo:
+                ahora = time.ticks_ms()
+                if not wifi.esta_conectado():
+                    with self._lock:
+                        self._reloj_listo = False
+                        self._pendiente = None
+                    ultimo_ntp = None
+                    if time.ticks_diff(ahora, ultima_revision) >= config.REVISAR_WIFI_CADA_S * 1000:
+                        try:
+                            wifi.asegurar_conexion()
+                        except OSError:
+                            print("Ambiente: no se pudo reconectar al WiFi")
+                        ultima_revision = time.ticks_ms()
+                elif not self._reloj_listo:
+                    if ultimo_ntp is None or time.ticks_diff(ahora, ultimo_ntp) >= _INTERVALO_MS:
+                        try:
+                            self._ntp.settime()
+                        except (OSError, ValueError, OverflowError):
+                            print("Ambiente: hora pendiente de sincronizar")
+                        else:
+                            conectado = wifi.esta_conectado()
+                            with self._lock:
+                                self._reloj_listo = self._activo and conectado
+                            if self._reloj_listo:
+                                print("Ambiente: hora UTC sincronizada")
+                        ultimo_ntp = time.ticks_ms()
+                else:
+                    with self._lock:
+                        pendiente = self._pendiente
+                        self._pendiente = None
+                    if pendiente is not None:
+                        self._enviar(*pendiente)
+                time.sleep_ms(100)
+        finally:
+            self.detener()
+
+
+def iniciar():
+    url = getattr(secrets, "AMBIENTE_URL", "")
+    dispositivo = getattr(secrets, "AMBIENTE_DEVICE_ID", "")
+    token = getattr(secrets, "AMBIENTE_TOKEN", "")
+    if not url or not dispositivo or not token:
+        print("Ambiente: envio desactivado; falta la configuracion de Supabase")
+        return None
+    if not url.startswith("https://") or not url.endswith(_RUTA_INGESTA):
+        print("Ambiente: URL de Ingesta invalida")
+        return None
+    host = url[8:-len(_RUTA_INGESTA)]
+    if not host or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789.-" for c in host):
+        print("Ambiente: servidor de Ingesta invalido")
+        return None
+    if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
+        print("Ambiente: formato de credencial invalido")
+        return None
+
+    try:
+        import ntptime
+
+        ntptime.timeout = 2
+        contexto = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        contexto.verify_mode = ssl.CERT_REQUIRED
+        with open(_CA, "rb") as certificado:
+            contexto.load_verify_locations(certificado.read())
+        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime)
+        pila_anterior = _thread.stack_size(12 * 1024)
+        try:
+            _thread.start_new_thread(envio.ejecutar, ())
+        finally:
+            _thread.stack_size(pila_anterior)
+    except (ImportError, AttributeError, OSError, ValueError, MemoryError, RuntimeError) as error:
+        print("Ambiente: no se pudo iniciar el envio (%s)" % type(error).__name__)
+        return None
+    return envio

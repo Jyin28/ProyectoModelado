@@ -6,3 +6,8 @@
 """
 WIFI_SSID = "nombre-de-tu-wifi"
 WIFI_PASSWORD = "clave-de-tu-wifi"
+
+# Completa el token con el valor entregado para este modulo.
+AMBIENTE_URL = "https://tlbwsdnqhwvuvgjcxgsg.supabase.co/functions/v1/ingesta"
+AMBIENTE_DEVICE_ID = "cuna-ambiente-01"
+AMBIENTE_TOKEN = ""

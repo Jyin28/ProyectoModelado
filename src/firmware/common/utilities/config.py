@@ -4,7 +4,7 @@ Los pines son PROVISIONALES: confirmalos con el equipo de circuitos.
 No uses GP23, GP24, GP25 ni GP29 (los usa el chip WiFi de la Pico W).
 """
 
-# Nombre con el que este dispositivo se identificara mas adelante en la nube
+# Identificador de la placa fisica. El modulo ambiental usa AMBIENTE_DEVICE_ID.
 DEVICE_ID = "pico-sprint3-01"
 
 # ---- Pines (numero de GPIO) ----
