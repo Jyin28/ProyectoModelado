@@ -102,7 +102,7 @@ describe('páginas sin datos', () => {
     expect(screen.getByText('Backend no configurado.')).toBeInTheDocument()
   })
 
-  it('con backend configurado y sesión el banner sigue en "Integración pendiente"', async () => {
+  it('con backend configurado y sesión Layout no muestra un banner propio', async () => {
     const servicios: Servicios = {
       ...serviciosNoConfigurados,
       auth: {
@@ -121,8 +121,11 @@ describe('páginas sin datos', () => {
         </MemoryRouter>
       </ProveedorServicios>,
     )
-    const banner = (await screen.findByText('Integración pendiente.')).closest('p')
+    // Cuna consulta (el servicio de prueba falla) y muestra su único banner.
+    const banner = (await screen.findByText(/Sin conexión con el servidor/)).closest('p')
     expect(banner).toHaveAttribute('data-estado', 'desconectado')
+    expect(screen.queryByText('Integración pendiente.')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('status').filter((el) => el.hasAttribute('data-estado'))).toHaveLength(1)
   })
 
   it('Figuras muestra seis indicadores neutros "Sin datos"', () => {

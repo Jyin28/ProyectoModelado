@@ -63,11 +63,8 @@ function Layout() {
       </header>
       {errorCierre && <p role="alert">{errorCierre}</p>}
 
-      {backendConfigurado ? (
-        <BannerConexion estado="desconectado" texto="Integración pendiente." />
-      ) : (
-        <BannerConexion estado="sin-configurar" />
-      )}
+      {/* Con backend configurado, cada pantalla informa su propia conexión. */}
+      {!backendConfigurado && <BannerConexion estado="sin-configurar" />}
 
       <main className="layout-contenido">
         <Outlet />

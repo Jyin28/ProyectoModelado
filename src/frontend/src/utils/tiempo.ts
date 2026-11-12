@@ -45,7 +45,9 @@ export function estaDesactualizado(
   umbralSegundos: number,
 ): boolean {
   if (isoUtc === null) return true
-  const antiguedad = antiguedadSegundos(isoUtc, ahora)
-  if (Number.isNaN(antiguedad)) return true
-  return antiguedad > umbralSegundos
+  const ms = aMilisegundos(isoUtc)
+  if (Number.isNaN(ms)) return true
+  // Compara en milisegundos exactos; un reloj atrasado no da antigüedad negativa.
+  const antiguedadMs = Math.max(0, ahora.getTime() - ms)
+  return antiguedadMs > umbralSegundos * 1000
 }

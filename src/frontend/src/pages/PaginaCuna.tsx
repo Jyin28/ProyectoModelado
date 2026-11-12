@@ -1,37 +1,51 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
+import BannerConexion from '../components/BannerConexion.tsx'
 import TarjetaLectura from '../components/TarjetaLectura.tsx'
+import { useUltimaAmbiental } from '../hooks/useUltimaAmbiental.ts'
+import { dispositivoAmbienteId } from '../services/configuracion.ts'
 import './paginas.css'
 
 // El ambiente se mide cada 10 s: se tolera hasta 3 periodos sin lectura nueva.
 const UMBRAL_AMBIENTE_S = 30
 
 function PaginaCuna() {
+  const { activo, cargando, fallo, lectura } =
+    useUltimaAmbiental(dispositivoAmbienteId)
+
   return (
     <section className="pagina" aria-labelledby="titulo-cuna">
       <h1 id="titulo-cuna">Cuna</h1>
-      <AvisoSinDatos />
-      <div className="rejilla-lecturas">
-        <TarjetaLectura
-          etiqueta="Temperatura"
-          valor={null}
-          unidad="°C"
-          decimales={1}
-          registradoEn={null}
-          umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
-        />
-        <TarjetaLectura
-          etiqueta="Humedad"
-          valor={null}
-          unidad="% HR"
-          decimales={0}
-          registradoEn={null}
-          umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
-        />
-      </div>
-      <p>
-        Sección reservada para la información de la cuna. La conexión con el
-        dispositivo y el backend está pendiente de implementación.
-      </p>
+      {activo && fallo && <BannerConexion estado="desconectado" />}
+      {activo && cargando && (
+        <p role="status">Cargando la última lectura…</p>
+      )}
+      {!cargando && lectura === null && <AvisoSinDatos />}
+      {!cargando && (
+        <div className="rejilla-lecturas">
+          <TarjetaLectura
+            etiqueta="Temperatura"
+            valor={lectura?.temperatura_c ?? null}
+            unidad="°C"
+            decimales={1}
+            registradoEn={lectura?.registrado_en ?? null}
+            umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
+          />
+          <TarjetaLectura
+            etiqueta="Humedad"
+            valor={lectura?.humedad_pct ?? null}
+            unidad="% HR"
+            decimales={0}
+            registradoEn={lectura?.registrado_en ?? null}
+            umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
+          />
+        </div>
+      )}
+      {!activo && (
+        <p>
+          Sección reservada para la información de la cuna. La conexión con el
+          dispositivo y el backend está pendiente de implementación.
+        </p>
+      )}
     </section>
   )
 }

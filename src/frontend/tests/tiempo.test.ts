@@ -86,4 +86,12 @@ describe('estaDesactualizado', () => {
   it('fecha inválida cuenta como desactualizado', () => {
     expect(estaDesactualizado('xx', ahora, 30)).toBe(true)
   })
+
+  it('compara el borde en milisegundos exactos', () => {
+    const lectura = '2026-11-12T12:00:00.000Z'
+    const exacto = new Date('2026-11-12T12:00:30.000Z')
+    const pasado = new Date('2026-11-12T12:00:30.001Z')
+    expect(estaDesactualizado(lectura, exacto, 30)).toBe(false)
+    expect(estaDesactualizado(lectura, pasado, 30)).toBe(true)
+  })
 })

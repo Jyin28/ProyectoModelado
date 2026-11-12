@@ -6,10 +6,9 @@ todavía a ningún backend ni dispositivo real.
 
 Esta fase **no** incluye:
 
-- Consultas a Supabase (Auth, PostgreSQL, Realtime, Storage). El cliente
-  está preparado, pero no se consulta ninguna tabla.
-- Lecturas reales de sensores ni control de hardware.
-- Autenticación de usuarios.
+- Realtime, Storage ni consultas distintas de la última lectura de ambiente
+  (Auth y esa consulta sí están implementadas; ver más abajo).
+- Control de hardware.
 
 ## Requisitos
 
@@ -71,8 +70,9 @@ En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 
 ## Variables de entorno
 
-La web lee solo dos variables, definidas en `.env.example`:
-`VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+La web lee estas variables, definidas en `.env.example`:
+`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y, opcional,
+`VITE_AMBIENTE_DEVICE_ID`.
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -85,12 +85,39 @@ sube al repositorio). Reiniciar `npm.cmd run dev` después de cambiarlo.
 clave publicable. La clave de servicio no debe copiarse a ningún archivo de
 `src/frontend/`.
 
-Sin `.env.local` la aplicación arranca y compila igual, y el banner muestra
-"Backend no configurado". Con las variables completas el cliente se crea
-(`src/services/supabase.ts`), pero todavía no se consulta ninguna tabla: el
-banner muestra "Integración pendiente" hasta que exista un servicio real.
-Los servicios (`src/services/tipos.ts`) usan por ahora la implementación
-`noConfigurado.ts`, que responde "Backend no configurado" sin datos.
+Sin `.env.local` la aplicación arranca y compila igual (modo maqueta), y el
+banner muestra "Backend no configurado". Con las dos variables de Supabase
+completas el cliente se crea (`src/services/supabase.ts`) y se exige
+inicio de sesión.
+
+`VITE_AMBIENTE_DEVICE_ID` es opcional (por defecto `cuna-ambiente-01`) e
+indica el módulo cuya última lectura se consulta.
+
+## Última lectura en Cuna (fase 2)
+
+Con sesión iniciada, `/cuna` consulta `public.lecturas_ambiente` con la sesión
+del usuario y la clave publicable (RLS limita las filas): última fila del
+`device_id` configurado, ordenada por `ts`, `recibido_en` y `event_id`
+descendente. Consulta al abrir y cada 10 s mientras la pantalla está abierta
+(`services/lecturas.ts`, `hooks/useUltimaAmbiental.ts`). El resto de
+servicios (`noConfigurado.ts`) sigue sin datos.
+
+Estados: carga (primera consulta), "Sin datos" (consulta sin fila), "Actual" o
+"Desactualizado" (más de 30 s desde `ts`, hora en Costa Rica) y, si falla la
+consulta, aviso de conexión conservando la última lectura de la sesión.
+
+### Probar con una cuenta existente, sin Pico
+
+1. Copiar `.env.example` a `.env.local` y completar URL y clave publicable.
+2. `npm.cmd run dev`, abrir la web e iniciar sesión con una cuenta existente.
+3. En Cuna: si no hay filas visibles para esa cuenta y ese `device_id`,
+   aparece "Sin datos". Si la cuenta ya tiene lecturas, aparece la última; pasa
+   a "Desactualizado" a los 30 s de su `ts`.
+4. Para ver el aviso de conexión, cortar la red del navegador (DevTools →
+   Network → Offline): la última lectura se conserva con el aviso.
+
+Esta fase no crea tablas, usuarios ni datos: la prueba usa lo que ya exista
+en Supabase.
 
 ## Estado
 
