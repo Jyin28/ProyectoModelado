@@ -7,8 +7,10 @@ todavía a ningún backend ni dispositivo real.
 Esta fase **no** incluye:
 
 - Realtime, Storage ni consultas distintas de la última lectura de ambiente
-  (Auth y esa consulta sí están implementadas; ver más abajo).
-- Control de hardware.
+  y de la última orden de la lámpara (Auth y esas consultas sí están
+  implementadas; ver más abajo).
+- Control de hardware verificado: el panel de la lámpara es opt-in y solo
+  registra solicitudes y muestra lo que reporta la base.
 
 ## Requisitos
 
@@ -72,7 +74,8 @@ En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 
 La web lee estas variables, definidas en `.env.example`:
 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y, opcional,
-`VITE_AMBIENTE_DEVICE_ID`.
+`VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_HABILITADA` y `VITE_LAMPARA_DEVICE_ID`
+(las dos últimas, opcionales; ver «Lámpara en Cuna»).
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -118,6 +121,37 @@ consulta, aviso de conexión conservando la última lectura de la sesión.
 
 Esta fase no crea tablas, usuarios ni datos: la prueba usa lo que ya exista
 en Supabase.
+
+## Lámpara en Cuna (opt-in)
+
+Los controles de la lámpara están **apagados por defecto**: sin
+`VITE_LAMPARA_HABILITADA=true` (valor exacto) la pantalla Cuna queda como está,
+sin panel ni consultas. `VITE_LAMPARA_DEVICE_ID` es opcional (por defecto
+`cuna-lampara-01`). El flag no está habilitado en ningún `.env` del
+repositorio; activarlo en `.env.local` solo cuando el backend de la lámpara
+exista y la Pico esté probada.
+
+Con el flag, backend configurado y sesión iniciada, `PanelLampara` ofrece un
+campo entero de 0 a 100 y el botón «Solicitar nivel». Sin sesión no aparece.
+
+- **Solicitud:** `services/lampara.ts` llama al RPC `public.solicitar_lampara`
+  con `p_command_id` (`crypto.randomUUID()`), `p_device_id` y `p_level`.
+- **Estado:** consulta `public.ordenes_lampara` bajo RLS (última fila del
+  `device_id`, orden `creado_en` y `command_id` descendente) al abrir y cada
+  2 s mientras el panel está montado, sin superponer consultas
+  (`hooks/useLampara.ts`). Se descartan respuestas de otra cuenta, del panel
+  desmontado o anteriores a una solicitud más reciente; ante un fallo se
+  conserva la última orden de la misma cuenta.
+- **Estados:** solicitud registrada (`pendiente`), orden enviada, confirmada por
+  la Pico, error y sin respuesta (`pendiente` o `enviado` con `vence_en`
+  superado según el reloj local). El nivel pedido se muestra aparte del nivel
+  confirmado por la Pico, que solo dice lo que el firmware aplicó a su salida:
+  **no prueba que la luz esté encendida**.
+- Los errores se muestran con mensajes genéricos; nunca el texto del servidor.
+
+Contrato: [`src/shared/contracts/lampara.md`](../shared/contracts/lampara.md).
+Esta fase web no crea tablas, usuarios ni datos, y no se ha verificado contra
+el Supabase real ni contra la Pico.
 
 ## Estado
 

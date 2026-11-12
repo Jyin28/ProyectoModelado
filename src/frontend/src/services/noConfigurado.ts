@@ -25,6 +25,10 @@ export const serviciosNoConfigurados: Servicios = {
     enviarComando: () => fallo(),
     suscribirConfirmaciones: (manejadores) => suscripcionVacia(manejadores),
   },
+  lampara: {
+    solicitarLampara: () => fallo(),
+    obtenerUltimaOrdenLampara: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),
