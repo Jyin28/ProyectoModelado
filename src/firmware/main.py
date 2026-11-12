@@ -73,6 +73,8 @@ def ciclo_principal(envio=None):
         hay = sensores.hay_movimiento()
         if hay and not habia_movimiento:
             print("Movimiento detectado")
+            if envio is not None and config.MONITOREO_MOVIMIENTO_HABILITADO:
+                envio.registrar_movimiento(time.ticks_ms())
         habia_movimiento = hay
 
         # --- Tarea 3: avanzar la secuencia de los LED (si hay una activa) ---

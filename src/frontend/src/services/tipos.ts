@@ -40,6 +40,9 @@ export interface ServicioLecturas {
     hasta: string, // ISO UTC
   ): Promise<Resultado<LecturaAmbiental[]>>
   obtenerUltimoPeso(dispositivoId: string): Promise<Resultado<LecturaPeso | null>>
+  obtenerUltimoMovimiento(
+    dispositivoId: string,
+  ): Promise<Resultado<EventoMovimiento | null>>
   obtenerEventosMovimiento(
     dispositivoId: string,
     desde: string, // ISO UTC

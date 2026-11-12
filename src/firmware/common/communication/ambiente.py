@@ -60,16 +60,37 @@ def _post(host, autorizacion, contexto, cuerpo, timeout):
 
 
 class EnvioAmbiente:
-    def __init__(self, host, dispositivo, token, contexto, ntp):
+    def __init__(self, host, dispositivo, token, contexto, ntp, movimiento=None):
         self._host = host
         self._dispositivo = dispositivo
         self._token = token
         self._contexto = contexto
         self._ntp = ntp
+        # (device_id, token) del modulo de movimiento, o None si esta deshabilitado.
+        self._movimiento = movimiento
         self._lock = _thread.allocate_lock()
         self._activo = True
         self._reloj_listo = False
         self._pendiente = None
+        self._pendiente_movimiento = None   # como maximo un evento PIR en RAM
+
+    def registrar_movimiento(self, detectado_ms):
+        """Guarda el flanco ascendente del PIR. Sin hora confiable o con un
+        evento ya pendiente, lo omite: nunca se acumulan eventos."""
+        if self._movimiento is None:
+            return
+        with self._lock:
+            if not self._reloj_listo or self._pendiente_movimiento is not None:
+                return
+            utc = time.gmtime()
+            evento = {
+                "event_id": _uuid4(),
+                "device_id": self._movimiento[0],
+                "tipo": "movimiento",
+                "ts": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
+                "datos": {},
+            }
+            self._pendiente_movimiento = (json.dumps(evento).encode(), detectado_ms)
 
     def registrar(self, temperatura, humedad, medido_ms):
         if not math.isfinite(temperatura) or not 0 <= humedad <= 100:
@@ -92,21 +113,23 @@ class EnvioAmbiente:
             self._activo = False
             self._reloj_listo = False
             self._pendiente = None
+            self._pendiente_movimiento = None
 
-    def _enviar(self, cuerpo, medido_ms):
+    def _enviar(self, cuerpo, medido_ms, token=None, nombre="Ambiente"):
+        token = token or self._token
         for intento in range(2):
             restante_ms = _INTERVALO_MS - time.ticks_diff(time.ticks_ms(), medido_ms)
             if not self._activo or restante_ms <= 0 or not wifi.esta_conectado():
                 return
             try:
                 estado = _post(
-                    self._host, self._token, self._contexto, cuerpo,
+                    self._host, token, self._contexto, cuerpo,
                     min(_TIMEOUT_HTTPS_S, restante_ms / 1000),
                 )
             except (OSError, ValueError, MemoryError) as error:
-                print("Ambiente: fallo HTTPS (%s)" % type(error).__name__)
+                print("%s: fallo HTTPS (%s)" % (nombre, type(error).__name__))
                 return
-            print("Ambiente: HTTP %d" % estado)
+            print("%s: HTTP %d" % (nombre, estado))
             if estado != 503:
                 return
             if intento == 0:
@@ -122,6 +145,7 @@ class EnvioAmbiente:
                     with self._lock:
                         self._reloj_listo = False
                         self._pendiente = None
+                        self._pendiente_movimiento = None
                     ultimo_ntp = None
                     if time.ticks_diff(ahora, ultima_revision) >= config.REVISAR_WIFI_CADA_S * 1000:
                         try:
@@ -146,11 +170,33 @@ class EnvioAmbiente:
                     with self._lock:
                         pendiente = self._pendiente
                         self._pendiente = None
+                        movimiento = self._pendiente_movimiento
+                        self._pendiente_movimiento = None
                     if pendiente is not None:
                         self._enviar(*pendiente)
+                    if movimiento is not None:
+                        self._enviar(*movimiento, token=self._movimiento[1], nombre="Movimiento")
                 time.sleep_ms(100)
         finally:
             self.detener()
+
+
+def _credencial_movimiento():
+    """(device_id, token) del PIR, o None si el monitoreo esta deshabilitado
+    o la configuracion es invalida."""
+    if not config.MONITOREO_MOVIMIENTO_HABILITADO:
+        return None
+    dispositivo = getattr(secrets, "MOVIMIENTO_DEVICE_ID", "")
+    token = getattr(secrets, "MOVIMIENTO_TOKEN", "")
+    if (len(dispositivo) != 18 or not dispositivo.startswith("cuna-movimiento-")
+            or not dispositivo[16:].isdigit()):
+        print("Movimiento: device_id invalido; monitoreo desactivado")
+        return None
+    if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
+        print("Movimiento: credencial invalida; monitoreo desactivado")
+        return None
+    print("Movimiento: monitoreo habilitado localmente")
+    return (dispositivo, token)
 
 
 def iniciar():
@@ -179,7 +225,7 @@ def iniciar():
         contexto.verify_mode = ssl.CERT_REQUIRED
         with open(_CA, "rb") as certificado:
             contexto.load_verify_locations(certificado.read())
-        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime)
+        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, _credencial_movimiento())
         pila_anterior = _thread.stack_size(12 * 1024)
         try:
             _thread.start_new_thread(envio.ejecutar, ())

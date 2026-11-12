@@ -119,6 +119,21 @@ consulta, aviso de conexión conservando la última lectura de la sesión.
 Esta fase no crea tablas, usuarios ni datos: la prueba usa lo que ya exista
 en Supabase.
 
+## Último movimiento en Cuna (opt-in)
+
+Con `VITE_MOVIMIENTO_HABILITADO=true` (por defecto apagado) y sesión iniciada,
+`/cuna` muestra un panel «Último movimiento». Consulta
+`public.eventos_movimiento` (`event_id,device_id,ts,recibido_en`) filtrando por
+`VITE_MOVIMIENTO_DEVICE_ID` (por defecto `cuna-movimiento-01`), ordenada por
+`ts`, `recibido_en` y `event_id` descendente, límite 1 (`services/lecturas.ts`,
+`hooks/useUltimoMovimiento.ts`, `components/PanelMovimiento.tsx`). Consulta al
+abrir y cada 10 s, sin superposición; si falla conserva el último dato de la
+misma cuenta con un aviso, y con la tabla vacía muestra «Sin datos». La hora se
+muestra en `America/Costa_Rica`.
+
+Solo registra el último evento: no hay alerta por Telegram ni controles. No se
+ha probado con hardware real.
+
 ## Estado
 
 Aplicación base ejecutable. Pendiente: integración con Supabase, firmware y

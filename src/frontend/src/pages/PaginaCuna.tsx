@@ -1,8 +1,13 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
 import BannerConexion from '../components/BannerConexion.tsx'
+import PanelMovimiento from '../components/PanelMovimiento.tsx'
 import TarjetaLectura from '../components/TarjetaLectura.tsx'
 import { useUltimaAmbiental } from '../hooks/useUltimaAmbiental.ts'
-import { dispositivoAmbienteId } from '../services/configuracion.ts'
+import {
+  dispositivoAmbienteId,
+  dispositivoMovimientoId,
+  movimientoHabilitado,
+} from '../services/configuracion.ts'
 import './paginas.css'
 
 // El ambiente se mide cada 10 s: se tolera hasta 3 periodos sin lectura nueva.
@@ -40,6 +45,10 @@ function PaginaCuna() {
           />
         </div>
       )}
+      <PanelMovimiento
+        dispositivoId={dispositivoMovimientoId}
+        habilitado={movimientoHabilitado}
+      />
       {!activo && (
         <p>
           Sección reservada para la información de la cuna. La conexión con el

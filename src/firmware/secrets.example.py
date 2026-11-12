@@ -11,3 +11,8 @@ WIFI_PASSWORD = "clave-de-tu-wifi"
 AMBIENTE_URL = "https://tlbwsdnqhwvuvgjcxgsg.supabase.co/functions/v1/ingesta"
 AMBIENTE_DEVICE_ID = "cuna-ambiente-01"
 AMBIENTE_TOKEN = ""
+
+# Solo se usan si config.MONITOREO_MOVIMIENTO_HABILITADO = True.
+# El token es el dedicado al modulo de movimiento (64 hex), distinto al de ambiente.
+MOVIMIENTO_DEVICE_ID = "cuna-movimiento-01"
+MOVIMIENTO_TOKEN = ""

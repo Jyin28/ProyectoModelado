@@ -17,6 +17,7 @@ export const serviciosNoConfigurados: Servicios = {
     obtenerUltimaAmbiental: () => fallo(),
     obtenerHistorialAmbiental: () => fallo(),
     obtenerUltimoPeso: () => fallo(),
+    obtenerUltimoMovimiento: () => fallo(),
     obtenerEventosMovimiento: () => fallo(),
     suscribirAmbiental: (_dispositivoId, manejadores) =>
       suscripcionVacia(manejadores),
