@@ -7,6 +7,9 @@
 
 // ---- Lecturas ----
 
+// Modelo interno de la web (vigente). El contrato es
+// src/shared/contracts/ambiente.md; el adaptador de src/services mapea
+// event_id → id, device_id → dispositivo_id y ts → registrado_en.
 export type LecturaAmbiental = {
   id: string
   dispositivo_id: string
@@ -15,12 +18,14 @@ export type LecturaAmbiental = {
   registrado_en: string // ISO UTC
 }
 
+// PROVISIONAL: pendiente de acuerdo con Persona B y C
 export type EventoMovimiento = {
   id: string
   dispositivo_id: string
   registrado_en: string // ISO UTC
 }
 
+// PROVISIONAL: pendiente de acuerdo con Persona B y C
 export type LecturaPeso = {
   id: string
   dispositivo_id: string
