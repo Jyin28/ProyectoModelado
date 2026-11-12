@@ -60,19 +60,21 @@ def _post(host, autorizacion, contexto, cuerpo, timeout):
 
 
 class EnvioAmbiente:
-    def __init__(self, host, dispositivo, token, contexto, ntp):
+    def __init__(self, host, dispositivo, token, contexto, ntp, remota=None):
+        # host=None: solo trabaja la lampara remota (sin envio de ambiente)
         self._host = host
         self._dispositivo = dispositivo
         self._token = token
         self._contexto = contexto
         self._ntp = ntp
+        self._remota = remota
         self._lock = _thread.allocate_lock()
         self._activo = True
         self._reloj_listo = False
         self._pendiente = None
 
     def registrar(self, temperatura, humedad, medido_ms):
-        if not math.isfinite(temperatura) or not 0 <= humedad <= 100:
+        if self._host is None or not math.isfinite(temperatura) or not 0 <= humedad <= 100:
             return
         with self._lock:
             if not self._reloj_listo:
@@ -92,6 +94,8 @@ class EnvioAmbiente:
             self._activo = False
             self._reloj_listo = False
             self._pendiente = None
+        if self._remota is not None:
+            self._remota.detener()
 
     def _enviar(self, cuerpo, medido_ms):
         for intento in range(2):
@@ -148,12 +152,18 @@ class EnvioAmbiente:
                         self._pendiente = None
                     if pendiente is not None:
                         self._enviar(*pendiente)
+                if self._remota is not None:
+                    # Polling cooperativo de la lampara remota en este mismo hilo
+                    self._remota.paso(self._reloj_listo and wifi.esta_conectado())
                 time.sleep_ms(100)
         finally:
             self.detener()
+            if self._remota is not None:
+                self._remota.cerrar_red()
 
 
-def iniciar():
+def _leer_configuracion():
+    """(host, dispositivo, token) del envio de ambiente, o None si no esta listo."""
     url = getattr(secrets, "AMBIENTE_URL", "")
     dispositivo = getattr(secrets, "AMBIENTE_DEVICE_ID", "")
     token = getattr(secrets, "AMBIENTE_TOKEN", "")
@@ -170,6 +180,20 @@ def iniciar():
     if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
         print("Ambiente: formato de credencial invalido")
         return None
+    return host, dispositivo, token
+
+
+def iniciar(remota=None):
+    """Inicia el unico worker de red.
+
+    Atiende el envio de ambiente y, si se pasa, la lampara remota. Si falta
+    la configuracion de ambiente pero hay lampara remota, el worker corre
+    solo para ella.
+    """
+    configuracion = _leer_configuracion()
+    if configuracion is None and remota is None:
+        return None
+    host, dispositivo, token = configuracion or (None, None, None)
 
     try:
         import ntptime
@@ -179,8 +203,11 @@ def iniciar():
         contexto.verify_mode = ssl.CERT_REQUIRED
         with open(_CA, "rb") as certificado:
             contexto.load_verify_locations(certificado.read())
-        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime)
-        pila_anterior = _thread.stack_size(12 * 1024)
+        if remota is not None:
+            remota.contexto = contexto
+        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota)
+        # La lampara remota agrega TLS, JSON y WebSocket: pila mayor (pendiente de medir en hardware)
+        pila_anterior = _thread.stack_size((16 if remota is not None else 12) * 1024)
         try:
             _thread.start_new_thread(envio.ejecutar, ())
         finally:

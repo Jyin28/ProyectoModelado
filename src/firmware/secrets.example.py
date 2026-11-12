@@ -11,3 +11,11 @@ WIFI_PASSWORD = "clave-de-tu-wifi"
 AMBIENTE_URL = "https://tlbwsdnqhwvuvgjcxgsg.supabase.co/functions/v1/ingesta"
 AMBIENTE_DEVICE_ID = "cuna-ambiente-01"
 AMBIENTE_TOKEN = ""
+
+# Lampara remota (apagada mientras estas variables esten vacias).
+# Cuenta Supabase Auth exclusiva del dispositivo; no uses la del cuidador.
+LAMPARA_SUPABASE_URL = ""        # https://<proyecto>.supabase.co (sin ruta)
+LAMPARA_PUBLISHABLE_KEY = ""     # clave publicable (nunca la secreta ni service_role)
+LAMPARA_DEVICE_ID = ""           # cuna-lampara-NN
+LAMPARA_AUTH_EMAIL = ""
+LAMPARA_AUTH_PASSWORD = ""

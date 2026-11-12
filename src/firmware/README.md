@@ -23,6 +23,8 @@ firmware/
    ├─ communication/
    │  ├─ wifi.py                conectar, comprobar y reconectar el WiFi
    │  ├─ ambiente.py            sincronizar el reloj y publicar lecturas por HTTPS
+   │  ├─ lampara_remota.py      Auth, Realtime y RPC de la lámpara (apagado sin LAMPARA_*)
+   │  ├─ websocket_cliente.py   cliente WebSocket RFC 6455 mínimo
    │  └─ gts-root-r4.der        certificado raíz público para verificar el servidor
    └─ utilities/
       ├─ config.py              pines y tiempos (lo que más editas)
@@ -75,6 +77,81 @@ de TLS 1.3 de la arquitectura queda pendiente para la prueba en hardware
 con un firmware que lo admita. [Configuración de TLS de MicroPython 1.28.0](https://github.com/micropython/micropython/blob/v1.28.0/extmod/mbedtls/mbedtls_config_common.h)
 
 [Contrato de ambiente](../shared/contracts/ambiente.md)
+
+## Lámpara remota (Supabase Auth + Realtime)
+
+Apagada por defecto: sin variables `LAMPARA_*` en `secrets.py` el firmware
+se comporta como antes (demo incluida). Alcance: solo la lámpara de la
+maqueta (`lamp_set`, nivel entero 0..100). Colchón, PIR remoto, figuras
+remotas y audio no forman parte de esta fase. Contrato:
+[lámpara](../shared/contracts/lampara.md).
+
+### Configuración
+
+Agrega a tu `secrets.py` (plantilla en `secrets.example.py`; nunca lo subas a Git):
+
+| Variable | Contenido |
+| --- | --- |
+| `LAMPARA_SUPABASE_URL` | `https://<proyecto>.supabase.co`, sin ruta |
+| `LAMPARA_PUBLISHABLE_KEY` | clave publicable (nunca `service_role` ni la secreta) |
+| `LAMPARA_DEVICE_ID` | `cuna-lampara-NN` |
+| `LAMPARA_AUTH_EMAIL`, `LAMPARA_AUTH_PASSWORD` | cuenta Auth exclusiva del dispositivo |
+
+Las credenciales de AM2301 (`AMBIENTE_*`) no cambian. La cuenta del
+dispositivo y su vínculo con el módulo los crea el backend; esta fase no los crea.
+Cada variable se valida al arrancar y, si falta algo, la lámpara remota se
+queda desactivada con un aviso sin datos sensibles.
+
+### Cómo funciona
+
+- Un solo worker de red (el de `ambiente.py`, que también corre si solo hay
+  lámpara) hace `paso()` cooperativo cada ~100 ms, con timeout de socket de
+  0,2 s para leer. No se crea otro `_thread` y el ciclo principal (PIR, LED,
+  sensores) no espera a la red.
+- Auth: `POST /auth/v1/token?grant_type=password`; renueva con
+  `refresh_token` antes de vencer o vuelve a autenticarse; en fallos aplica
+  backoff de 2 s a 60 s (60 s si la cuenta es rechazada). Nunca imprime
+  credenciales, tokens ni respuestas.
+- Realtime: `wss://<host>/realtime/v1/websocket?apikey=<publicable>&vsn=1.0.0`
+  (cliente RFC 6455 propio en `websocket_cliente.py`: valida HTTP 101 y
+  `Sec-WebSocket-Accept`, enmascara frames, responde ping, maneja cierre y limita
+  tamaños). `phx_join` a `realtime:lampara:<id>` con `private: true` y espera
+  `phx_reply` ok. Heartbeat a `phoenix` cada 20 s; sin respuesta en 10 s se
+  reconecta. Renueva el JWT con el evento `access_token`.
+- La orden nunca viaja por Realtime. Al confirmarse la suscripción y ante
+  cada `orden_disponible` se llama al RPC `tomar_orden_lampara`. Las órdenes se
+  procesan una a una.
+- La orden pasa por un buzón de un lugar al ciclo principal, que comprueba la
+  vigencia (`vence_en`, con reloj NTP y margen de 1 s, además del guard del
+  servidor) y ejecuta con `comandos.ejecutar`. Después el worker llama a
+  `confirmar_orden_lampara` (`p_ok`, `p_level`, `p_error`). Sin respuesta
+  2xx no se declara registrada, y tras 3 intentos se descarta.
+- Al perder la conexión (WiFi, heartbeat, cierre) se descartan las órdenes
+  pendientes y la lámpara queda apagada. También arranca apagada.
+- Con la lámpara remota activa, `demo.py` no corre, para no pisar el PWM.
+
+### Limitaciones y pendientes
+
+- **TLS**: MicroPython 1.28 habilita TLS 1.2; el TLS 1.3 de la arquitectura
+  sigue pendiente. El cliente valida el certificado raíz DER incluido y el
+  nombre del servidor.
+- **No verificado en hardware**: WSS/TLS contra Supabase Realtime, el
+  comportamiento de `settimeout` y las lecturas parciales sobre sockets TLS,
+  el tamaño de pila del worker (16 KiB con lámpara remota) y la memoria con dos
+  conexiones TLS. Tampoco la luz física ni el cableado de la lámpara.
+- `tomar_orden_lampara` entrega una sola vez: si se pierde la respuesta, la
+  orden aparecerá como `sin-respuesta`.
+- `ok` solo dice qué nivel aplicó el firmware, no que la luz sea visible.
+
+### Pruebas de lógica (computadora, sin hardware ni red)
+
+```powershell
+cd src\firmware
+python -m unittest discover -s tests -v
+```
+
+Cubren frames y handshake WebSocket, vigencia RFC 3339, validación de órdenes,
+respuestas HTTP y el flujo del cliente con RPC simulados. No se suben a la Pico.
 
 ## Notas sobre tus archivos originales (no los toqué)
 

@@ -8,6 +8,8 @@ Que hace:
   5. El LED interno parpadea para indicar el estado.
   6. Mueve las secuencias de los 6 LED y, en modo demo, ejecuta comandos
      de ejemplo sobre la lampara y las figuras (ver demo.py).
+  7. Si secrets.py configura la lampara remota, ejecuta sus ordenes (la demo
+     se desactiva para no pisar el PWM).
 
 Para detenerlo en Thonny: boton Stop (Ctrl+C).
 """
@@ -23,10 +25,12 @@ for _carpeta in ("/colchon", "/cuna", "/figuras-led", "/common/communication",
         sys.path.append(_carpeta)
 
 import ambiente
+import comandos
 import config
 import demo
 import figuras
 import indicador
+import lampara_remota
 import sensores
 import wifi
 
@@ -49,7 +53,7 @@ def han_pasado(inicio_ms, segundos):
     return time.ticks_diff(time.ticks_ms(), inicio_ms) >= segundos * 1000
 
 
-def ciclo_principal(envio=None):
+def ciclo_principal(envio=None, remota=None):
     """Bucle infinito: cada tarea corre cuando le toca su turno."""
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
     ultima_lectura = time.ticks_add(time.ticks_ms(),
@@ -78,8 +82,13 @@ def ciclo_principal(envio=None):
         # --- Tarea 3: avanzar la secuencia de los LED (si hay una activa) ---
         figuras.actualizar()
 
-        # --- Tarea 4: demo de comandos (se apaga con MODO_DEMO = False) ---
-        if config.MODO_DEMO:
+        # --- Tarea 4: lampara remota (el actuador solo se toca en este hilo) ---
+        if remota is not None:
+            remota.actualizar()
+
+        # --- Tarea 5: demo de comandos (se apaga con MODO_DEMO = False) ---
+        # Con la lampara remota activa la demo se separa para no pisar el PWM.
+        if config.MODO_DEMO and remota is None:
             demo.actualizar()
 
         # Sin envio configurado, el ciclo principal conserva la revision del WiFi.
@@ -92,15 +101,21 @@ def ciclo_principal(envio=None):
 
 def ejecutar():
     envio = None
+    remota = None
     try:
         iniciar()
-        envio = ambiente.iniciar()
-        ciclo_principal(envio)
+        remota = lampara_remota.configurar(comandos.ejecutar)
+        envio = ambiente.iniciar(remota)
+        if envio is None:
+            remota = None            # sin worker de red no hay lampara remota
+        ciclo_principal(envio, remota)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
         if envio is not None:
             envio.detener()
+        if remota is not None:
+            remota.actualizar()      # deja la lampara apagada
         indicador.apagar()
 
 
