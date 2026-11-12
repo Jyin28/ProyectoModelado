@@ -8,6 +8,8 @@
   --notice-bg: #fff3cd;
   --notice-border: #f0d78c;
   --dot: #a0a0ab;
+  --ok: #2e8540;
+  --error: #c62828;
 
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -27,6 +29,8 @@
     --notice-bg: #3a3419;
     --notice-border: #5c531f;
     --dot: #55565f;
+    --ok: #5fbf77;
+    --error: #ef6b6b;
   }
 }
 
