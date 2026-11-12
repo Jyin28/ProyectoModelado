@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from '../src/App.tsx'
 import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
+import { serviciosNoConfigurados } from '../src/services/noConfigurado.ts'
+import type { Servicios } from '../src/services/tipos.ts'
 
 function renderizarEn(ruta: string) {
   return render(
@@ -43,10 +45,12 @@ describe('rutas', () => {
     expect(tituloPrincipal()).toHaveTextContent('No encontrada')
   })
 
-  it('el login no tiene formulario funcional', () => {
+  it('sin backend configurado el login no está disponible', () => {
     renderizarEn('/login')
     expect(
-      screen.getByText('Inicio de sesión pendiente de integración.'),
+      screen.getByText(
+        'Inicio de sesión no disponible: el backend no está configurado.',
+      ),
     ).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -98,15 +102,26 @@ describe('páginas sin datos', () => {
     expect(screen.getByText('Backend no configurado.')).toBeInTheDocument()
   })
 
-  it('con backend configurado el banner dice "Integración pendiente"', () => {
+  it('con backend configurado y sesión el banner sigue en "Integración pendiente"', async () => {
+    const servicios: Servicios = {
+      ...serviciosNoConfigurados,
+      auth: {
+        ...serviciosNoConfigurados.auth,
+        obtenerSesion: () =>
+          Promise.resolve({
+            ok: true,
+            datos: { usuario_id: 'u-1', correo: 'usuario@ejemplo.test' },
+          }),
+      },
+    }
     render(
-      <ProveedorServicios configurado>
+      <ProveedorServicios configurado servicios={servicios}>
         <MemoryRouter initialEntries={['/cuna']}>
           <App />
         </MemoryRouter>
       </ProveedorServicios>,
     )
-    const banner = screen.getByText('Integración pendiente.').closest('p')
+    const banner = (await screen.findByText('Integración pendiente.')).closest('p')
     expect(banner).toHaveAttribute('data-estado', 'desconectado')
   })
 

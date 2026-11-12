@@ -21,6 +21,18 @@
   text-decoration: none;
 }
 
+.layout-sesion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.layout-sesion-correo {
+  overflow-wrap: anywhere;
+}
+
 .layout-nav ul {
   list-style: none;
   margin: 0;

@@ -5,6 +5,25 @@
   text-align: center;
 }
 
+.login-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.login-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.login-formulario input,
+.login-formulario button {
+  font: inherit;
+  padding: 10px 12px;
+}
+
 .login-marca {
   font-size: 1.25rem;
   font-weight: 600;

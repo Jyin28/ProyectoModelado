@@ -1,22 +1,32 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { ContextoServicios } from '../hooks/useServicios.ts'
+import { crearServicioAuth } from '../services/auth.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
-import { backendConfigurado } from '../services/supabase.ts'
+import { backendConfigurado, supabase } from '../services/supabase.ts'
+import type { Servicios } from '../services/tipos.ts'
 
 interface Props {
   children: ReactNode
   /** Solo para pruebas; por defecto se usa `backendConfigurado`. */
   configurado?: boolean
+  /** Solo para pruebas: reemplaza los servicios. */
+  servicios?: Servicios
 }
 
 function ProveedorServicios({
   children,
   configurado = backendConfigurado,
+  servicios,
 }: Props) {
-  // TODO: cuando existan las tablas, entregar aquí la implementación con
-  // Supabase (basada en `supabase` de services/supabase.ts) si `configurado`.
-  // Mientras tanto siempre se usa la implementación sin datos.
-  const valor = { servicios: serviciosNoConfigurados, backendConfigurado: configurado }
+  const valor = useMemo(() => {
+    // TODO: lecturas y comandos con Supabase cuando existan las tablas.
+    const efectivos: Servicios =
+      servicios ??
+      (configurado && supabase
+        ? { ...serviciosNoConfigurados, auth: crearServicioAuth(supabase) }
+        : serviciosNoConfigurados)
+    return { servicios: efectivos, backendConfigurado: configurado }
+  }, [servicios, configurado])
   return (
     <ContextoServicios.Provider value={valor}>
       {children}

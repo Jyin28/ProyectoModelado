@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useServicios } from '../hooks/useServicios.ts'
+import { useSesion } from '../hooks/useSesion.ts'
 import BannerConexion from './BannerConexion.tsx'
 import './Layout.css'
 
@@ -12,6 +14,22 @@ const ENLACES = [
 
 function Layout() {
   const { backendConfigurado } = useServicios()
+  const { estado, cerrarSesion } = useSesion()
+  const [cerrando, setCerrando] = useState(false)
+  const [errorCierre, setErrorCierre] = useState<string | null>(null)
+
+  async function alCerrarSesion() {
+    if (cerrando) return
+    setCerrando(true)
+    setErrorCierre(null)
+    const r = await cerrarSesion()
+    // Si salió bien, la ruta protegida redirige y este componente se desmonta.
+    if (!r.ok) {
+      setErrorCierre(r.error)
+      setCerrando(false)
+    }
+  }
+
   return (
     <div className="layout">
       <header className="layout-header">
@@ -34,7 +52,16 @@ function Layout() {
             ))}
           </ul>
         </nav>
+        {estado.tipo === 'autenticado' && (
+          <div className="layout-sesion">
+            <span className="layout-sesion-correo">{estado.sesion.correo}</span>
+            <button type="button" onClick={alCerrarSesion} disabled={cerrando}>
+              Cerrar sesión
+            </button>
+          </div>
+        )}
       </header>
+      {errorCierre && <p role="alert">{errorCierre}</p>}
 
       {backendConfigurado ? (
         <BannerConexion estado="desconectado" texto="Integración pendiente." />
