@@ -19,3 +19,8 @@ LAMPARA_PUBLISHABLE_KEY = ""     # clave publicable (nunca la secreta ni service
 LAMPARA_DEVICE_ID = ""           # cuna-lampara-NN
 LAMPARA_AUTH_EMAIL = ""
 LAMPARA_AUTH_PASSWORD = ""
+
+# Solo se usan si config.MONITOREO_MOVIMIENTO_HABILITADO = True.
+# El token es el dedicado al modulo de movimiento (64 hex), distinto al de ambiente.
+MOVIMIENTO_DEVICE_ID = "cuna-movimiento-01"
+MOVIMIENTO_TOKEN = ""

@@ -13,6 +13,12 @@ PIN_PIR = 3         # sensor de movimiento
 PIN_LAMPARA = 13    # compuerta del MOSFET (LED blanco)
 PINES_LEDS = (18, 19, 20, 21, 22, 26)   # los seis LED de las figuras
 
+# ---- Movimiento (PIR) ----
+# Deshabilitado por defecto. Para la maqueta: ponlo en True en este archivo y
+# completa MOVIMIENTO_DEVICE_ID y MOVIMIENTO_TOKEN en secrets.py. No hay
+# activacion remota ni horario en este incremento.
+MONITOREO_MOVIMIENTO_HABILITADO = False
+
 # ---- Lampara y figuras ----
 LAMPARA_FRECUENCIA_HZ = 1000
 SECUENCIAS_LED = ("chase", "alternate", "blink_all")

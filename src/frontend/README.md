@@ -74,8 +74,9 @@ En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 
 La web lee estas variables, definidas en `.env.example`:
 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y, opcional,
-`VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_HABILITADA` y `VITE_LAMPARA_DEVICE_ID`
-(las dos últimas, opcionales; ver «Lámpara en Cuna»).
+`VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_HABILITADA`, `VITE_LAMPARA_DEVICE_ID`,
+`VITE_MOVIMIENTO_HABILITADO` y `VITE_MOVIMIENTO_DEVICE_ID` (opcionales; ver
+«Lámpara en Cuna» y «Último movimiento en Cuna»).
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -152,6 +153,21 @@ campo entero de 0 a 100 y el botón «Solicitar nivel». Sin sesión no aparece.
 Contrato: [`src/shared/contracts/lampara.md`](../shared/contracts/lampara.md).
 Esta fase web no crea tablas, usuarios ni datos, y no se ha verificado contra
 el Supabase real ni contra la Pico.
+
+## Último movimiento en Cuna (opt-in)
+
+Con `VITE_MOVIMIENTO_HABILITADO=true` (por defecto apagado) y sesión iniciada,
+`/cuna` muestra un panel «Último movimiento». Consulta
+`public.eventos_movimiento` (`event_id,device_id,ts,recibido_en`) filtrando por
+`VITE_MOVIMIENTO_DEVICE_ID` (por defecto `cuna-movimiento-01`), ordenada por
+`ts`, `recibido_en` y `event_id` descendente, límite 1 (`services/lecturas.ts`,
+`hooks/useUltimoMovimiento.ts`, `components/PanelMovimiento.tsx`). Consulta al
+abrir y cada 10 s, sin superposición; si falla conserva el último dato de la
+misma cuenta con un aviso, y con la tabla vacía muestra «Sin datos». La hora se
+muestra en `America/Costa_Rica`.
+
+Solo registra el último evento: no hay alerta por Telegram ni controles. No se
+ha probado con hardware real.
 
 ## Estado
 

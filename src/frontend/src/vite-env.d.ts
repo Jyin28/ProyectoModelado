@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_AMBIENTE_DEVICE_ID?: string
   readonly VITE_LAMPARA_HABILITADA?: string
   readonly VITE_LAMPARA_DEVICE_ID?: string
+  readonly VITE_MOVIMIENTO_HABILITADO?: string
+  readonly VITE_MOVIMIENTO_DEVICE_ID?: string
 }
 
 interface ImportMeta {
