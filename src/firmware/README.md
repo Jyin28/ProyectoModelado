@@ -170,7 +170,7 @@ lugar donde se definen:
 | Función | GPIO propuesto |
 |---|---|
 | HX711 SCK / DT | GP16 / GP17 |
-| Buzzer activo (base del NPN) | GP14 |
+| Buzzer pasivo (base del NPN) | GP14 |
 | Botón físico (a GND, pull-up interno) | GP15 |
 | I²S BCLK / WS / DIN (MAX98357A) | GP6 / GP7 / GP8 (WS = BCLK + 1, exigido por la RP2) |
 
@@ -196,6 +196,8 @@ de circuitos.
 - La alarma se apaga por botón, por comando `mattress_stop` o a los 60 s
   (`COLCHON_ALARMA_MAX_S`), y en los tres casos queda `detenido`. El buzzer
   arranca apagado y se apaga en cada parada y al cerrar el programa.
+  La salida genera PWM a 2 kHz durante el tono y queda como GPIO en bajo
+  con el PWM deshabilitado al silenciarse.
 - Al vencer la duración del monitoreo también queda `detenido`.
 - El botón (con antirrebote) **solo detiene**. Reanudar es explícito
   (`mattress_arm` o `mattress_rearm`) y siempre toma una referencia nueva.

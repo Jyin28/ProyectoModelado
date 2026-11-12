@@ -33,7 +33,8 @@ DEMO_CADA_S = 6              # segundos entre una orden y la siguiente
 COLCHON_HABILITADO = False   # True solo cuando el cableado este confirmado
 PIN_HX711_DT = 17            # datos del HX711 (propuesta)
 PIN_HX711_SCK = 16           # reloj del HX711 (propuesta)
-PIN_BUZZER = 14              # base del NPN del buzzer activo (propuesta)
+PIN_BUZZER = 14              # base del NPN del buzzer pasivo (propuesta)
+BUZZER_FRECUENCIA_HZ = 2000   # tono de la alarma
 PIN_BOTON = 15               # boton fisico a GND con pull-up interno (propuesta)
 BOTON_ACTIVO_BAJO = True     # True: pulsado = 0 (boton a GND)
 

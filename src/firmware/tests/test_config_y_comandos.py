@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from unittest.mock import Mock
 
 import _ruta
 import setup_colchon
@@ -53,6 +54,34 @@ class ConfigTests(unittest.TestCase):
             setup_colchon.validar_pines((16, 17, 24, 15), reservados)
         with self.assertRaises(ValueError):
             setup_colchon.validar_pines((16, 17, 14, 14), reservados)
+
+
+class BuzzerPasivoTests(unittest.TestCase):
+    def test_tono_usa_pwm_y_apagado_deja_gpio_en_bajo(self):
+        pin = Mock()
+        crear_pwm = Mock()
+        buzzer = setup_colchon.BuzzerPasivo(pin, "salida", crear_pwm, 2000)
+        pin.init.assert_called_once_with("salida", value=0)
+        crear_pwm.assert_not_called()
+
+        buzzer.value(1)
+        buzzer.value(1)
+        crear_pwm.assert_called_once_with(pin, freq=2000, duty_u16=32768)
+
+        buzzer.value(0)
+        buzzer.value(0)
+        crear_pwm.return_value.deinit.assert_called_once_with()
+        pin.init.assert_called_with("salida", value=0)
+        self.assertEqual(pin.init.call_count, 2)
+
+    def test_fallo_al_crear_pwm_devuelve_gpio_a_salida_baja(self):
+        pin = Mock()
+        crear_pwm = Mock(side_effect=OSError("sin PWM"))
+        buzzer = setup_colchon.BuzzerPasivo(pin, "salida", crear_pwm, 2000)
+        pin.init.reset_mock()
+        with self.assertRaises(OSError):
+            buzzer.value(1)
+        pin.init.assert_called_once_with("salida", value=0)
 
 
 class FakeColchon:

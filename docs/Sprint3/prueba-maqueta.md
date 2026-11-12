@@ -33,3 +33,15 @@ se cargó a la placa.
 Las pruebas en la computadora cubren reglas y mensajes con datos de prueba.
 La negociación WSS en la Pico, TLS 1.3, la carga eléctrica y el efecto físico
 se registran por separado cuando el equipo pueda comprobarlos en la maqueta.
+
+## Resultado del montaje independiente del colchón
+
+La Pico leyó el HX711 por DT en GP13 y SCK en GP12. Se completó la tara y
+se usó un mouse como carga de prueba con una masa estimada. Al retirarlo,
+el firmware pasó a alarma tras tres lecturas bajo el umbral. La medición en
+gramos requiere calibración con una pesa conocida.
+
+Con PWM a 2 kHz en GP18 se escucharon los tonos del buzzer pasivo. La Pico
+confirmó GP18 en bajo al apagarlos. El ruido residual sigue presente y
+requiere revisar el montaje. GP19 permaneció en alto durante la prueba
+del botón.
