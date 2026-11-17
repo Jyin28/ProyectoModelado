@@ -1,0 +1,63 @@
+.panel-lampara {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.panel-lampara h2 {
+  font-size: 1.2rem;
+}
+
+.panel-lampara label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.95rem;
+}
+
+.panel-lampara-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.panel-lampara input {
+  min-width: 0;
+  width: 8rem;
+  min-height: 44px;
+  padding: 0 8px;
+  font: inherit;
+}
+
+.panel-lampara button {
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.panel-lampara button:disabled {
+  cursor: not-allowed;
+}
+
+.panel-lampara-estado {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+}
+
+.panel-lampara-estado dt {
+  color: var(--text-muted);
+}
+
+.panel-lampara-estado dd {
+  margin: 0;
+}
+
+@media (max-width: 400px) {
+  .panel-lampara-estado {
+    grid-template-columns: 1fr;
+  }
+}

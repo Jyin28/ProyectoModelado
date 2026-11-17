@@ -1,0 +1,43 @@
+.figuras {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 720px) {
+  .figuras {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.figura {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.figura-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot);
+  flex-shrink: 0;
+}
+
+.figura-etiqueta {
+  font-weight: 600;
+}
+
+.figura-estado {
+  color: var(--text-muted);
+  margin-left: auto;
+  text-align: right;
+}

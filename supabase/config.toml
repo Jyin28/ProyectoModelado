@@ -1,0 +1,5 @@
+project_id = "cuna-inteligente"
+
+[functions.ingesta]
+# La función autentica cada dispositivo con su propia credencial.
+verify_jwt = false
