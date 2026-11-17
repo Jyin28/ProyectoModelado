@@ -28,13 +28,20 @@ def copiar_config(modulo, **cambios):
 
 
 class ControlColchon:
-    def __init__(self, sensor, buzzer, boton, cfg):
-        """sensor: listo()/leer(); buzzer: value(v); boton: value()."""
+    def __init__(self, sensor, buzzer, boton, cfg, almacen=None):
+        """sensor: listo()/leer(); buzzer: value(v); boton: value().
+
+        almacen (opcional): cargar() -> factor o None; guardar(factor) -> bool.
+        Con el, el factor de calibracion sobrevive a reinicios y cambios de modulo.
+        """
         self._sensor = sensor
         self._buzzer = buzzer
         self._boton = boton
         self._cfg = cfg
         self.calibracion = logica.Calibracion()
+        self._almacen = almacen
+        if almacen is not None:
+            self.calibracion.factor = almacen.cargar()   # None si no hay uno valido
         self.monitor = logica.Monitor(cfg.COLCHON_TOLERANCIA_PCT,
                                       cfg.COLCHON_LECTURAS_REQUERIDAS,
                                       cfg.COLCHON_ALARMA_MAX_S,
@@ -215,6 +222,8 @@ class ControlColchon:
                 self.calibracion.calibrar(promedio, c["peso_g"],
                                           self._cfg.COLCHON_CALIBRACION_DELTA_MIN)
                 res = {"ok": True, "accion": tipo, "factor": self.calibracion.factor}
+                if self._almacen is not None:
+                    res["guardado"] = bool(self._almacen.guardar(self.calibracion.factor))
             elif tipo == "leer":
                 res = {"ok": True, "accion": tipo, "crudo": promedio,
                        "peso_g": self.calibracion.a_gramos(promedio),
@@ -273,5 +282,10 @@ def iniciar(cfg=None):
     if cfg is None:
         import config as cfg
     import setup_colchon
+    from almacen_calibracion import AlmacenArchivo
     sensor, buzzer, boton = setup_colchon.crear_hardware(cfg)
-    return ControlColchon(sensor, buzzer, boton, cfg)
+    almacen = AlmacenArchivo(cfg.ARCHIVO_CALIBRACION)
+    control = ControlColchon(sensor, buzzer, boton, cfg, almacen)
+    if control.calibracion.factor is not None:
+        print("Colchon: factor de calibracion cargado; falta la tara")
+    return control

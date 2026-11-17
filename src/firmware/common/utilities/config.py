@@ -7,6 +7,14 @@ No uses GP23, GP24, GP25 ni GP29 (los usa el chip WiFi de la Pico W).
 # Identificador de la placa fisica. El modulo ambiental usa AMBIENTE_DEVICE_ID.
 DEVICE_ID = "pico-sprint3-01"
 
+# Modulo al que esta conectada la Pico AHORA. Hay una sola Pico y se pasa de un
+# modulo a otro: edita este valor, copia config.py a la Pico y reinicia.
+#   "cuna"    AM2301, PIR, lampara y audio
+#   "colchon" HX711, celda de carga, buzzer y boton
+#   "figuras" los seis LED
+# Solo se inicializa lo del modulo elegido (ver modulo.py).
+MODULO = "cuna"
+
 # ---- Pines (numero de GPIO) ----
 PIN_AM2301 = 2      # sensor de temperatura y humedad
 PIN_PIR = 3         # sensor de movimiento
@@ -53,6 +61,9 @@ COLCHON_CALIBRACION_DELTA_MIN = 100  # cuentas minimas de diferencia al calibrar
 # False solo para una prueba controlada independiente (ver README).
 COLCHON_REQUIERE_WIFI = True
 COLCHON_PAUSA_CICLO_MS = 20          # pausa del ciclo si el colchon esta habilitado
+# El factor de calibracion se guarda en la Pico para que sobreviva al cambio de
+# modulo. La tara NO se guarda: depende del montaje y se toma cada vez.
+ARCHIVO_CALIBRACION = "calibracion.json"
 
 # ---- Audio local MAX98357A (APAGADO POR DEFECTO, SIN PROBAR EN HARDWARE) ----
 # Pines PROPUESTOS: en la RP2 WS debe ser el GPIO siguiente a BCLK.

@@ -1,7 +1,8 @@
 # Prueba de la maqueta del Sprint 3
 
 Usar la Pico 2 W, alimentación USB, el hotspot del teléfono y cargas de
-prueba. El equipo de circuitos confirma el cableado y el mapa de GPIO antes
+prueba. Hay una sola Pico y se conecta a un módulo por vez: se prueba un
+módulo, se desconecta la Pico y se pasa al siguiente. El equipo de circuitos confirma el cableado y el mapa de GPIO antes
 de habilitar salidas. Registrar cada resultado con la rama o el commit que
 se cargó a la placa.
 
@@ -17,7 +18,9 @@ se cargó a la placa.
   `ingesta`. [Contratos](../../src/shared/contracts/)
 - **C, firmware:** cargar los archivos conservando la estructura de carpetas.
   Usar el `secrets.py` local para los datos de Wi-Fi y las credenciales de
-  cada módulo. Conservar fuera de Git ese archivo. [Configuración de la Pico](../../src/firmware/pico-integrado/README.md)
+  cada módulo. Conservar fuera de Git ese archivo. Antes de cada prueba,
+  poner en `MODULO` el módulo conectado (`config.py`) y cargarlo a la Pico.
+  [Configuración de la Pico](../../src/firmware/README.md)
 
 ## Evidencia esperada
 
@@ -27,8 +30,11 @@ se cargó a la placa.
 | Lámpara | La Pico se suscribe al canal privado. Al solicitar una intensidad en la prueba controlada, cambia la luz y la web muestra la confirmación de la Pico. Verificar apagado, nivel intermedio y pérdida de conexión. |
 | PIR | Con el monitoreo habilitado, un flanco de detección llega como evento y aparece su hora en Cuna. Con el monitoreo desactivado, una detección no crea un evento. |
 | Seis figuras LED | La demo local enciende las seis salidas y ejecuta la secuencia. Verificar cada LED y el apagado final. |
-| Colchón | Ejecutar primero el [menú del colchón](../../src/firmware/pico-integrado/README.md#procedimiento-de-calibración-con-pesas-conocidas) con el montaje aislado. Con la celda calibrada usando una pesa conocida, registrar la referencia, demostrar el filtro de tres lecturas, detener el buzzer con el botón y rearmar con una referencia nueva. |
+| Colchón | Ejecutar primero el [menú del colchón](../../src/firmware/README.md#procedimiento-de-calibración-con-pesas-conocidas) con el montaje aislado. Con la celda calibrada usando una pesa conocida, registrar la referencia, demostrar el filtro de tres lecturas, detener el buzzer con el botón y rearmar con una referencia nueva. |
 | Audio | Reproducir y detener el sonido de prueba, con volumen digital conservador y cableado verificado. Comprobar que se siguen leyendo sensores y que se mantienen los controles locales. |
+
+Módulo de cada prueba: Ambiente, Lámpara, PIR y Audio con `MODULO = "cuna"`;
+Seis figuras LED con `"figuras"`; Colchón con `"colchon"`.
 
 Las pruebas en la computadora cubren reglas y mensajes con datos de prueba.
 La negociación WSS en la Pico, TLS 1.3, la carga eléctrica y el efecto físico
