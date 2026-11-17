@@ -1,8 +1,10 @@
 # src/frontend — Cuna Inteligente IoT
 
-Aplicación web mínima del Sprint 3. Tiene rutas y navegación entre las
-pantallas previstas (Cuna, Colchón, Figuras LED, Historial) sin conectarse
-todavía a ningún backend ni dispositivo real.
+Aplicación web del Sprint 3. Tiene rutas y navegación entre las pantallas
+previstas (Cuna, Colchón, Figuras LED, Historial), inicio de sesión con
+formulario y rutas protegidas cuando el backend está configurado. Sin
+backend (sin `.env.local`) la navegación es libre, en modo maqueta, y no
+muestra datos.
 
 Esta fase **no** incluye:
 
@@ -11,6 +13,8 @@ Esta fase **no** incluye:
   implementadas; ver más abajo).
 - Control de hardware verificado: el panel de la lámpara es opt-in y solo
   registra solicitudes y muestra lo que reporta la base.
+
+Plan de trabajo de la web: [`PLAN.md`](PLAN.md).
 
 ## Requisitos
 
@@ -44,7 +48,7 @@ Enrutado con `react-router` en modo declarativo (`BrowserRouter` en
 | Ruta         | Pantalla                          | Notas                                         |
 | ------------ | --------------------------------- | --------------------------------------------- |
 | `/`          | —                                 | Redirige a `/cuna`.                           |
-| `/login`     | `pages/PaginaLogin.tsx`           | Sin formulario; integración pendiente.        |
+| `/login`     | `pages/PaginaLogin.tsx`           | Formulario de correo y contraseña.            |
 | `/cuna`      | `pages/PaginaCuna.tsx`            |                                               |
 | `/colchon`   | `pages/PaginaColchon.tsx`         |                                               |
 | `/figuras`   | `pages/PaginaFiguras.tsx`         | Seis indicadores neutros "Sin datos".         |
@@ -52,8 +56,15 @@ Enrutado con `react-router` en modo declarativo (`BrowserRouter` en
 | `*`          | `pages/PaginaNoEncontrada.tsx`    | Muestra "No encontrada".                      |
 
 Todas las rutas salvo `/login` se muestran dentro de `components/Layout.tsx`
-(encabezado, navegación y pie). En pantallas de menos de 720 px la navegación
-es una barra fija inferior.
+(encabezado, navegación, «Cerrar sesión» y pie). En pantallas de menos de
+720 px la navegación es una barra fija inferior.
+
+Todas las rutas salvo `/login` pasan por `components/RutaProtegida.tsx`:
+
+- **Backend configurado:** sin sesión redirige a `/login` y, tras iniciar
+  sesión, vuelve a la ruta pedida (solo rutas internas).
+- **Sin backend:** no hay sesión posible; la navegación es libre (maqueta) y
+  `/login` avisa que el inicio de sesión no está disponible.
 
 **Hosting estático:** al desplegar el `dist/`, el servidor debe redirigir
 todas las rutas a `index.html` (fallback de SPA). Sin esa regla, recargar o
@@ -96,7 +107,7 @@ inicio de sesión.
 `VITE_AMBIENTE_DEVICE_ID` es opcional (por defecto `cuna-ambiente-01`) e
 indica el módulo cuya última lectura se consulta.
 
-## Última lectura en Cuna (fase 2)
+## Última lectura en Cuna
 
 Con sesión iniciada, `/cuna` consulta `public.lecturas_ambiente` con la sesión
 del usuario y la clave publicable (RLS limita las filas): última fila del
@@ -155,5 +166,15 @@ el Supabase real ni contra la Pico.
 
 ## Estado
 
-Aplicación base ejecutable. Pendiente: integración con Supabase, firmware y
-datos reales del dispositivo ([validación de la base](../../docs/Sprint3/validacion-base.md)).
+**Implementado** (código y pruebas automáticas):
+
+- Rutas, navegación, banner de conexión y estados «Sin datos» / «Desactualizado».
+- Inicio y cierre de sesión con Supabase Auth, y rutas protegidas.
+- Última lectura de ambiente en Cuna.
+- Panel de la lámpara, opt-in.
+
+**Verificado con el sistema real:** nada todavía. Auth, última lectura y
+lámpara no se han probado contra el Supabase desplegado ni contra la Pico;
+las pruebas automáticas usan dobles y no sustituyen esa verificación. Lo
+pendiente de verificar, y lo que falta construir, está en [`PLAN.md`](PLAN.md)
+y en la [validación de la base](../../docs/Sprint3/validacion-base.md).
