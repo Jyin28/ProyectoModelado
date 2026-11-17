@@ -1,0 +1,4 @@
+# Se instalan con apt (ver README): python3-gpiozero python3-lgpio python3-requests
+requests
+gpiozero
+adafruit-circuitpython-dht
