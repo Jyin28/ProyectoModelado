@@ -20,6 +20,11 @@ ISO 8601 en UTC. Los nombres `command_id`, `command`, `params`, `ok`,
 | | `peso_g` | número | gramos |
 | | `registrado_en` | texto | ISO UTC |
 
+Frecuencia de ambiente (respondida en
+[ambiente.md](../../src/shared/contracts/ambiente.md)): la web consulta la
+última lectura cada 10 s, sin Realtime, y muestra «Desactualizado» cuando la
+medición tiene más de 30 s.
+
 ## Comandos
 
 `Modulo`: `cuna` \| `colchon` \| `figuras`.
@@ -54,14 +59,28 @@ La web valida los parámetros con `validarComando` antes de enviar.
 ## Preguntas abiertas para B
 
 1. ¿Cómo se llaman las tablas (ambiente, movimiento, peso, comandos, confirmaciones)?
+   **Respondida para ambiente** ([ambiente.md](../../src/shared/contracts/ambiente.md)):
+   `public.lecturas_ambiente`. Siguen abiertas movimiento, peso, comandos y confirmaciones.
 2. ¿Cómo se identifica el dispositivo? El contrato de ambiente usa `device_id`
    del módulo lógico (`cuna-ambiente-01`) y el firmware tiene
    `DEVICE_ID = "pico-sprint3-01"` (Pico física). ¿A cuál corresponde `dispositivo_id`?
+   **Respondida para ambiente** ([ambiente.md](../../src/shared/contracts/ambiente.md)):
+   `device_id` es el módulo lógico `cuna-ambiente-01`, igual en la Pico, Supabase y la web;
+   `pico-sprint3-01` queda reservado para la placa.
 3. ¿Se adoptan `id` y `registrado_en` o los nombres de
    `src/shared/contracts/ambiente.md` (`event_id`, `ts`, `recibido_en`)?
+   **Respondida para ambiente** ([ambiente.md](../../src/shared/contracts/ambiente.md)):
+   la web conserva `id` y `registrado_en`; el adaptador mapea desde `event_id` y `ts`.
 4. ¿Cómo llegan las confirmaciones a la web (Realtime, tabla o ambos) y quién
    fija `confirmado_en`?
+   Respondida solo para la lámpara en [lampara.md](../../src/shared/contracts/lampara.md):
+   la web llama al RPC `solicitar_lampara` y consulta `public.ordenes_lampara`
+   cada 2 s bajo RLS; la señal privada de Realtime es solo para la Pico.
+   Abierta para el resto.
 5. ¿Qué tiempo de espera marca un comando como `sin-respuesta`?
+   Respondida solo para la lámpara en [lampara.md](../../src/shared/contracts/lampara.md):
+   vence a los 15 s (`vence_en`); la web muestra `sin-respuesta` cuando la orden
+   sigue `pendiente` o `enviado` tras `vence_en`. Abierta para el resto.
 6. ¿`name` de `led_sequence` se limita a `chase`, `alternate` y `blink_all`?
 7. ¿Qué comandos tendrán el colchón y el audio?
 
