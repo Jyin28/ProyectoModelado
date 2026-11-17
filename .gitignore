@@ -121,6 +121,6 @@ micropython-*.bin
 .DS_Store
 npm-debug.log*
 
-firmware/secrets.py
+firmware/common/utilities/secrets.py
 firmware/calibration.json
 __pycache__/
