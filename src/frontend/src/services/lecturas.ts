@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { LecturaAmbiental } from '../models/contrato.ts'
+import type { EventoMovimiento, LecturaAmbiental } from '../models/contrato.ts'
 import { serviciosNoConfigurados } from './noConfigurado.ts'
 import type { Resultado, ServicioLecturas } from './tipos.ts'
 
@@ -43,8 +43,25 @@ function aLecturaAmbiental(fila: unknown): LecturaAmbiental | null {
   }
 }
 
+export const TABLA_EVENTOS_MOVIMIENTO = 'eventos_movimiento'
+export const COLUMNAS_EVENTO_MOVIMIENTO = 'event_id,device_id,ts,recibido_en'
+
+// event_id → id, device_id → dispositivo_id, ts → registrado_en.
+function aEventoMovimiento(fila: unknown): EventoMovimiento | null {
+  if (typeof fila !== 'object' || fila === null) return null
+  const f = fila as Record<string, unknown>
+  if (
+    typeof f.event_id !== 'string' ||
+    typeof f.device_id !== 'string' ||
+    typeof f.ts !== 'string'
+  ) {
+    return null
+  }
+  return { id: f.event_id, dispositivo_id: f.device_id, registrado_en: f.ts }
+}
+
 /**
- * Lecturas reales: solo `obtenerUltimaAmbiental` consulta Supabase (con la
+ * Lecturas reales: solo `obtenerUltimaAmbiental` y `obtenerUltimoMovimiento` consultan Supabase (con la
  * sesión del usuario y la clave publicable, bajo RLS). El resto sigue sin
  * configurar hasta que exista su integración.
  */
@@ -69,6 +86,26 @@ export function crearServicioLecturas(
         if (data === null || data === undefined) return { ok: true, datos: null }
         const lectura = aLecturaAmbiental(data)
         return lectura ? { ok: true, datos: lectura } : fallo()
+      } catch {
+        return fallo()
+      }
+    },
+
+    async obtenerUltimoMovimiento(dispositivoId) {
+      try {
+        const { data, error } = await cliente
+          .from(TABLA_EVENTOS_MOVIMIENTO)
+          .select(COLUMNAS_EVENTO_MOVIMIENTO)
+          .eq('device_id', dispositivoId)
+          .order('ts', { ascending: false })
+          .order('recibido_en', { ascending: false })
+          .order('event_id', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (error) return fallo()
+        if (data === null || data === undefined) return { ok: true, datos: null }
+        const evento = aEventoMovimiento(data)
+        return evento ? { ok: true, datos: evento } : fallo()
       } catch {
         return fallo()
       }

@@ -1,6 +1,6 @@
 # Contrato de control de la lámpara
 
-Contrato de la fase local 1 de RF-11 / CA-11.1 («la lámpara permite encendido, apagado y cambio de intensidad») según la [especificación](../../../docs/Requerimientos/EspecificacionRequerimientos.md). Los nombres `command_id`, `command` y `params` son los del comando `lamp_set` de `src/firmware/common/utilities/comandos.py`. Los de la base corresponden a la migración `20261111000200_comandos_lampara.sql`. La propuesta general de comandos sigue en [contrato-web-propuesta.md](../../../docs/Sprint3/contrato-web-propuesta.md), todavía provisional.
+Contrato de la fase local 1 de RF-11 / CA-11.1 («la lámpara permite encendido, apagado y cambio de intensidad») según la [especificación](../../../docs/Requerimientos/EspecificacionRequerimientos.md). Los nombres `command_id`, `command` y `params` son los del comando `lamp_set` de `src/firmware/pico-integrado/common/utilities/comandos.py`. Los de la base corresponden a la migración `20261111000200_comandos_lampara.sql`. La propuesta general de comandos sigue en [contrato-web-propuesta.md](../../../docs/Sprint3/contrato-web-propuesta.md), todavía provisional.
 
 ## Primer recorrido de RF-11.1
 

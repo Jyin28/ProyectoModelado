@@ -28,7 +28,7 @@ ni controles de hardware.
 
 - Firmware de la Pico 2 W: lectura de AM2301, PIR HC-SR501, HX711 +
   celda de carga, control de LED blanco (MOSFET IRLZ44N) y de los seis LED
-  comunes, buzzer activo, audio por MAX98357A.
+  comunes, buzzer pasivo, audio por MAX98357A.
 - Ingesta de datos reales por HTTPS hacia Supabase.
 - Canal de comandos definitivo por Realtime/WSS.
 - Autenticación (Auth) y seguridad a nivel de fila (RLS) aplicadas a datos
@@ -45,7 +45,7 @@ ni controles de hardware.
 - LED blanco regulado con MOSFET IRLZ44N.
 - Seis LED comunes con resistencias de 330 Ω; sin WS2812B ni conversor.
 - HX711 y celda de carga de barra de 5 kg.
-- Buzzer activo con transistor NPN, resistencia de 1 kΩ y botón físico.
+- Buzzer pasivo con PWM, transistor NPN, resistencia de 1 kΩ y botón físico.
 - MAX98357A y parlante de 8 Ω / 0,5 W.
 - Alimentación USB y tierra común.
 - Sin condensadores externos adicionales.

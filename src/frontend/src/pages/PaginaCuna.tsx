@@ -1,12 +1,15 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
 import BannerConexion from '../components/BannerConexion.tsx'
 import PanelLampara from '../components/PanelLampara.tsx'
+import PanelMovimiento from '../components/PanelMovimiento.tsx'
 import TarjetaLectura from '../components/TarjetaLectura.tsx'
 import { useUltimaAmbiental } from '../hooks/useUltimaAmbiental.ts'
 import {
   dispositivoAmbienteId,
   dispositivoLamparaId,
+  dispositivoMovimientoId,
   lamparaHabilitada,
+  movimientoHabilitado,
 } from '../services/configuracion.ts'
 import './paginas.css'
 
@@ -48,6 +51,11 @@ function PaginaCuna() {
       {lamparaHabilitada() && (
         <PanelLampara dispositivoId={dispositivoLamparaId()} />
       )}
+      <PanelMovimiento
+        dispositivoId={dispositivoMovimientoId}
+        habilitado={movimientoHabilitado}
+      />
+
       {!activo && (
         <p>
           Sección reservada para la información de la cuna. La conexión con el
