@@ -1,3 +1,0 @@
-Coloca aqui los audios pregrabados en formato .wav (PCM).
-El nombre del archivo (sin .wav) es el que se usa en el comando audio_play.
-Ejemplo: demo.wav  ->  {"command": "audio_play", "params": {"name": "demo"}}

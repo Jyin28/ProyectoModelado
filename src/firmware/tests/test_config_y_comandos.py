@@ -36,6 +36,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.PIN_BOTON, 15)
         self.assertEqual(config.PIN_I2S_WS, config.PIN_I2S_BCLK + 1)
 
+    def test_modulo_por_defecto_es_valido(self):
+        _ruta.modulo.validar(config.MODULO)
+
     def test_hardware_apagado_por_defecto(self):
         self.assertFalse(config.COLCHON_HABILITADO)
         self.assertFalse(config.AUDIO_HABILITADO)
@@ -131,43 +134,67 @@ class FakeAudio:
         return {"estado": "inactivo"}
 
 
+_FIGURAS_STUB = {"secuencia": None}
+_PERIFERICO_A_MODULO = {"lampara": "cuna", "audio": "cuna",
+                        "figuras": "figuras", "colchon": "colchon"}
+
+
 def cargar_comandos():
-    """Importa comandos.py con stubs de figuras y lampara (necesitan 'machine')."""
+    """Importa comandos.py con stubs de figuras y lampara (necesitan 'machine').
+
+    comandos.py las importa de forma perezosa, asi que los stubs deben seguir en
+    sys.modules mientras dura la prueba. Devuelve (comandos, restaurar).
+    """
     figuras = types.ModuleType("figuras")
-    figuras.secuencia_actual = lambda: None
+    figuras.secuencia_actual = lambda: _FIGURAS_STUB["secuencia"]
+    figuras.llamadas = []
+    figuras.todos = lambda on: figuras.llamadas.append(("todos", on))
     lampara = types.ModuleType("lampara")
     _nivel = [0]
     lampara.nivel = lambda: _nivel[0]
     lampara.poner_nivel = lambda n: _nivel.__setitem__(0, n)
-    anteriores = {n: sys.modules.get(n) for n in ("figuras", "lampara", "comandos")}
+    nombres = ("figuras", "lampara", "comandos")
+    anteriores = {n: sys.modules.get(n) for n in nombres}
     sys.modules["figuras"] = figuras
     sys.modules["lampara"] = lampara
     sys.modules.pop("comandos", None)
-    try:
-        import comandos
-    finally:
+    import comandos
+
+    def restaurar():
         for nombre, modulo in anteriores.items():
-            if nombre != "comandos":
-                if modulo is None:
-                    sys.modules.pop(nombre, None)
-                else:
-                    sys.modules[nombre] = modulo
+            if modulo is None:
+                sys.modules.pop(nombre, None)
+            else:
+                sys.modules[nombre] = modulo
+
     comandos.time = types.SimpleNamespace(ticks_ms=lambda: 123)
-    return comandos
+    return comandos, restaurar
 
 
 class ComandosTests(unittest.TestCase):
     def setUp(self):
-        self.cmd = cargar_comandos()
+        self._modulo_original = config.MODULO
+        self.cmd, self._restaurar = cargar_comandos()
+        _FIGURAS_STUB["secuencia"] = None
         self.colchon = FakeColchon()
         self.audio = FakeAudio()
         self.cmd.conectar_colchon(self.colchon)
         self.cmd.conectar_audio(self.audio)
 
     def tearDown(self):
-        sys.modules.pop("comandos", None)
+        config.MODULO = self._modulo_original
+        self._restaurar()
 
     def run_cmd(self, nombre, **params):
+        """Ejecuta el comando en el modulo al que pertenece (get_status: el actual)."""
+        periferico = self.cmd.modulo.periferico_de(nombre)
+        if periferico is not None:
+            config.MODULO = _PERIFERICO_A_MODULO[periferico]
+        return self.cmd.ejecutar({"command_id": "t", "command": nombre, "params": params})
+
+    def run_en(self, modulo, nombre, **params):
+        """Ejecuta el comando con un modulo conectado concreto."""
+        config.MODULO = modulo
         return self.cmd.ejecutar({"command_id": "t", "command": nombre, "params": params})
 
     def test_sin_hardware_habilitado_los_comandos_fallan_con_codigo(self):
@@ -178,15 +205,48 @@ class ComandosTests(unittest.TestCase):
         r = self.run_cmd("audio_play", sound="tono_suave")
         self.assertEqual((r["ok"], r["error"]), (False, "audio_no_habilitado"))
 
-    def test_get_status_conserva_campos_y_agrega_colchon_y_audio(self):
-        r = self.run_cmd("get_status")
+    def test_get_status_conserva_campos_y_agrega_modulo_colchon_y_audio(self):
+        r = self.run_en("cuna", "get_status")
         self.assertTrue(r["ok"])
-        self.assertEqual(r["result"], {"lampara": 0, "secuencia": None,
+        self.assertEqual(r["result"], {"modulo": "cuna", "lampara": 0, "secuencia": None,
                                        "colchon": "inactivo", "audio": "inactivo"})
         self.cmd.conectar_colchon(None)
         self.cmd.conectar_audio(None)
-        r = self.run_cmd("get_status")
+        r = self.run_en("cuna", "get_status")
         self.assertEqual((r["result"]["colchon"], r["result"]["audio"]), (None, None))
+
+    def test_get_status_solo_informa_lo_que_aplica_al_modulo(self):
+        _FIGURAS_STUB["secuencia"] = "chase"
+        r = self.run_en("figuras", "get_status")["result"]
+        self.assertEqual((r["modulo"], r["lampara"], r["secuencia"]), ("figuras", None, "chase"))
+        r = self.run_en("colchon", "get_status")["result"]
+        self.assertEqual((r["modulo"], r["lampara"], r["secuencia"]), ("colchon", None, None))
+        r = self.run_en("cuna", "get_status")["result"]
+        self.assertEqual((r["lampara"], r["secuencia"]), (0, None))
+
+    def test_comandos_de_otro_modulo_se_rechazan_sin_tocar_hardware(self):
+        casos = [
+            ("figuras", "lamp_set", {"level": 50}), ("colchon", "lamp_set", {"level": 50}),
+            ("cuna", "led_all", {"on": True}), ("colchon", "led_stop", {}),
+            ("cuna", "led_sequence", {"name": "chase", "step_s": 2}),
+            ("cuna", "mattress_tare", {}), ("figuras", "mattress_arm", {}),
+            ("colchon", "audio_play", {"sound": "tono_suave"}), ("figuras", "audio_stop", {}),
+        ]
+        for modulo, nombre, params in casos:
+            r = self.run_en(modulo, nombre, **params)
+            self.assertEqual((r["ok"], r["error"]), (False, "comando_de_otro_modulo:" + modulo),
+                             (modulo, nombre))
+        self.assertEqual(self.colchon.llamadas, [])
+        self.assertEqual(self.audio.llamadas, [])
+        self.assertEqual(sys.modules["figuras"].llamadas, [])
+        self.assertEqual(self.run_en("cuna", "get_status")["result"]["lampara"], 0)
+
+    def test_modulo_invalido_rechaza_todo_menos_get_status(self):
+        for nombre, params in (("lamp_set", {"level": 5}), ("led_all", {"on": True}),
+                               ("mattress_status", {}), ("audio_status", {})):
+            r = self.run_en("inexistente", nombre, **params)
+            self.assertEqual((r["ok"], r["error"]),
+                             (False, "comando_de_otro_modulo:inexistente"))
 
     def test_comandos_del_colchon(self):
         self.assertTrue(self.run_cmd("mattress_status")["ok"])

@@ -12,7 +12,8 @@ backend y firmware.
 ## Estructura
 
 - `src/frontend/` — aplicación web (React + TypeScript + Vite).
-- `src/firmware/` — firmware único de la Raspberry Pi Pico 2 W (pendiente).
+- `src/firmware/` — firmware único de la Raspberry Pi Pico 2 W. Es una sola
+  Pico que se conecta a un módulo por vez (`MODULO` en `common/utilities/config.py`).
 - `src/backend/` — carpetas reservadas para código de integración. El backend del Sprint 3 se implementará en Supabase.
 - `supabase/` — backend Supabase (pendiente de implementación real).
 - `docs/Sprint3/` — alcance, equipo, entorno y validación del Sprint 3.
@@ -28,8 +29,9 @@ pg_cron para tareas programadas.
 
 ## Alcance vigente del Sprint 3
 
-Cuna, colchón y figuras LED, controlados por una sola Raspberry Pi Pico 2 W,
-alimentados por USB de computadora. Demostración mediante hotspot del
+Cuna, colchón y figuras LED son módulos separados. Hay una sola Raspberry
+Pi Pico 2 W y se conecta a un módulo por vez (no controla los tres a la vez);
+se alimenta por USB de computadora. Demostración mediante hotspot del
 teléfono. Ver `docs/Sprint3/alcance.md` para el detalle y las restricciones
 de hardware vigentes (sensores, LED, resistencias, HX711, buzzer, audio).
 

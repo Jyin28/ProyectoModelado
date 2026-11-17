@@ -10,6 +10,7 @@ for _carpeta in ("colchon", "cuna", os.path.join("common", "utilities")):
         sys.path.insert(0, _ruta)
 
 import config  # noqa: E402
+import modulo  # noqa: E402
 
 
 def cfg_prueba(**cambios):

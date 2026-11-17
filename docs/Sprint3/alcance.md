@@ -3,8 +3,9 @@
 ## Objetivo del incremento
 
 Demostrar, en ocho días, un incremento verificable del proyecto Cuna
-Inteligente IoT compuesto por cuna, colchón y figuras LED, controlados por
-una sola Raspberry Pi Pico 2 W, alimentados por USB de computadora.
+Inteligente IoT compuesto por cuna, colchón y figuras LED. Son módulos
+separados y se demuestran con una sola Raspberry Pi Pico 2 W, que se conecta
+a un módulo por vez, alimentada por USB de computadora.
 
 ## Esta fase (base ejecutable)
 
@@ -39,7 +40,9 @@ ni controles de hardware.
 
 ## Restricciones vigentes del hardware (Sprint 3)
 
-- Una Pico 2 W compartida entre tres protoboards.
+- Una sola Pico 2 W disponible a la vez: se conecta a un módulo por vez (cuna,
+  colchón o figuras LED), que están separados en tres protoboards. El módulo
+  conectado se elige con `MODULO` en el firmware.
 - Sensor ambiental AM2301 (no SHT31).
 - PIR HC-SR501.
 - LED blanco regulado con MOSFET IRLZ44N.

@@ -12,6 +12,11 @@ web. (Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
 
 Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, get_status
 
+Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set y
+audio_* en "cuna", led_* en "figuras", mattress_* en "colchon". Uno de otro modulo
+se rechaza con el error "comando_de_otro_modulo:<modulo>" sin tocar ningun pin.
+get_status sirve siempre e incluye el campo "modulo".
+
 Comandos locales del colchon y del audio (se pueden invocar sin red; solo
 funcionan si main.py los registro con conectar_colchon / conectar_audio, es
 decir, si COLCHON_HABILITADO / AUDIO_HABILITADO estan en True):
@@ -24,8 +29,7 @@ Las acciones del colchon que miden (tara, calibrar, armar, rearmar) devuelven
 import time
 
 import config
-import figuras
-import lampara
+import modulo
 
 _colchon = None
 _audio = None
@@ -41,6 +45,18 @@ def conectar_audio(reproductor):
     """Registra el reproductor de audio (o None para desconectarlo)."""
     global _audio
     _audio = reproductor
+
+
+def _lampara():
+    """Importa lampara.py solo cuando hace falta: al importarse configura el PWM."""
+    import lampara
+    return lampara
+
+
+def _figuras():
+    """Importa figuras.py solo cuando hace falta: al importarse configura los LED."""
+    import figuras
+    return figuras
 
 
 def _colchon_activo():
@@ -67,7 +83,9 @@ def _numero(params, clave, minimo, maximo):
 
 def estado():
     """Resumen de lo que hay encendido ahora."""
-    return {"lampara": lampara.nivel(), "secuencia": figuras.secuencia_actual(),
+    return {"modulo": config.MODULO,
+            "lampara": _lampara().nivel() if modulo.usa("lampara") else None,
+            "secuencia": _figuras().secuencia_actual() if modulo.usa("figuras") else None,
             "colchon": _colchon.monitor.estado if _colchon is not None else None,
             "audio": _audio.estado()["estado"] if _audio is not None else None}
 
@@ -87,26 +105,32 @@ def ejecutar(orden):
 
 
 def _ejecutar(nombre, params):
+    necesario = modulo.periferico_de(nombre)
+    if necesario is not None and not modulo.usa(necesario):
+        raise ValueError("comando_de_otro_modulo:%s" % (config.MODULO,))
+
     if nombre == "lamp_set":
+        lampara = _lampara()
         lampara.poner_nivel(_numero(params, "level", 0, 100))
         return {"level": lampara.nivel()}
 
     if nombre == "led_set":
         indice = int(_numero(params, "index", 0, len(config.PINES_LEDS) - 1))
-        figuras.encender_led(indice, bool(params.get("on")))
+        _figuras().encender_led(indice, bool(params.get("on")))
         return {}
 
     if nombre == "led_all":
-        figuras.todos(bool(params.get("on")))
+        _figuras().todos(bool(params.get("on")))
         return {}
 
     if nombre == "led_sequence":
         intervalo = _numero(params, "step_s", config.LED_INTERVALO_MINIMO_S, 3600)
+        figuras = _figuras()
         figuras.iniciar_secuencia(params.get("name"), intervalo)
         return {"sequence": figuras.secuencia_actual()}
 
     if nombre == "led_stop":
-        figuras.todos(False)
+        _figuras().todos(False)
         return {}
 
     if nombre == "get_status":
