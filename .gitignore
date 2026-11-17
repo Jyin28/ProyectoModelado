@@ -127,4 +127,5 @@ npm-debug.log*
 src/firmware/**/secrets.py
 src/firmware/**/secretos.py
 src/firmware/**/calibration.json
+src/firmware/**/calibracion.json
 __pycache__/
