@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs"
+    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs tests/movimiento.test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.16"
