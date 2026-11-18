@@ -38,3 +38,14 @@ export function movimientoActivado(valor: string | undefined): boolean {
 export const movimientoHabilitado: boolean = movimientoActivado(
   import.meta.env.VITE_MOVIMIENTO_HABILITADO,
 )
+
+// Módulo lógico del colchón inteligente (Pico 2 W).
+export const DISPOSITIVO_COLCHON_POR_DEFECTO = 'pico-figuras-colchon-01'
+
+export function dispositivoColchonId(): string {
+  return (
+    import.meta.env.VITE_COLCHON_DEVICE_ID?.trim() ||
+    DISPOSITIVO_COLCHON_POR_DEFECTO
+  )
+}
+

@@ -17,6 +17,9 @@ describe('serviciosNoConfigurados', () => {
       s.comandos.enviarComando('figuras', orden),
       s.lampara.solicitarLampara('d', 40),
       s.lampara.obtenerUltimaOrdenLampara('d'),
+      s.colchon.obtenerUltimoEvento('d'),
+      s.colchon.obtenerHistorialEventos('d'),
+      s.colchon.solicitarComando('d', 'scale_tare'),
       s.auth.obtenerSesion(),
       s.auth.iniciarSesion('a@b.c', 'x'),
       s.auth.cerrarSesion(),
@@ -34,8 +37,9 @@ describe('serviciosNoConfigurados', () => {
     const cancelaciones = [
       s.lecturas.suscribirAmbiental('d', { alRecibir, alError }),
       s.comandos.suscribirConfirmaciones({ alRecibir, alError }),
+      s.colchon.suscribirEventos('d', { alRecibir, alError }),
     ]
-    expect(alError).toHaveBeenCalledTimes(2)
+    expect(alError).toHaveBeenCalledTimes(3)
     expect(alError).toHaveBeenCalledWith('Backend no configurado')
     expect(alRecibir).not.toHaveBeenCalled()
     for (const cancelar of cancelaciones) expect(() => cancelar()).not.toThrow()

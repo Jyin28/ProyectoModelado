@@ -11,6 +11,7 @@ import type {
   Modulo,
   OrdenComando,
 } from '../models/contrato.ts'
+import type { EventoColchon, OrdenColchon } from '../models/colchon.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
 
 export type Resultado<T> =
@@ -73,6 +74,25 @@ export interface ServicioLampara {
   ): Promise<Resultado<OrdenLampara | null>>
 }
 
+export interface ServicioColchon {
+  obtenerUltimoEvento(
+    dispositivoId: string,
+  ): Promise<Resultado<EventoColchon | null>>
+  obtenerHistorialEventos(
+    dispositivoId: string,
+    limite?: number,
+  ): Promise<Resultado<EventoColchon[]>>
+  solicitarComando(
+    dispositivoId: string,
+    comando: string,
+    parametros?: Record<string, unknown>,
+  ): Promise<Resultado<OrdenColchon>>
+  suscribirEventos(
+    dispositivoId: string,
+    manejadores: Manejadores<EventoColchon>,
+  ): Cancelar
+}
+
 export interface ServicioAuth {
   obtenerSesion(): Promise<Resultado<Sesion | null>>
   iniciarSesion(correo: string, contrasena: string): Promise<Resultado<Sesion>>
@@ -84,5 +104,6 @@ export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
   lampara: ServicioLampara
+  colchon: ServicioColchon
   auth: ServicioAuth
 }

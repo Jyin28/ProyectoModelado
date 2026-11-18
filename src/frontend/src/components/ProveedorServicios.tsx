@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { ContextoServicios } from '../hooks/useServicios.ts'
 import { crearServicioAuth } from '../services/auth.ts'
+import { crearServicioColchon } from '../services/colchon.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
@@ -30,6 +31,7 @@ function ProveedorServicios({
             auth: crearServicioAuth(supabase),
             lecturas: crearServicioLecturas(supabase),
             lampara: crearServicioLampara(supabase),
+            colchon: crearServicioColchon(supabase),
           }
         : serviciosNoConfigurados)
     return { servicios: efectivos, backendConfigurado: configurado }
