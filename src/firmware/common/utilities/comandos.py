@@ -164,10 +164,16 @@ def _ejecutar(nombre, params):
         duracion = None                 # sin parametro: se usa la duracion previa/por defecto
         if "duration_s" in params:      # presente pero nulo/negativo se rechaza (DEC-13)
             duracion = _numero(params, "duration_s", 0, config.COLCHON_MONITOREO_MAX_S)
+        tolerancia = None               # sin parametro: la de config.py (CA-15.1)
+        if "tolerance_pct" in params:
+            tolerancia = _numero(params, "tolerance_pct", 0, 100)
+        alarma = None                   # sin parametro: el tope de config.py (60 s)
+        if "alarm_s" in params:
+            alarma = _numero(params, "alarm_s", 0, config.COLCHON_ALARMA_MAX_S)
         colchon = _colchon_activo()
         if nombre == "mattress_arm":
-            return colchon.armar(duracion, time.ticks_ms())
-        return colchon.rearmar(duracion, time.ticks_ms())
+            return colchon.armar(duracion, time.ticks_ms(), tolerancia, alarma)
+        return colchon.rearmar(duracion, time.ticks_ms(), tolerancia, alarma)
 
     if nombre == "mattress_stop":
         return _colchon_activo().detener(time.ticks_ms())

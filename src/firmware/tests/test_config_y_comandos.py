@@ -103,11 +103,11 @@ class FakeColchon:
         self.llamadas.append(("calibrar", peso))
         return {"pendiente": True}
 
-    def armar(self, duracion, ahora):
+    def armar(self, duracion, ahora, tolerancia=None, alarma=None):
         self.llamadas.append(("armar", duracion))
         return {"pendiente": True}
 
-    def rearmar(self, duracion, ahora):
+    def rearmar(self, duracion, ahora, tolerancia=None, alarma=None):
         self.llamadas.append(("rearmar", duracion))
         return {"pendiente": True}
 

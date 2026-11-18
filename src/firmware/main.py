@@ -182,6 +182,10 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
             try:
                 conectado = envio.esta_conectado() if envio is not None else wifi.esta_conectado()
                 colchon.actualizar(time.ticks_ms(), conectado)
+                for evento in colchon.sacar_eventos():
+                    if envio is not None:
+                        envio.registrar_evento_colchon(
+                            evento["tipo"], evento["datos"], evento["ms"])
             except Exception as error:
                 print("Colchon: error (%s); se deshabilita" % type(error).__name__)
                 try:
@@ -239,7 +243,7 @@ def ejecutar():
         ordenes = ordenes_remotas.configurar(comandos.ejecutar, voz=sesion_voz)
         if lampara is not None or ordenes is not None:
             remota = ordenes_remotas.Grupo([lampara, ordenes])
-        if modulo.usa("ambiente") or remota is not None:
+        if modulo.usa("ambiente") or modulo.usa("colchon") or remota is not None:
             envio = ambiente.iniciar(remota)
             if envio is None:
                 remota = None        # sin worker de red no hay ordenes remotas

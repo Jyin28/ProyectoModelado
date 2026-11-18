@@ -1,8 +1,12 @@
 """prueba_colchon.py - Menu de prueba local del colchon, SIN red.
 
 Ejecutalo desde Thonny con solo el montaje del colchon conectado. Usa
-su cableado (DT GP13, SCK GP12, buzzer GP18, boton GP19). Esta prueba
-controlada no exige WiFi para armar el monitoreo.
+el cableado del MONTAJE DE BANCO (DT GP13, SCK GP12, buzzer GP18, boton
+GP19), que solo sirve para esta prueba. El mapa del modulo integrado es el
+de config.py (DT GP17, SCK GP16, buzzer GP14, boton GP15) y es el unico que
+usa main.py; los pines de banco chocan con la lampara y las figuras, asi que
+no deben copiarse a config.py. Esta prueba controlada no exige WiFi para
+armar el monitoreo.
 
 Opciones 1 a 6: las del menu original. 7 a 11: calibrar, armar, estado,
 detener y rearmar.
@@ -112,6 +116,7 @@ def _ejecutar(control, opcion):
 
 
 def menu():
+    # Solo para el banco: no cambia el mapa de config.py (modulo integrado).
     cfg = control_colchon.copiar_config(
         config, PIN_HX711_DT=13, PIN_HX711_SCK=12,
         PIN_BUZZER=18, PIN_BOTON=19, COLCHON_REQUIERE_WIFI=False,

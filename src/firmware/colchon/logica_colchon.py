@@ -97,6 +97,9 @@ class Monitor:
         self.tolerancia_pct = tolerancia_pct
         self.lecturas_requeridas = lecturas_requeridas
         self.alarma_max_s = alarma_max_s
+        # Valores de configuracion: cada armado puede pedir otros (CA-14.5, CA-15.1).
+        self._tolerancia_base = tolerancia_pct
+        self._alarma_tope = alarma_max_s
         self.duracion_max_s = duracion_max_s
 
         self.estado = INACTIVO
@@ -117,13 +120,30 @@ class Monitor:
         if not numero_valido(duracion_s) or duracion_s <= 0 or duracion_s > self.duracion_max_s:
             raise ValueError("duracion_invalida")
 
-    def armar(self, referencia_g, duracion_s, ahora_ms):
+    def validar_parametros(self, tolerancia_pct=None, alarma_s=None):
+        """Devuelve (tolerancia_pct, alarma_s) a usar; None toma el valor de configuracion.
+
+        La tolerancia va entre 0 y 100 sin incluirlos; la alarma es mayor que 0 y
+        no supera el tope de configuracion (60 s por defecto).
+        """
+        tolerancia = self._tolerancia_base if tolerancia_pct is None else tolerancia_pct
+        if not numero_valido(tolerancia) or not 0 < tolerancia < 100:
+            raise ValueError("tolerancia_invalida")
+        alarma = self._alarma_tope if alarma_s is None else alarma_s
+        if not numero_valido(alarma) or alarma <= 0 or alarma > self._alarma_tope:
+            raise ValueError("alarma_invalida")
+        return tolerancia, alarma
+
+    def armar(self, referencia_g, duracion_s, ahora_ms, tolerancia_pct=None, alarma_s=None):
         """Activa el monitoreo con una referencia NUEVA (primer armado o rearme)."""
         if self.estado in (ACTIVO, ALARMA):
             raise ValueError("monitoreo_en_curso")
         if not numero_valido(referencia_g) or referencia_g <= 0:
             raise ValueError("referencia_invalida")
         self.validar_duracion(duracion_s)
+        tolerancia, alarma = self.validar_parametros(tolerancia_pct, alarma_s)
+        self.tolerancia_pct = tolerancia
+        self.alarma_max_s = alarma
         self.estado = ACTIVO
         self.referencia_g = referencia_g
         self.duracion_s = duracion_s
@@ -184,6 +204,7 @@ class Monitor:
             "estado": self.estado,
             "referencia_g": self.referencia_g,
             "tolerancia_pct": self.tolerancia_pct,
+            "alarma_s": self.alarma_max_s,
             "duracion_s": self.duracion_s,
             "restante_s": restante,
             "consecutivas": self.consecutivas,

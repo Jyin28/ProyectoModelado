@@ -34,3 +34,8 @@ ORDENES_AUTH_PASSWORD = ""
 # El token es el dedicado al modulo de movimiento (64 hex), distinto al de ambiente.
 MOVIMIENTO_DEVICE_ID = "cuna-movimiento-01"
 MOVIMIENTO_TOKEN = ""
+
+# Informe de alarmas del colchon (solo con COLCHON_HABILITADO = True y MODULO = "colchon").
+# El token se crea con el alta del dispositivo; nunca se sube a git.
+COLCHON_DEVICE_ID = "cuna-colchon-01"
+COLCHON_TOKEN = ""

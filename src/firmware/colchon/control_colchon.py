@@ -12,6 +12,12 @@ SIN PROBAR EN HARDWARE.
 import logica_colchon as logica
 from logica_colchon import ACTIVO, ALARMA, DETENIDO, INACTIVO
 
+# Motivo de parada del Monitor -> motivo que se informa (contrato colchon.md).
+# "apagado" (fin del programa) no se informa.
+MOTIVOS_INFORMADOS = {"comando": "app", "boton": "boton", "timeout_alarma": "temporizador",
+                      "duracion": "duracion", "wifi_perdido": "wifi"}
+MAX_EVENTOS = 8
+
 
 def copiar_config(modulo, **cambios):
     """Copia los valores en MAYUSCULAS de config.py y aplica cambios (para pruebas)."""
@@ -56,6 +62,8 @@ class ControlColchon:
         self._duracion_s = cfg.COLCHON_MONITOREO_S
         self.ultimo_resultado = None
         self.pulsaciones = 0
+        self._estado_visto = INACTIVO
+        self._eventos = []
         self._escribir_buzzer(False)        # arranque seguro: apagado
 
     # ---------------- consultas ----------------
@@ -74,6 +82,18 @@ class ControlColchon:
         datos["requiere_wifi"] = bool(self._cfg.COLCHON_REQUIERE_WIFI)
         datos["ultimo_resultado"] = self.ultimo_resultado
         return datos
+
+    def sacar_eventos(self):
+        """Entrega y vacia los eventos pendientes de informar (colchon_armado,
+        alarma_colchon, colchon_detenido), del mas antiguo al mas nuevo.
+
+        Cada uno es {"tipo", "datos", "ms"}; "ms" es time.ticks_ms() de cuando
+        ocurrio. Nunca incluye lecturas de peso (CA-14.4): solo el ultimo valor
+        de la alarma.
+        """
+        eventos = self._eventos
+        self._eventos = []
+        return eventos
 
     # ---------------- comandos locales ----------------
 
@@ -99,23 +119,28 @@ class ControlColchon:
         self._iniciar_captura("leer", ahora_ms)
         return {"pendiente": True, "accion": "leer"}
 
-    def armar(self, duracion_s, ahora_ms):
-        """Captura la referencia ACTUAL y activa el monitoreo."""
+    def armar(self, duracion_s, ahora_ms, tolerancia_pct=None, alarma_s=None):
+        """Captura la referencia ACTUAL y activa el monitoreo.
+
+        tolerancia_pct y alarma_s (opcionales) reemplazan, solo en este armado,
+        los valores de config.py; se validan antes de medir.
+        """
         if self.monitor.estado in (ACTIVO, ALARMA):
             raise ValueError("monitoreo_en_curso")
-        return self._armar("armar", duracion_s, ahora_ms)
+        return self._armar("armar", duracion_s, ahora_ms, tolerancia_pct, alarma_s)
 
-    def rearmar(self, duracion_s, ahora_ms):
+    def rearmar(self, duracion_s, ahora_ms, tolerancia_pct=None, alarma_s=None):
         """Despues de DETENIDO: nueva referencia y nuevo monitoreo (accion explicita)."""
         if self.monitor.estado != DETENIDO:
             raise ValueError("no_detenido")
-        return self._armar("rearmar", duracion_s, ahora_ms)
+        return self._armar("rearmar", duracion_s, ahora_ms, tolerancia_pct, alarma_s)
 
     def detener(self, ahora_ms):
         """Detiene monitoreo/alarma, apaga el buzzer y cancela capturas."""
         detenido = self.monitor.detener("comando")
         self._captura = None
         self._prueba_buzzer_ms = None
+        self._observar(ahora_ms)
         self._sincronizar_buzzer(ahora_ms)
         return {"detenido": detenido, "estado": self.monitor.estado}
 
@@ -158,24 +183,54 @@ class ControlColchon:
         elif self.monitor.estado == ACTIVO:
             self._muestrear(ahora_ms)
 
+        self._observar(ahora_ms)
         self._sincronizar_buzzer(ahora_ms)
         return self.monitor.estado
 
     # ---------------- internos ----------------
 
+    def _observar(self, ahora_ms):
+        """Anota un evento por cada cambio de estado que hay que informar."""
+        monitor = self.monitor
+        actual = monitor.estado
+        if actual == self._estado_visto:
+            return
+        self._estado_visto = actual
+        if actual == ACTIVO:
+            self._anotar("colchon_armado", ahora_ms, {
+                "referencia_g": monitor.referencia_g,
+                "duracion_s": monitor.duracion_s,
+                "tolerancia_pct": monitor.tolerancia_pct,
+                "alarma_s": monitor.alarma_max_s})
+        elif actual == ALARMA:
+            self._anotar("alarma_colchon", ahora_ms, {
+                "referencia_g": monitor.referencia_g,
+                "ultimo_peso_g": monitor.ultimo_peso_g})
+        elif actual == DETENIDO:
+            motivo = MOTIVOS_INFORMADOS.get(monitor.motivo_parada)
+            if motivo is not None:
+                self._anotar("colchon_detenido", ahora_ms, {"motivo": motivo})
+
+    def _anotar(self, tipo, ahora_ms, datos):
+        if len(self._eventos) >= MAX_EVENTOS:
+            self._eventos.pop(0)            # nunca crece sin limite
+        self._eventos.append({"tipo": tipo, "datos": datos, "ms": ahora_ms})
+
     def _exigir_sin_monitoreo(self):
         if self.monitor.estado in (ACTIVO, ALARMA):
             raise ValueError("monitoreo_en_curso")
 
-    def _armar(self, tipo, duracion_s, ahora_ms):
+    def _armar(self, tipo, duracion_s, ahora_ms, tolerancia_pct=None, alarma_s=None):
         if duracion_s is None:
             duracion_s = self._duracion_s
         self.monitor.validar_duracion(duracion_s)       # DEC-13
+        self.monitor.validar_parametros(tolerancia_pct, alarma_s)
         if not self.calibracion.calibrada:
             raise ValueError("sin_calibracion")
         if self._cfg.COLCHON_REQUIERE_WIFI and not self._wifi_ok:
             raise ValueError("sin_wifi")
-        self._iniciar_captura(tipo, ahora_ms, duracion_s=duracion_s)
+        self._iniciar_captura(tipo, ahora_ms, duracion_s=duracion_s,
+                              tolerancia_pct=tolerancia_pct, alarma_s=alarma_s)
         return {"pendiente": True, "accion": tipo}
 
     def _iniciar_captura(self, tipo, ahora_ms, **extra):
@@ -232,7 +287,8 @@ class ControlColchon:
                 if self._cfg.COLCHON_REQUIERE_WIFI and not self._wifi_ok:
                     raise ValueError("sin_wifi")
                 referencia = self.calibracion.a_gramos(promedio)
-                self.monitor.armar(referencia, c["duracion_s"], ahora_ms)
+                self.monitor.armar(referencia, c["duracion_s"], ahora_ms,
+                                   c["tolerancia_pct"], c["alarma_s"])
                 self._duracion_s = c["duracion_s"]
                 self._ultimo_muestreo = ahora_ms
                 self._pendiente_desde = None

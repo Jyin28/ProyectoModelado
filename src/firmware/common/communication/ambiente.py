@@ -9,7 +9,9 @@ import socket
 import ssl
 import time
 
+import cola_eventos
 import config
+import modulo
 import secrets
 import wifi
 
@@ -60,7 +62,8 @@ def _post(host, autorizacion, contexto, cuerpo, timeout):
 
 
 class EnvioAmbiente:
-    def __init__(self, host, dispositivo, token, contexto, ntp, remota=None, movimiento=None):
+    def __init__(self, host, dispositivo, token, contexto, ntp, remota=None, movimiento=None,
+                 colchon=None):
         # host=None: no hay envio a Ingesta; solo trabaja la lampara remota.
         # dispositivo/token=None: ambiente deshabilitado (puede seguir movimiento).
         self._host = host
@@ -71,6 +74,10 @@ class EnvioAmbiente:
         self._remota = remota
         # (device_id, token) del modulo de movimiento, o None si esta deshabilitado.
         self._movimiento = movimiento
+        # (device_id, token) del colchon, o None. Sus eventos (armado, alarma, parada)
+        # esperan en una cola acotada y se reintentan con el mismo event_id.
+        self._colchon = colchon
+        self._cola_colchon = cola_eventos.ColaEventos(_uuid4)
         self._lock = _thread.allocate_lock()
         self._activo = True
         self._wifi_conectado = False
@@ -95,6 +102,16 @@ class EnvioAmbiente:
                 "datos": {},
             }
             self._pendiente_movimiento = (json.dumps(evento).encode(), detectado_ms)
+
+    def registrar_evento_colchon(self, tipo, datos, ocurrido_ms):
+        """Encola un evento del colchon (colchon_armado, alarma_colchon o
+        colchon_detenido). No exige hora ni WiFi ahora: la hora UTC se calcula al
+        enviar, restando lo que paso desde que ocurrio."""
+        if self._colchon is None or self._host is None:
+            return
+        with self._lock:
+            if self._activo:
+                self._cola_colchon.agregar(tipo, datos, ocurrido_ms)
 
     def registrar(self, temperatura, humedad, medido_ms):
         if self._dispositivo is None or not math.isfinite(temperatura) or not 0 <= humedad <= 100:
@@ -123,6 +140,7 @@ class EnvioAmbiente:
             self._reloj_listo = False
             self._pendiente = None
             self._pendiente_movimiento = None
+            self._cola_colchon.vaciar()
         if self._remota is not None:
             self._remota.detener()
 
@@ -145,6 +163,38 @@ class EnvioAmbiente:
                 return
             if intento == 0:
                 time.sleep_ms(250)
+
+    def _enviar_eventos_colchon(self):
+        """Envia en orden los eventos del colchon. Un fallo transitorio detiene el
+        turno y se reintenta mas tarde con el mismo event_id."""
+        ahora = time.ticks_ms()
+        with self._lock:
+            lista = self._cola_colchon.pendientes(ahora)
+        device_id, token = self._colchon
+        for evento, edad_s in lista:
+            if not self._activo or not wifi.esta_conectado():
+                return
+            utc = time.gmtime(time.time() - edad_s)
+            cuerpo = json.dumps({
+                "event_id": evento["event_id"],
+                "device_id": device_id,
+                "tipo": evento["tipo"],
+                "ts": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
+                "datos": evento["datos"],
+            }).encode()
+            try:
+                estado = _post(self._host, token, self._contexto, cuerpo, _TIMEOUT_HTTPS_S)
+            except (OSError, ValueError, MemoryError) as error:
+                print("Colchon: fallo HTTPS (%s)" % type(error).__name__)
+                estado = None
+            print("Colchon: HTTP %s" % (estado,))
+            with self._lock:
+                if estado is None or estado == 503:
+                    self._cola_colchon.reintentar(evento, time.ticks_ms())
+                    return
+                # 2xx y 409 (ya recibido) terminan; cualquier otro rechazo no se
+                # reintenta: el mismo evento volveria a rechazarse.
+                self._cola_colchon.terminado(evento)
 
     def ejecutar(self):
         ultima_revision = time.ticks_add(time.ticks_ms(), -config.REVISAR_WIFI_CADA_S * 1000)
@@ -190,6 +240,8 @@ class EnvioAmbiente:
                         self._enviar(*pendiente)
                     if movimiento is not None:
                         self._enviar(*movimiento, token=self._movimiento[1], nombre="Movimiento")
+                    if self._colchon is not None:
+                        self._enviar_eventos_colchon()
                 if self._remota is not None:
                     # Polling cooperativo de la lampara remota en este mismo hilo
                     self._remota.paso(self._reloj_listo and wifi.esta_conectado())
@@ -215,6 +267,22 @@ def _credencial_movimiento():
         print("Movimiento: credencial invalida; monitoreo desactivado")
         return None
     print("Movimiento: monitoreo habilitado localmente")
+    return (dispositivo, token)
+
+
+def _credencial_colchon():
+    """(device_id, token) del colchon para informar alarmas, o None si no aplica."""
+    if not (config.COLCHON_HABILITADO and modulo.usa("colchon")):
+        return None
+    dispositivo = getattr(secrets, "COLCHON_DEVICE_ID", "")
+    token = getattr(secrets, "COLCHON_TOKEN", "")
+    if (len(dispositivo) != 15 or not dispositivo.startswith("cuna-colchon-")
+            or not dispositivo[13:].isdigit()):
+        print("Colchon: device_id invalido; no se informa a Supabase")
+        return None
+    if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
+        print("Colchon: credencial invalida; no se informa a Supabase")
+        return None
     return (dispositivo, token)
 
 
@@ -250,15 +318,16 @@ def _credencial_ambiente():
 def iniciar(remota=None):
     """Inicia el unico worker de red.
 
-    Atiende, como cargas separadas, el envio de ambiente y el de movimiento
-    (PIR), y si se pasa, la lampara remota. Si no hay ni ambiente ni
+    Atiende, como cargas separadas, el envio de ambiente, el de movimiento
+    (PIR) y los eventos del colchon, y si se pasa, la lampara remota. Si no hay ni ambiente ni
     movimiento configurados pero si lampara remota, el worker corre solo para
     ella (host=None).
     """
     host = _leer_host()
     ambiente = _credencial_ambiente() if host is not None else None
     movimiento = _credencial_movimiento() if host is not None else None
-    if ambiente is None and movimiento is None:
+    colchon = _credencial_colchon() if host is not None else None
+    if ambiente is None and movimiento is None and colchon is None:
         host = None                 # sin cargas de Ingesta no se usa el host
     if host is None and remota is None:
         return None
@@ -274,7 +343,8 @@ def iniciar(remota=None):
             contexto.load_verify_locations(certificado.read())
         if remota is not None:
             remota.contexto = contexto
-        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota, movimiento)
+        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota, movimiento,
+                              colchon)
         # La lampara remota agrega TLS, JSON y WebSocket: pila mayor (pendiente de medir en hardware)
         pila_anterior = _thread.stack_size((16 if remota is not None else 12) * 1024)
         try:
