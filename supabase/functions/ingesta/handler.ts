@@ -12,6 +12,16 @@ export type EventoMovimiento = {
   datos: Record<string, never>
 }
 
+export type TipoColchon = 'colchon_armado' | 'alarma_colchon' | 'colchon_detenido'
+
+export type EventoColchon = {
+  event_id: string
+  device_id: string
+  tipo: TipoColchon
+  ts: string
+  datos: Record<string, number | string>
+}
+
 export type Resultado =
   | 'creado'
   | 'duplicado'
@@ -19,14 +29,19 @@ export type Resultado =
   | 'id_reutilizado'
   | 'sin_asignacion'
   | 'monitoreo_inactivo'
+  | 'evento_invalido'
 
 type Guardar = (evento: EventoAmbiente, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarMovimiento = (evento: EventoMovimiento, tokenHash: string, recibidoEn: string) => Promise<Resultado>
+type GuardarColchon = (evento: EventoColchon, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const DEVICE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/
 const DEVICE_ID_MOVIMIENTO = /^cuna-movimiento-[0-9]{2}$/
-const PREFIJOS_OTROS_MODULOS = ['cuna-movimiento-', 'cuna-lampara-']
+const DEVICE_ID_COLCHON = /^cuna-colchon-[0-9]{2}$/
+const PREFIJOS_OTROS_MODULOS = ['cuna-movimiento-', 'cuna-lampara-', 'cuna-colchon-']
+const TIPOS_COLCHON: readonly string[] = ['colchon_armado', 'alarma_colchon', 'colchon_detenido']
+const MOTIVOS_COLCHON: readonly string[] = ['app', 'boton', 'temporizador', 'duracion', 'wifi']
 const UTC =/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,3}))?Z$/
 const MAX_BODY_BYTES = 2048
 
@@ -66,11 +81,68 @@ function movimiento(value: unknown): EventoMovimiento | undefined {
   return { event_id: event_id.toLowerCase(), device_id, ts, datos: {} }
 }
 
+function numero(
+  value: unknown,
+  minimo: number,
+  maximo: number,
+  incluyeMinimo = false,
+  incluyeMaximo = true,
+): value is number {
+  return typeof value === 'number' && Number.isFinite(value) &&
+    (incluyeMinimo ? value >= minimo : value > minimo) &&
+    (incluyeMaximo ? value <= maximo : value < maximo)
+}
+
+function mismasClaves(datos: Record<string, unknown>, esperadas: string[]): boolean {
+  const claves = Object.keys(datos).sort()
+  return claves.length === esperadas.length && claves.every((clave, i) => clave === esperadas[i])
+}
+
+// Misma forma y rangos que cuna_private.datos_colchon_validos (SQL).
+function datosColchon(tipo: TipoColchon, datos: Record<string, unknown>): Record<string, number | string> | undefined {
+  if (tipo === 'colchon_armado') {
+    if (!mismasClaves(datos, ['alarma_s', 'duracion_s', 'referencia_g', 'tolerancia_pct'])) return
+    const { referencia_g, duracion_s, tolerancia_pct, alarma_s } = datos
+    if (!numero(referencia_g, 0, 100000) || !numero(duracion_s, 0, 86400)) return
+    if (!numero(tolerancia_pct, 0, 100, false, false) || !numero(alarma_s, 0, 60)) return
+    return { referencia_g, duracion_s, tolerancia_pct, alarma_s }
+  }
+  if (tipo === 'alarma_colchon') {
+    if (!mismasClaves(datos, ['referencia_g', 'ultimo_peso_g'])) return
+    const { referencia_g, ultimo_peso_g } = datos
+    if (!numero(referencia_g, 0, 100000) || !numero(ultimo_peso_g, -100000, 100000, true)) return
+    return { referencia_g, ultimo_peso_g }
+  }
+  if (!mismasClaves(datos, ['motivo'])) return
+  const { motivo } = datos
+  if (typeof motivo !== 'string' || !MOTIVOS_COLCHON.includes(motivo)) return
+  return { motivo }
+}
+
+function colchon(value: unknown): EventoColchon | undefined {
+  if (!objeto(value) || typeof value.tipo !== 'string' || !TIPOS_COLCHON.includes(value.tipo)) return
+  if (!objeto(value.datos)) return
+  const { event_id, device_id, ts } = value
+  const tipo = value.tipo as TipoColchon
+
+  if (typeof event_id !== 'string' || !UUID.test(event_id)) return
+  if (typeof device_id !== 'string' || !DEVICE_ID_COLCHON.test(device_id)) return
+  if (typeof ts !== 'string' || !fechaUtc(ts)) return
+  const datos = datosColchon(tipo, value.datos)
+  if (!datos) return
+
+  return { event_id: event_id.toLowerCase(), device_id, tipo, ts, datos }
+}
+
 function error(status: number, codigo: string, mensaje: string, reintentable = false, headers?: HeadersInit) {
   return Response.json({ codigo, mensaje, reintentable }, { status, headers })
 }
 
-export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimiento) {
+export function crearIngesta(
+  guardar: Guardar,
+  guardarMovimiento?: GuardarMovimiento,
+  guardarColchon?: GuardarColchon,
+) {
   return async (request: Request): Promise<Response> => {
     const recibidoEn = new Date().toISOString()
     if (request.method !== 'POST') {
@@ -87,6 +159,8 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
     let evento: EventoAmbiente | undefined
     let eventoMovimiento: EventoMovimiento | undefined
     let esMovimiento = false
+    let eventoColchon: EventoColchon | undefined
+    let esColchon = false
     try {
       while (true) {
         const { done, value } = await reader.read()
@@ -102,6 +176,9 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
       if (objeto(json) && json.tipo === 'movimiento') {
         esMovimiento = true
         eventoMovimiento = movimiento(json)
+      } else if (objeto(json) && typeof json.tipo === 'string' && TIPOS_COLCHON.includes(json.tipo)) {
+        esColchon = true
+        eventoColchon = colchon(json)
       } else {
         evento = lectura(json)
       }
@@ -113,7 +190,12 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
     if (esMovimiento && !(eventoMovimiento && guardarMovimiento)) {
       return error(400, 'evento_invalido', 'Se requiere un evento movimiento válido.')
     }
-    if (!esMovimiento && !evento) return error(400, 'evento_invalido', 'Se requiere un evento ambiente válido.')
+    if (esColchon && !(eventoColchon && guardarColchon)) {
+      return error(400, 'evento_invalido', 'Se requiere un evento colchón válido.')
+    }
+    if (!esMovimiento && !esColchon && !evento) {
+      return error(400, 'evento_invalido', 'Se requiere un evento ambiente válido.')
+    }
     if (evento && PREFIJOS_OTROS_MODULOS.some((prefijo) => evento!.device_id.startsWith(prefijo))) {
       // Credencial de otro módulo usada contra ambiente: se rechaza sin tocar la base.
       return error(401, 'no_autorizado', 'Credencial de dispositivo inválida.')
@@ -122,10 +204,12 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
     try {
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))
       const tokenHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
-      const resultado = eventoMovimiento
-        ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
-        : await guardar(evento!, tokenHash, recibidoEn)
-      const idEvento = (eventoMovimiento ?? evento)!.event_id
+      const resultado = eventoColchon
+        ? await guardarColchon!(eventoColchon, tokenHash, recibidoEn)
+        : eventoMovimiento
+          ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
+          : await guardar(evento!, tokenHash, recibidoEn)
+      const idEvento = (eventoColchon ?? eventoMovimiento ?? evento)!.event_id
       switch (resultado) {
         case 'creado':
           return Response.json({ event_id: idEvento, estado: 'recibido' }, { status: 201 })
@@ -137,6 +221,8 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
           return error(400, 'id_reutilizado', 'El identificador ya corresponde a otro evento.')
         case 'sin_asignacion':
           return error(422, 'sin_asignacion', 'El dispositivo no tenía un bebé asignado a la hora de medición.')
+        case 'evento_invalido':
+          return error(400, 'evento_invalido', 'El evento no tiene la forma esperada.')
         case 'monitoreo_inactivo':
           // La última confirmación real dice que el monitoreo está apagado: no se reintenta.
           return error(409, 'monitoreo_inactivo', 'El monitoreo de movimiento está desactivado.')
