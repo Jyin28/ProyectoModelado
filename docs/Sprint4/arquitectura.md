@@ -292,12 +292,12 @@ Reglas permanentes de la web (de `src/frontend/CLAUDE.md` y `CLAUDE.md`): no mos
 
 ## 8. Decisiones abiertas para el equipo
 
-1. Transporte de la voz en vivo (Realtime o conexión directa) y viabilidad en la Pico. Probar en la fase 2 antes de fijar el diseño.
+1. Transporte de la voz en vivo (Realtime o conexión directa) y viabilidad en la Pico. Probar antes de fijar el diseño: prueba P2 de [`protocolo-banco.md`](protocolo-banco.md), pendiente de ejecución.
 2. Si una toma interrumpida por un corte cuenta el hueco en la duración activa.
 3. Comportamiento de ventanas de monitoreo y horarios de figuras cuando el corte termina dentro de la ventana (propuesta: no reanudar hasta el siguiente inicio).
 4. Cómo generalizar `ordenes_lampara` a todos los módulos (una tabla con `command` y `params` o una tabla por módulo).
 5. Matriz de navegadores y dispositivos para HU-35 (CA-35.3).
-6. Mecanismo de fotos: carga desde el celular a Storage o captura por una cámara del módulo.
+6. Mecanismo de fotos: carga desde el celular a Storage o captura por una cámara del módulo. Prueba P3 de [`protocolo-banco.md`](protocolo-banco.md), pendiente de ejecución.
 7. Definir los identificadores de módulo lógico futuros (por ejemplo `cuna-colchon-NN`, `cuna-figuras-NN`). Hoy `ingesta` exige el patrón `cuna-movimiento-NN` para movimiento y `cuna-lampara-NN` para las órdenes de lámpara (en la base). Para ambiente acepta cualquier identificador con el formato general `[a-z0-9][a-z0-9_-]{0,63}`, salvo los prefijos `cuna-movimiento-` y `cuna-lampara-`, que rechaza con 401 (`supabase/functions/ingesta/handler.ts:21-23`).
 
 ## 9. Fuentes
