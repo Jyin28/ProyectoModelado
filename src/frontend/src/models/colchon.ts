@@ -11,7 +11,7 @@ export type ConfigColchon = {
 export const COLCHON_DURACION_MAX_S = 86400
 export const COLCHON_ALARMA_MAX_S = 60
 
-export type MotivoParada = 'app' | 'boton' | 'temporizador' | 'duracion' | 'wifi'
+export type MotivoParada = 'app' | 'boton' | 'temporizador' | 'duracion' | 'wifi' | 'reinicio'
 
 export const TEXTO_MOTIVO: Record<MotivoParada, string> = {
   app: 'desde la app',
@@ -19,6 +19,7 @@ export const TEXTO_MOTIVO: Record<MotivoParada, string> = {
   temporizador: 'al terminar el tiempo de la alarma',
   duracion: 'al terminar la duración',
   wifi: 'por pérdida de WiFi',
+  reinicio: 'al reiniciarse o reconectarse el módulo',
 }
 
 export const TIPOS_EVENTO_COLCHON = [
