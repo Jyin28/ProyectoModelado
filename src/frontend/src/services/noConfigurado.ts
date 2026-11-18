@@ -47,6 +47,11 @@ export const serviciosNoConfigurados: Servicios = {
     abrir: () => fallo(),
     registrarActividad: () => fallo(),
   },
+  colchon: {
+    obtenerConfig: () => fallo(),
+    guardarConfig: () => fallo(),
+    listarEventos: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),

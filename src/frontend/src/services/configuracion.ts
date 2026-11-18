@@ -52,6 +52,7 @@ export function botTelegram(): string | null {
 export const DISPOSITIVO_FIGURAS_POR_DEFECTO = 'cuna-figuras-01'
 export const DISPOSITIVO_AUDIO_POR_DEFECTO = 'cuna-audio-01'
 export const PRODUCTO_CUNA_POR_DEFECTO = 'cuna-01'
+export const DISPOSITIVO_COLCHON_POR_DEFECTO = 'cuna-colchon-01'
 
 const IDENTIFICADOR = /^[a-z0-9][a-z0-9_-]{0,63}$/
 
@@ -85,4 +86,9 @@ export function ordenesHabilitadas(): boolean {
 /** La voz en vivo es opt-in aparte: VITE_VOZ_HABILITADA=true (exactamente). */
 export function vozHabilitada(): boolean {
   return import.meta.env.VITE_VOZ_HABILITADA?.trim() === 'true'
+}
+
+/** Módulo del colchón. Es un módulo separado de la cuna. */
+export function dispositivoColchonId(): string {
+  return identificador(import.meta.env.VITE_COLCHON_DEVICE_ID, DISPOSITIVO_COLCHON_POR_DEFECTO)
 }

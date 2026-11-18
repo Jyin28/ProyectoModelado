@@ -17,6 +17,7 @@ import type {
   InvitacionDueno,
   ModuloAsociado,
 } from '../models/cuentas.ts'
+import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
 import type {
   ComandoModulo,
@@ -195,6 +196,21 @@ export interface ServicioVoz {
   ): Promise<Resultado<null>>
 }
 
+export interface ServicioColchon {
+  /** Configuración guardada, o null si nunca se guardó (no hay valores por defecto). */
+  obtenerConfig(dispositivoId: string): Promise<Resultado<ConfigColchon | null>>
+  /** Un rechazo conserva la configuración anterior. */
+  guardarConfig(
+    dispositivoId: string,
+    config: ConfigColchon,
+  ): Promise<Resultado<ConfigColchon>>
+  /** Eventos de armado, alarma y parada, del más reciente al más antiguo. */
+  listarEventos(
+    dispositivoId: string,
+    limite: number,
+  ): Promise<Resultado<EventoColchon[]>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -203,6 +219,7 @@ export type Servicios = {
   limites: ServicioLimites
   horarios: ServicioHorarios
   voz: ServicioVoz
+  colchon: ServicioColchon
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram

@@ -37,6 +37,8 @@ const MENSAJES_ORDENES: Record<string, string> = {
     'Los límites no son válidos: el mínimo debe ser menor que el máximo y estar en rango.',
   horario_invalido: 'Alguna hora del horario no es válida.',
   actividad_invalida: 'No se pudo registrar la actividad de voz.',
+  config_colchon_invalida:
+    'La configuración no es válida: revisa la duración, la tolerancia y la alarma.',
 }
 
 function mensaje(error: unknown): string {
@@ -86,7 +88,7 @@ function aOrden(fila: unknown): OrdenModulo | null {
   }
 }
 
-async function llamar(
+export async function llamar(
   cliente: ClienteRpc,
   nombre: string,
   parametros: Record<string, unknown>,

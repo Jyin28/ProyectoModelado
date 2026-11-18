@@ -35,11 +35,23 @@ export type ComandoMovimiento = {
   params: { enabled: boolean }
 }
 
-export type ComandoModulo = ComandoFiguras | ComandoAudio | ComandoMovimiento
+export type ComandoColchon =
+  | {
+      command: 'mattress_arm' | 'mattress_rearm'
+      params: { duration_s?: number; tolerance_pct?: number; alarm_s?: number }
+    }
+  | { command: 'mattress_stop'; params: Record<string, never> }
+
+export type ComandoModulo =
+  | ComandoFiguras
+  | ComandoAudio
+  | ComandoMovimiento
+  | ComandoColchon
 
 export const COMANDOS_FIGURAS = ['led_set', 'led_all', 'led_sequence', 'led_stop']
 export const COMANDOS_AUDIO = ['audio_play', 'audio_stop']
 export const COMANDOS_MOVIMIENTO = ['motion_set']
+export const COMANDOS_COLCHON = ['mattress_arm', 'mattress_rearm', 'mattress_stop']
 
 /** Estado guardado por el servidor. */
 export type EstadoOrden = 'pendiente' | 'enviado' | 'confirmado' | 'error'

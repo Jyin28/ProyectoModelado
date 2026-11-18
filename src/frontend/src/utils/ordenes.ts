@@ -19,6 +19,15 @@ export const MENSAJE_LIMITES_RANGO =
 const esEnteroEn = (v: unknown, min: number, max: number): v is number =>
   typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
 
+const PARAMETROS_ARMADO = ['duration_s', 'tolerance_pct', 'alarm_s']
+
+/** Número finito mayor que `minimo` y menor (o igual, si `incluyeMaximo`) que `maximo`. */
+const numeroEn = (v: unknown, minimo: number, maximo: number, incluyeMaximo: boolean): v is number =>
+  typeof v === 'number' &&
+  Number.isFinite(v) &&
+  v > minimo &&
+  (incluyeMaximo ? v <= maximo : v < maximo)
+
 /** true si el comando cumple los mismos rangos que el firmware y la base. */
 export function comandoValido(comando: ComandoModulo): boolean {
   const p: Record<string, unknown> = comando.params
@@ -42,6 +51,16 @@ export function comandoValido(comando: ComandoModulo): boolean {
       return CATALOGO_AUDIO.some((s) => s.id === p.sound)
     case 'motion_set':
       return typeof p.enabled === 'boolean'
+    case 'mattress_arm':
+    case 'mattress_rearm':
+      return (
+        Object.keys(p).every((k) => PARAMETROS_ARMADO.includes(k)) &&
+        (p.duration_s === undefined || numeroEn(p.duration_s, 0, 86400, true)) &&
+        (p.tolerance_pct === undefined || numeroEn(p.tolerance_pct, 0, 100, false)) &&
+        (p.alarm_s === undefined || numeroEn(p.alarm_s, 0, 60, true))
+      )
+    case 'mattress_stop':
+      return Object.keys(p).length === 0
     default:
       return false
   }

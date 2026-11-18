@@ -3,6 +3,7 @@ import { ContextoServicios } from '../hooks/useServicios.ts'
 import { crearServicioAuth } from '../services/auth.ts'
 import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
+import { crearServicioColchon } from '../services/colchon.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
 import {
   crearServicioHorarios,
@@ -43,6 +44,7 @@ function ProveedorServicios({
             limites: crearServicioLimites(supabase),
             horarios: crearServicioHorarios(supabase),
             voz: crearServicioVoz(supabase),
+            colchon: crearServicioColchon(supabase),
             telegram: crearServicioTelegram(supabase),
           }
         : serviciosNoConfigurados)
