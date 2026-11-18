@@ -1,0 +1,378 @@
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import App from '../src/App.tsx'
+import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
+import type { EstadoModulo, LimitesAmbiente, OrdenModulo } from '../src/models/ordenes.ts'
+import { serviciosNoConfigurados } from '../src/services/noConfigurado.ts'
+import type {
+  Resultado,
+  Servicios,
+  ServicioHorarios,
+  ServicioLimites,
+  ServicioOrdenes,
+  ServicioVoz,
+  SesionVoz,
+} from '../src/services/tipos.ts'
+import { MENSAJE_INTERVALO } from '../src/utils/ordenes.ts'
+import { MENSAJE_SIN_MICROFONO } from '../src/hooks/useVoz.ts'
+import type { Capturador } from '../src/utils/voz.ts'
+
+const ok = <T,>(datos: T): Promise<Resultado<T>> => Promise.resolve({ ok: true, datos })
+const falla = <T,>(error: string): Promise<Resultado<T>> => Promise.resolve({ ok: false, error })
+
+const SIN_ESTADO: EstadoModulo = { estado: {}, actualizado_en: null }
+
+function orden(extra: Partial<OrdenModulo> = {}): OrdenModulo {
+  return {
+    command_id: 'c-1',
+    device_id: 'cuna-figuras-01',
+    command: 'led_all',
+    params: { on: true },
+    creado_en: '2999-11-18T10:00:00Z',
+    vence_en: '2999-11-18T10:00:15Z',
+    estado: 'pendiente',
+    entregado_en: null,
+    confirmado_en: null,
+    error: null,
+    ...extra,
+  }
+}
+
+type Parciales = {
+  ordenes?: Partial<ServicioOrdenes>
+  limites?: Partial<ServicioLimites>
+  horarios?: Partial<ServicioHorarios>
+  voz?: Partial<ServicioVoz>
+}
+
+function abrir(ruta: string, p: Parciales = {}, backend = true) {
+  const servicios: Servicios = {
+    ...serviciosNoConfigurados,
+    ordenes: {
+      solicitar: () => falla('x'),
+      obtenerUltimaOrden: () => ok(null),
+      obtenerEstado: () => ok(SIN_ESTADO),
+      ...p.ordenes,
+    },
+    limites: { obtener: () => ok(null), guardar: () => falla('x'), ...p.limites },
+    horarios: { listar: () => ok([]), reemplazar: (_d, _t, h) => ok(h), ...p.horarios },
+    voz: { abrir: () => falla('x'), registrarActividad: () => ok(null), ...p.voz },
+    auth: {
+      ...serviciosNoConfigurados.auth,
+      obtenerSesion: () => ok({ usuario_id: 'u-1', correo: 'ana@ejemplo.test' }),
+    },
+  }
+  return render(
+    <ProveedorServicios configurado={backend} servicios={servicios}>
+      <MemoryRouter initialEntries={[ruta]}>
+        <App />
+      </MemoryRouter>
+    </ProveedorServicios>,
+  )
+}
+
+afterEach(() => vi.unstubAllEnvs())
+
+describe('Figuras LED', () => {
+  it('sin la bandera no hay controles que aparenten operar hardware', async () => {
+    abrir('/figuras')
+    expect(await screen.findByRole('heading', { name: 'Figuras LED' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Control de las figuras' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Encender todos' })).not.toBeInTheDocument()
+  })
+
+  it('una solicitud no cambia el estado: sigue «Sin confirmación» hasta que la Pico confirme', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden()))
+    abrir('/figuras', { ordenes: { solicitar } })
+    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    expect(await within(panel).findByText('Sin confirmación de la Pico.')).toBeInTheDocument()
+    fireEvent.click(within(panel).getByRole('button', { name: 'Encender todos' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-figuras-01', { command: 'led_all', params: { on: true } }),
+    )
+    expect(await within(panel).findByText(/Solicitud registrada/)).toBeInTheDocument()
+    expect(within(panel).getByText('Sin confirmación de la Pico.')).toBeInTheDocument()
+  })
+
+  it('muestra la secuencia solo si la Pico la confirmó', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    abrir('/figuras', {
+      ordenes: {
+        obtenerEstado: () =>
+          ok({ estado: { secuencia: 'chase' }, actualizado_en: '2999-11-18T10:00:00Z' }),
+      },
+    })
+    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    expect(
+      await within(panel).findByText(/Secuencia activa confirmada por la Pico: Persecución/),
+    ).toBeInTheDocument()
+  })
+
+  it('rechaza un intervalo menor que 2 s sin llamar al servicio (CA-13.4)', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden()))
+    abrir('/figuras', { ordenes: { solicitar } })
+    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    const campo = within(panel).getByLabelText(/Intervalo entre pasos/)
+    for (const malo of ['', '1', '1.9', '3601', 'abc']) {
+      fireEvent.change(campo, { target: { value: malo } })
+      fireEvent.click(within(panel).getByRole('button', { name: 'Iniciar secuencia' }))
+      expect(await within(panel).findByText(MENSAJE_INTERVALO)).toBeInTheDocument()
+    }
+    expect(solicitar).not.toHaveBeenCalled()
+
+    fireEvent.change(campo, { target: { value: '2' } })
+    const formulario = within(panel).getByRole('form', { name: 'Secuencia' })
+    fireEvent.change(within(formulario).getAllByRole('combobox')[0], { target: { value: 'blink_all' } })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Iniciar secuencia' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-figuras-01', {
+        command: 'led_sequence',
+        params: { name: 'blink_all', step_s: 2 },
+      }),
+    )
+  })
+
+  it('un fallo al solicitar se muestra y no inventa una orden', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    abrir('/figuras', { ordenes: { solicitar: () => falla('No tienes permiso para esta operación.') } })
+    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    fireEvent.click(await within(panel).findByRole('button', { name: 'Apagar todos' }))
+    expect(await within(panel).findByRole('alert')).toHaveTextContent('No tienes permiso')
+    expect(within(panel).getByText('No hay órdenes registradas.')).toBeInTheDocument()
+  })
+
+  it('sin backend configurado el panel no muestra nada', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    abrir('/figuras', {}, false)
+    expect(await screen.findByRole('heading', { name: 'Figuras LED' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Control de las figuras' })).not.toBeInTheDocument()
+  })
+
+  it('los horarios se guardan en el servidor y se muestran los guardados', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const reemplazar = vi.fn((_d: string, _t: string, h: string[]) => ok(h))
+    abrir('/figuras', {
+      horarios: { listar: (_d, tipo) => ok(tipo === 'figuras_encender' ? ['20:00'] : []), reemplazar },
+    })
+    const grupo = await screen.findByRole('group', { name: 'Encender figuras' })
+    expect(await within(grupo).findByText('20:00')).toBeInTheDocument()
+    fireEvent.change(within(grupo).getByLabelText(/Nueva hora/), { target: { value: '06:30' } })
+    fireEvent.click(within(grupo).getByRole('button', { name: /Agregar hora/ }))
+    fireEvent.click(within(grupo).getByRole('button', { name: /Guardar horarios/ }))
+    await waitFor(() =>
+      expect(reemplazar).toHaveBeenCalledWith('cuna-figuras-01', 'figuras_encender', ['06:30', '20:00']),
+    )
+    expect(within(grupo).getByText(/hora de Costa Rica/i)).toBeInTheDocument()
+  })
+})
+
+describe('Monitoreo de movimiento y audio', () => {
+  it('el monitoreo se muestra activado solo con la confirmación de la Pico (CA-08.2)', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden({ device_id: 'cuna-movimiento-01', command: 'motion_set' })))
+    abrir('/cuna', { ordenes: { solicitar } })
+    const panel = await screen.findByRole('region', { name: 'Monitoreo de movimiento' })
+    expect(await within(panel).findByText('Sin confirmación de la Pico.')).toBeInTheDocument()
+    fireEvent.click(within(panel).getByRole('button', { name: 'Activar monitoreo' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-movimiento-01', {
+        command: 'motion_set',
+        params: { enabled: true },
+      }),
+    )
+    expect(within(panel).getByText('Sin confirmación de la Pico.')).toBeInTheDocument()
+  })
+
+  it('con el monitoreo confirmado lo dice con la hora', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    abrir('/cuna', {
+      ordenes: {
+        obtenerEstado: () =>
+          ok({ estado: { monitoreo: true }, actualizado_en: '2999-11-18T14:15:00Z' }),
+      },
+    })
+    const panel = await screen.findByRole('region', { name: 'Monitoreo de movimiento' })
+    expect(await within(panel).findByText(/Monitoreo activado, confirmado por la Pico el .*08:15:00/)).toBeInTheDocument()
+  })
+
+  it('el audio ofrece solo el catálogo real de la Pico', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden({ device_id: 'cuna-audio-01', command: 'audio_play' })))
+    abrir('/cuna', { ordenes: { solicitar } })
+    const panel = await screen.findByRole('region', { name: 'Audio de la cuna' })
+    const opciones = within(within(panel).getByLabelText('Sonido')).getAllByRole('option')
+    expect(opciones.map((o) => o.textContent)).toEqual(['Tono suave'])
+    fireEvent.click(within(panel).getByRole('button', { name: 'Reproducir' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', {
+        command: 'audio_play',
+        params: { sound: 'tono_suave' },
+      }),
+    )
+    fireEvent.click(within(panel).getByRole('button', { name: 'Detener audio' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', { command: 'audio_stop', params: {} }),
+    )
+  })
+
+  it('sin la bandera no aparecen el audio ni el monitoreo', async () => {
+    abrir('/cuna')
+    expect(await screen.findByRole('heading', { name: 'Cuna' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Audio de la cuna' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Monitoreo de movimiento' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Hablar a la cuna' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Límites de ambiente', () => {
+  const campo = (panel: HTMLElement, nombre: RegExp) => within(panel).getByLabelText(nombre)
+
+  it('sin límites guardados lo dice y no inventa valores (CA-10.1)', async () => {
+    abrir('/cuna')
+    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    expect(await within(panel).findByText('Todavía no hay límites guardados.')).toBeInTheDocument()
+    expect(campo(panel, /Temperatura mínima/)).toHaveValue('')
+  })
+
+  it('guarda límites válidos y muestra los guardados (CA-10.1, CA-10.3)', async () => {
+    const guardar = vi.fn((_d: string, l: LimitesAmbiente) => ok(l))
+    abrir('/cuna', { limites: { guardar } })
+    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    await within(panel).findByText('Todavía no hay límites guardados.')
+    fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '20' } })
+    fireEvent.change(campo(panel, /Temperatura máxima/), { target: { value: '26,5' } })
+    fireEvent.change(campo(panel, /Humedad mínima/), { target: { value: '40' } })
+    fireEvent.change(campo(panel, /Humedad máxima/), { target: { value: '60' } })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
+    await waitFor(() =>
+      expect(guardar).toHaveBeenCalledWith('cuna-ambiente-01', {
+        temp_min: 20,
+        temp_max: 26.5,
+        hum_min: 40,
+        hum_max: 60,
+      }),
+    )
+    expect(await within(panel).findByText('Límites guardados.')).toBeInTheDocument()
+  })
+
+  it('el mínimo igual o mayor que el máximo se rechaza sin llamar al servicio (CA-10.4)', async () => {
+    const guardar = vi.fn((_d: string, l: LimitesAmbiente) => ok(l))
+    abrir('/cuna', {
+      limites: {
+        guardar,
+        obtener: () => ok({ temp_min: 20, temp_max: 26, hum_min: 40, hum_max: 60 }),
+      },
+    })
+    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    await waitFor(() => expect(campo(panel, /Temperatura mínima/)).toHaveValue('20'))
+    fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '30' } })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
+    expect(await within(panel).findByRole('alert')).toHaveTextContent('el mínimo debe ser menor que el máximo')
+    expect(guardar).not.toHaveBeenCalled()
+    // Lo guardado en el servidor no cambió: al recargar siguen los valores anteriores.
+    expect(campo(panel, /Temperatura máxima/)).toHaveValue('26')
+  })
+
+  it('un rechazo del servidor se muestra', async () => {
+    abrir('/cuna', {
+      limites: { guardar: () => falla('Los límites no son válidos: el mínimo debe ser menor que el máximo y estar en rango.') },
+    })
+    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    await within(panel).findByText('Todavía no hay límites guardados.')
+    for (const [n, v] of [[/Temperatura mínima/, '10'], [/Temperatura máxima/, '20'], [/Humedad mínima/, '30'], [/Humedad máxima/, '70']] as const) {
+      fireEvent.change(campo(panel, n), { target: { value: v } })
+    }
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
+    expect(await within(panel).findByRole('alert')).toHaveTextContent('Los límites no son válidos')
+  })
+})
+
+describe('Voz', () => {
+  function sesionFalsa() {
+    const sesion: SesionVoz & { enviar: ReturnType<typeof vi.fn>; cerrar: ReturnType<typeof vi.fn> } = {
+      enviar: vi.fn(() => Promise.resolve(true)),
+      cerrar: vi.fn(() => Promise.resolve()),
+    }
+    return sesion
+  }
+
+  function capturadorFalso() {
+    const detener = vi.fn()
+    let emitir: (pcm: Int16Array) => void = () => {}
+    const capturador: Capturador = (alFragmento) => {
+      emitir = alFragmento
+      return Promise.resolve({ detener })
+    }
+    return { capturador, detener, emitir: (pcm: Int16Array) => emitir(pcm) }
+  }
+
+  // PanelVoz recibe el capturador por propiedad; se monta dentro de la página mediante
+  // el módulo de captura real, que aquí se sustituye con vi.mock en cada prueba.
+  async function conCaptura(c: Capturador, p: Parciales) {
+    vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
+    const modulo = await import('../src/utils/voz.ts')
+    vi.spyOn(modulo, 'capturarMicrofono').mockImplementation(c)
+    return abrir('/cuna', p)
+  }
+
+  it('sin la bandera no hay botón de voz', async () => {
+    abrir('/cuna')
+    await screen.findByRole('heading', { name: 'Cuna' })
+    expect(screen.queryByRole('button', { name: 'Hablar' })).not.toBeInTheDocument()
+  })
+
+  it('un fallo al abrir el canal se muestra y no se pide el micrófono', async () => {
+    vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
+    const abrirCanal = vi.fn(() => falla<SesionVoz>('No se pudo abrir el canal de voz.'))
+    abrir('/cuna', { voz: { abrir: abrirCanal } })
+    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
+    expect(await within(panel).findByRole('alert')).toHaveTextContent('No se pudo abrir el canal de voz.')
+    expect(abrirCanal).toHaveBeenCalledWith('cuna-01')
+    expect(within(panel).getByRole('button', { name: 'Hablar' })).toBeEnabled()
+  })
+
+  it('el texto aclara que la voz no se guarda ni se probó con hardware real', async () => {
+    vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
+    abrir('/cuna')
+    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    expect(within(panel).getByText(/no se graba ni se guarda/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Todavía no se probó/)).toBeInTheDocument()
+  })
+
+  it('sin permiso de micrófono cierra el canal y avisa', async () => {
+    const sesion = sesionFalsa()
+    const rechazo: Capturador = () => Promise.reject(new Error('denegado'))
+    await conCaptura(rechazo, { voz: { abrir: () => ok<SesionVoz>(sesion) } })
+    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
+    expect(await within(panel).findByRole('alert')).toHaveTextContent(MENSAJE_SIN_MICROFONO)
+    expect(sesion.cerrar).toHaveBeenCalled()
+  })
+
+  it('envía fragmentos numerados, registra la actividad y cierra al detener', async () => {
+    const sesion = sesionFalsa()
+    const falso = capturadorFalso()
+    const registrarActividad = vi.fn(() => ok(null))
+    await conCaptura(falso.capturador, { voz: { abrir: () => ok<SesionVoz>(sesion), registrarActividad } })
+    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
+    expect(await within(panel).findByRole('button', { name: 'Dejar de hablar' })).toBeInTheDocument()
+    expect(registrarActividad).toHaveBeenCalledWith('cuna-audio-01', 'inicio')
+
+    falso.emitir(new Int16Array(320).fill(1000))
+    falso.emitir(new Int16Array(320).fill(-1000))
+    expect(sesion.enviar).toHaveBeenCalledTimes(2)
+    expect(sesion.enviar.mock.calls.map((c) => c[0])).toEqual([0, 1])
+    expect(typeof sesion.enviar.mock.calls[0][1]).toBe('string')
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Dejar de hablar' }))
+    await waitFor(() => expect(sesion.cerrar).toHaveBeenCalled())
+    expect(falso.detener).toHaveBeenCalled()
+    expect(registrarActividad).toHaveBeenCalledWith('cuna-audio-01', 'fin')
+    expect(await within(panel).findByRole('button', { name: 'Hablar' })).toBeInTheDocument()
+  })
+})

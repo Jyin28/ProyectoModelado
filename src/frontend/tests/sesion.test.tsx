@@ -51,7 +51,15 @@ function crearAuth(opciones: Opciones = {}) {
     ),
     suscribirCambiosSesion: suscribir,
   }
-  const servicios: Servicios = { ...serviciosNoConfigurados, auth }
+  const servicios: Servicios = {
+    ...serviciosNoConfigurados,
+    // La pantalla Cuna también consulta los límites; sin límites guardados no muestra alertas.
+    limites: {
+      obtener: () => Promise.resolve({ ok: true, datos: null }),
+      guardar: serviciosNoConfigurados.limites.guardar,
+    },
+    auth,
+  }
   return {
     auth,
     servicios,

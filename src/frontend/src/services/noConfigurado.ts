@@ -30,6 +30,23 @@ export const serviciosNoConfigurados: Servicios = {
     solicitarLampara: () => fallo(),
     obtenerUltimaOrdenLampara: () => fallo(),
   },
+  ordenes: {
+    solicitar: () => fallo(),
+    obtenerUltimaOrden: () => fallo(),
+    obtenerEstado: () => fallo(),
+  },
+  limites: {
+    obtener: () => fallo(),
+    guardar: () => fallo(),
+  },
+  horarios: {
+    listar: () => fallo(),
+    reemplazar: () => fallo(),
+  },
+  voz: {
+    abrir: () => fallo(),
+    registrarActividad: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),

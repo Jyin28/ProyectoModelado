@@ -4,6 +4,12 @@ import { crearServicioAuth } from '../services/auth.ts'
 import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
+import {
+  crearServicioHorarios,
+  crearServicioLimites,
+  crearServicioOrdenes,
+  crearServicioVoz,
+} from '../services/ordenes.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
 import { crearServicioTelegram } from '../services/telegram.ts'
 import { backendConfigurado, supabase } from '../services/supabase.ts'
@@ -33,6 +39,10 @@ function ProveedorServicios({
             cuentas: crearServicioCuentas(supabase),
             lecturas: crearServicioLecturas(supabase),
             lampara: crearServicioLampara(supabase),
+            ordenes: crearServicioOrdenes(supabase),
+            limites: crearServicioLimites(supabase),
+            horarios: crearServicioHorarios(supabase),
+            voz: crearServicioVoz(supabase),
             telegram: crearServicioTelegram(supabase),
           }
         : serviciosNoConfigurados)

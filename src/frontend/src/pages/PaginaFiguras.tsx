@@ -1,4 +1,6 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
+import PanelFiguras from '../components/PanelFiguras.tsx'
+import { dispositivoFigurasId, ordenesHabilitadas } from '../services/configuracion.ts'
 import './paginas.css'
 import './PaginaFiguras.css'
 
@@ -8,6 +10,7 @@ function PaginaFiguras() {
   return (
     <section className="pagina" aria-labelledby="titulo-figuras">
       <h1 id="titulo-figuras">Figuras LED</h1>
+      {ordenesHabilitadas() && <PanelFiguras dispositivoId={dispositivoFigurasId()} />}
       <AvisoSinDatos />
       <p>
         Seis indicadores visuales, uno por figura. No representan un estado

@@ -19,6 +19,13 @@ import type {
 } from '../models/cuentas.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
 import type {
+  ComandoModulo,
+  EstadoModulo,
+  FaseVoz,
+  LimitesAmbiente,
+  OrdenModulo,
+} from '../models/ordenes.ts'
+import type {
   CodigoVinculacion,
   DestinatarioTelegram,
 } from '../models/telegram.ts'
@@ -139,10 +146,63 @@ export interface ServicioTelegram {
   retirarDestinatario(destinatarioId: string): Promise<Resultado<null>>
 }
 
+export interface ServicioOrdenes {
+  /** Registra una solicitud (RPC solicitar_orden). No prueba que el hardware actúe. */
+  solicitar(
+    dispositivoId: string,
+    comando: ComandoModulo,
+  ): Promise<Resultado<OrdenModulo>>
+  /** Última orden del módulo entre los comandos dados. */
+  obtenerUltimaOrden(
+    dispositivoId: string,
+    comandos: readonly string[],
+  ): Promise<Resultado<OrdenModulo | null>>
+  /** Lo último que la Pico confirmó; vacío si nunca confirmó nada. */
+  obtenerEstado(dispositivoId: string): Promise<Resultado<EstadoModulo>>
+}
+
+export interface ServicioLimites {
+  obtener(dispositivoId: string): Promise<Resultado<LimitesAmbiente | null>>
+  /** Un rechazo conserva los límites anteriores. */
+  guardar(
+    dispositivoId: string,
+    limites: LimitesAmbiente,
+  ): Promise<Resultado<LimitesAmbiente>>
+}
+
+export interface ServicioHorarios {
+  /** Horas «HH:MM» (hora de Costa Rica) activas para un tipo de horario. */
+  listar(dispositivoId: string, tipo: string): Promise<Resultado<string[]>>
+  reemplazar(
+    dispositivoId: string,
+    tipo: string,
+    horas: string[],
+  ): Promise<Resultado<string[]>>
+}
+
+/** Sesión de voz abierta: difunde fragmentos y se cierra con voz_fin. */
+export interface SesionVoz {
+  enviar(seq: number, pcmBase64: string): Promise<boolean>
+  cerrar(): Promise<void>
+}
+
+export interface ServicioVoz {
+  abrir(productoId: string): Promise<Resultado<SesionVoz>>
+  /** Registra que hubo voz (sin audio). */
+  registrarActividad(
+    dispositivoId: string,
+    fase: FaseVoz,
+  ): Promise<Resultado<null>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
   lampara: ServicioLampara
+  ordenes: ServicioOrdenes
+  limites: ServicioLimites
+  horarios: ServicioHorarios
+  voz: ServicioVoz
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram

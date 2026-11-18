@@ -9,6 +9,11 @@ interface ImportMetaEnv {
   readonly VITE_MOVIMIENTO_HABILITADO?: string
   readonly VITE_MOVIMIENTO_DEVICE_ID?: string
   readonly VITE_TELEGRAM_BOT?: string
+  readonly VITE_ORDENES_HABILITADAS?: string
+  readonly VITE_VOZ_HABILITADA?: string
+  readonly VITE_FIGURAS_DEVICE_ID?: string
+  readonly VITE_AUDIO_DEVICE_ID?: string
+  readonly VITE_CUNA_PRODUCTO_ID?: string
 }
 
 interface ImportMeta {
