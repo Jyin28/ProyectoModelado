@@ -28,6 +28,7 @@ Estados de la orden: `pendiente`, `enviado`, `confirmado`, `error`. La web los m
 | `cuna-colchon-NN` | `mattress_arm`, `mattress_rearm` | opcionales: `duration_s` mayor que 0 y hasta 86400; `tolerance_pct` mayor que 0 y menor que 100; `alarm_s` mayor que 0 y hasta 60 | `{pendiente: true}` |
 | | `mattress_stop` | ninguno | estado del colchón |
 | `cuna-habitacion-NN` | `room_monitor_set` | `sensor` en `puerta` o `movimiento`, `enabled` booleano (las dos claves son obligatorias) | `{sensor, enabled}` |
+| `cuna-alimentacion-NN` | `feeding_weigh` | `toma_id` (uuid), `momento` en `inicial`, `control` o `final` (las dos claves son obligatorias). **No se solicita con `solicitar_orden`**: solo la crea `pedir_peso_toma` ([alimentacion.md](alimentacion.md)). | `{pendiente: true, momento}`; el peso llega como evento, no en la confirmación |
 
 Claves de más, tipos distintos o valores fuera de rango se rechazan con `22023` (`parametros_invalidos`). Un comando de otro módulo se rechaza con `comando_de_otro_modulo`.
 
@@ -48,6 +49,7 @@ Catálogo de audio: la Pico solo tiene el sonido `tono_suave` (tono sintetizado)
 
 - Figuras: `secuencia` (nombre o `null`).
 - Habitación: `monitoreo_puerta` y `monitoreo_movimiento` (booleanos, uno por sensor; ver [habitacion.md](habitacion.md)).
+- Alimentación: ninguna clave; el pesaje no deja estado confirmado y su resultado es un evento de la toma ([alimentacion.md](alimentacion.md)).
 - Movimiento: `monitoreo` (booleano). Si es `false`, la ingesta ignora los eventos del PIR y responde `409 monitoreo_inactivo` (sin reintento).
 
 ## Horarios que generan órdenes

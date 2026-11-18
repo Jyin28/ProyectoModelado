@@ -59,6 +59,8 @@ export const COMANDOS_AUDIO = ['audio_play', 'audio_stop']
 export const COMANDOS_MOVIMIENTO = ['motion_set']
 export const COMANDOS_COLCHON = ['mattress_arm', 'mattress_rearm', 'mattress_stop']
 export const COMANDOS_HABITACION = ['room_monitor_set']
+/** Solo se pide desde una toma (pedir_peso_toma); no se solicita como orden libre. */
+export const COMANDOS_ALIMENTACION = ['feeding_weigh']
 
 /** Estado guardado por el servidor. */
 export type EstadoOrden = 'pendiente' | 'enviado' | 'confirmado' | 'error'

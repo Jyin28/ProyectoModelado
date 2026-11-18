@@ -60,7 +60,7 @@ describe('rutas', () => {
 })
 
 describe('Layout', () => {
-  it('muestra la marca y los seis enlaces de navegación', () => {
+  it('muestra la marca y los siete enlaces de navegación', () => {
     renderizarEn('/cuna')
     expect(screen.getByText('Cuna Inteligente IoT')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Principal' })
@@ -71,6 +71,7 @@ describe('Layout', () => {
       'Colchón',
       'Figuras LED',
       'Habitación',
+      'Alimentación',
       'Historial',
     ])
   })

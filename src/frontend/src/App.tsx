@@ -7,6 +7,7 @@ import PaginaColchon from './pages/PaginaColchon.tsx'
 import PaginaCamara from './pages/PaginaCamara.tsx'
 import PaginaCuna from './pages/PaginaCuna.tsx'
 import PaginaFiguras from './pages/PaginaFiguras.tsx'
+import PaginaAlimentacion from './pages/PaginaAlimentacion.tsx'
 import PaginaHabitacion from './pages/PaginaHabitacion.tsx'
 import PaginaHistorial from './pages/PaginaHistorial.tsx'
 import PaginaLogin from './pages/PaginaLogin.tsx'
@@ -28,6 +29,7 @@ function App() {
             <Route path="/bebes" element={<PaginaBebesDispositivos />} />
             <Route path="/colchon" element={<PaginaColchon />} />
             <Route path="/figuras" element={<PaginaFiguras />} />
+            <Route path="/alimentacion" element={<PaginaAlimentacion />} />
             <Route path="/habitacion" element={<PaginaHabitacion />} />
             <Route path="/habitacion/camara" element={<PaginaCamara />} />
             <Route path="/historial" element={<PaginaHistorial />} />

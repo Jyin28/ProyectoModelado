@@ -17,6 +17,15 @@ import type {
   InvitacionDueno,
   ModuloAsociado,
 } from '../models/cuentas.ts'
+import type {
+  AccionToma,
+  CampoCorreccion,
+  LecturaTemperatura,
+  LimitesBiberon,
+  ListaTomas,
+  MomentoPeso,
+  Toma,
+} from '../models/alimentacion.ts'
 import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
 import type {
   EventoHabitacion,
@@ -239,6 +248,28 @@ export interface ServicioHabitacion {
   marcarFallida(eventId: string, motivo: MotivoFoto): Promise<Resultado<null>>
 }
 
+export interface ServicioAlimentacion {
+  /** Tomas del módulo, de la más reciente a la más antigua, con la hora del servidor. */
+  listarTomas(dispositivoId: string, limite: number): Promise<Resultado<ListaTomas>>
+  /** Abre una toma en estado «preparando» para el bebé vigente del módulo. */
+  crearToma(dispositivoId: string, tomaId: string): Promise<Resultado<Toma>>
+  /** Iniciar, pausar, reanudar, finalizar, cerrar o cancelar. El servidor valida el estado. */
+  cambiarEstado(tomaId: string, accion: AccionToma): Promise<Resultado<Toma>>
+  /** Pide a la Pico un pesaje; el peso llega después como evento, no en la respuesta. */
+  pedirPeso(tomaId: string, momento: MomentoPeso, commandId: string): Promise<Resultado<null>>
+  /** Corrige un peso con motivo obligatorio; la corrección queda auditada. */
+  corregir(
+    tomaId: string,
+    campo: CampoCorreccion,
+    valor: number,
+    motivo: string,
+  ): Promise<Resultado<Toma>>
+  obtenerLimites(dispositivoId: string): Promise<Resultado<LimitesBiberon | null>>
+  guardarLimites(dispositivoId: string, limites: LimitesBiberon): Promise<Resultado<LimitesBiberon>>
+  /** Última temperatura informada por la Pico, o null si nunca informó. */
+  ultimaTemperatura(dispositivoId: string): Promise<Resultado<LecturaTemperatura | null>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -249,6 +280,7 @@ export type Servicios = {
   voz: ServicioVoz
   colchon: ServicioColchon
   habitacion: ServicioHabitacion
+  alimentacion: ServicioAlimentacion
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram

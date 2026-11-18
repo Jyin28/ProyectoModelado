@@ -10,6 +10,8 @@ type Props = {
   titulo: string
   /** Qué ocurre a cada hora; se muestra como aclaración. */
   descripcion: string
+  /** true si la hora solo genera un aviso (no una orden para la Pico). */
+  soloAviso?: boolean
 }
 
 /**
@@ -17,7 +19,7 @@ type Props = {
  * La lista que se muestra es la guardada en el servidor. Si la Pico no está
  * conectada en ese minuto, la orden vence y no se recupera.
  */
-function PanelHorarios({ dispositivoId, tipo, titulo, descripcion }: Props) {
+function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = false }: Props) {
   const { servicios, backendConfigurado } = useServicios()
   const { estado: sesion } = useSesion()
   const activo = backendConfigurado && sesion.tipo === 'autenticado'
@@ -75,8 +77,10 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion }: Props) {
     <div role="group" aria-labelledby={idTitulo} className="panel-horarios">
       <h3 id={idTitulo}>{titulo}</h3>
       <p>
-        {descripcion} Hora de Costa Rica. Si la Pico no está conectada en ese
-        minuto, la orden no se recupera.
+        {descripcion} Hora de Costa Rica.
+        {soloAviso
+          ? ' Es solo un aviso: no envía ninguna orden a la Pico.'
+          : ' Si la Pico no está conectada en ese minuto, la orden no se recupera.'}
       </p>
       {guardadas === null && !error && <p role="status">Cargando horarios…</p>}
       {guardadas !== null && borrador.length === 0 && <p>Sin horas programadas.</p>}

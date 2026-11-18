@@ -4,6 +4,7 @@ import { crearServicioAuth } from '../services/auth.ts'
 import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
 import { crearServicioColchon } from '../services/colchon.ts'
+import { crearServicioAlimentacion } from '../services/alimentacion.ts'
 import { crearServicioHabitacion } from '../services/habitacion.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
 import {
@@ -47,6 +48,7 @@ function ProveedorServicios({
             voz: crearServicioVoz(supabase),
             colchon: crearServicioColchon(supabase),
             habitacion: crearServicioHabitacion(supabase),
+            alimentacion: crearServicioAlimentacion(supabase),
             telegram: crearServicioTelegram(supabase),
           }
         : serviciosNoConfigurados)

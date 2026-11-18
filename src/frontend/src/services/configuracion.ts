@@ -106,6 +106,16 @@ export function camaraHabilitada(): boolean {
   return import.meta.env.VITE_CAMARA_HABILITADA?.trim() === 'true'
 }
 
+export const DISPOSITIVO_ALIMENTACION_POR_DEFECTO = 'cuna-alimentacion-01'
+
+/** Módulo de alimentación (balanza y temperatura del biberón). Separado de la cuna. */
+export function dispositivoAlimentacionId(): string {
+  return identificador(
+    import.meta.env.VITE_ALIMENTACION_DEVICE_ID,
+    DISPOSITIVO_ALIMENTACION_POR_DEFECTO,
+  )
+}
+
 /** Módulo del colchón. Es un módulo separado de la cuna. */
 export function dispositivoColchonId(): string {
   return identificador(import.meta.env.VITE_COLCHON_DEVICE_ID, DISPOSITIVO_COLCHON_POR_DEFECTO)

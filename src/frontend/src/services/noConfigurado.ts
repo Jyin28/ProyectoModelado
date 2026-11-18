@@ -59,6 +59,16 @@ export const serviciosNoConfigurados: Servicios = {
     subirFoto: () => fallo(),
     marcarFallida: () => fallo(),
   },
+  alimentacion: {
+    listarTomas: () => fallo(),
+    crearToma: () => fallo(),
+    cambiarEstado: () => fallo(),
+    pedirPeso: () => fallo(),
+    corregir: () => fallo(),
+    obtenerLimites: () => fallo(),
+    guardarLimites: () => fallo(),
+    ultimaTemperatura: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),

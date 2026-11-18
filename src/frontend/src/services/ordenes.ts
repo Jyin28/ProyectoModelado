@@ -41,6 +41,18 @@ const MENSAJES_ORDENES: Record<string, string> = {
   foto_no_subida: 'La imagen todavía no está en el almacén. Vuelve a intentar subirla.',
   foto_ya_resuelta: 'Esa foto ya estaba resuelta.',
   motivo_invalido: 'El motivo indicado no es válido.',
+  toma_sin_peso_inicial: 'Pesa el biberón antes de iniciar la toma.',
+  toma_incompleta: 'Falta el peso final o es mayor que el inicial. Pesa de nuevo o corrige el peso.',
+  correccion_invalida: 'El peso corregido no es válido para esta toma.',
+  estado_toma_invalido: 'Esa acción no corresponde al estado actual de la toma.',
+  toma_abierta: 'Ya hay una toma abierta en este módulo. Ciérrala o cancélala primero.',
+  toma_id_en_uso: 'Esa toma ya existe.',
+  sin_bebe_asignado: 'Este módulo no tiene un bebé asignado.',
+  momento_invalido: 'El momento de pesaje no es válido.',
+  command_id_en_uso: 'Esa solicitud ya se registró.',
+  command_id_requerido: 'No se pudo identificar la solicitud.',
+  limite_invalido: 'Los límites de temperatura no son válidos.',
+  reintentar: 'El servidor estaba ocupado. Vuelve a intentarlo.',
   config_colchon_invalida:
     'La configuración no es válida: revisa la duración, la tolerancia y la alarma.',
 }
