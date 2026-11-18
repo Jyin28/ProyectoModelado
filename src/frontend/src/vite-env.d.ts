@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_LAMPARA_DEVICE_ID?: string
   readonly VITE_MOVIMIENTO_HABILITADO?: string
   readonly VITE_MOVIMIENTO_DEVICE_ID?: string
+  readonly VITE_TELEGRAM_BOT?: string
 }
 
 interface ImportMeta {

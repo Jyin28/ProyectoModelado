@@ -6,6 +6,7 @@ import {
 } from '../models/cuentas.ts'
 import { useServicios } from '../hooks/useServicios.ts'
 import AdministrarDuenos from './AdministrarDuenos.tsx'
+import DestinatariosTelegram from './DestinatariosTelegram.tsx'
 
 type Props = {
   modulo: ModuloAsociado
@@ -19,6 +20,7 @@ function TarjetaModulo({ modulo, bebes, alCambiar }: Props) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [verDuenos, setVerDuenos] = useState(false)
+  const [verTelegram, setVerTelegram] = useState(false)
   const idSelect = `bebe-${modulo.id}`
   const nombre = NOMBRE_TIPO_MODULO[modulo.tipo]
 
@@ -75,6 +77,14 @@ function TarjetaModulo({ modulo, bebes, alCambiar }: Props) {
         Administrar dueños
       </button>
       {verDuenos && <AdministrarDuenos dispositivoId={modulo.id} />}
+      <button
+        type="button"
+        onClick={() => setVerTelegram((v) => !v)}
+        aria-expanded={verTelegram}
+      >
+        Destinatarios de Telegram
+      </button>
+      {verTelegram && <DestinatariosTelegram dispositivoId={modulo.id} />}
     </article>
   )
 }

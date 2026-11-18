@@ -18,6 +18,10 @@ import type {
   ModuloAsociado,
 } from '../models/cuentas.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
+import type {
+  CodigoVinculacion,
+  DestinatarioTelegram,
+} from '../models/telegram.ts'
 
 export type Resultado<T> =
   | { ok: true; datos: T }
@@ -124,10 +128,22 @@ export interface ServicioCuentas {
   aceptarInvitacion(invitacionId: string): Promise<Resultado<null>>
 }
 
+export interface ServicioTelegram {
+  listarDestinatarios(dispositivoId: string): Promise<Resultado<DestinatarioTelegram[]>>
+  crearDestinatario(
+    dispositivoId: string,
+    nombre: string,
+  ): Promise<Resultado<DestinatarioTelegram>>
+  /** El código se muestra una sola vez; el servidor guarda solo su hash. */
+  generarCodigo(destinatarioId: string): Promise<Resultado<CodigoVinculacion>>
+  retirarDestinatario(destinatarioId: string): Promise<Resultado<null>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
   lampara: ServicioLampara
   auth: ServicioAuth
   cuentas: ServicioCuentas
+  telegram: ServicioTelegram
 }

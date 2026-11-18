@@ -37,6 +37,12 @@ export const serviciosNoConfigurados: Servicios = {
     cerrarSesion: () => fallo(),
     suscribirCambiosSesion: () => () => {},
   },
+  telegram: {
+    listarDestinatarios: () => fallo(),
+    crearDestinatario: () => fallo(),
+    generarCodigo: () => fallo(),
+    retirarDestinatario: () => fallo(),
+  },
   cuentas: {
     listarBebes: () => fallo(),
     crearBebe: () => fallo(),

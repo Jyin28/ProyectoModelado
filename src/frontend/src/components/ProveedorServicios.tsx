@@ -5,6 +5,7 @@ import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
+import { crearServicioTelegram } from '../services/telegram.ts'
 import { backendConfigurado, supabase } from '../services/supabase.ts'
 import type { Servicios } from '../services/tipos.ts'
 
@@ -32,6 +33,7 @@ function ProveedorServicios({
             cuentas: crearServicioCuentas(supabase),
             lecturas: crearServicioLecturas(supabase),
             lampara: crearServicioLampara(supabase),
+            telegram: crearServicioTelegram(supabase),
           }
         : serviciosNoConfigurados)
     return { servicios: efectivos, backendConfigurado: configurado }

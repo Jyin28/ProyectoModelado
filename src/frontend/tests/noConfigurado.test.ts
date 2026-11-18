@@ -31,6 +31,10 @@ describe('serviciosNoConfigurados', () => {
       s.cuentas.retirarDueno('d', 'u'),
       s.cuentas.listarInvitaciones(),
       s.cuentas.aceptarInvitacion('i'),
+      s.telegram.listarDestinatarios('d'),
+      s.telegram.crearDestinatario('d', 'x'),
+      s.telegram.generarCodigo('d'),
+      s.telegram.retirarDestinatario('d'),
     ])
     for (const r of resultados) {
       expect(r).toEqual({ ok: false, error: 'Backend no configurado' })

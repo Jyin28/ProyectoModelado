@@ -38,3 +38,12 @@ export function movimientoActivado(valor: string | undefined): boolean {
 export const movimientoHabilitado: boolean = movimientoActivado(
   import.meta.env.VITE_MOVIMIENTO_HABILITADO,
 )
+
+/**
+ * Usuario del bot de Telegram (sin @) para armar el enlace de vinculación.
+ * Solo se acepta el formato de usuarios de Telegram; si no coincide, no hay enlace.
+ */
+export function botTelegram(): string | null {
+  const bot = import.meta.env.VITE_TELEGRAM_BOT?.trim().replace(/^@/, '') ?? ''
+  return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(bot) ? bot : null
+}
