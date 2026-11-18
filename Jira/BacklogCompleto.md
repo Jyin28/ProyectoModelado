@@ -1,6 +1,6 @@
 # Backlog completo del proyecto para Jira
 
-Versión 1.0 — 10 de octubre de 2026. **11 épicas, 47 historias y 141 tareas.** Incluye todo el alcance documentado y el trabajo del sprint 1. HU-01 a HU-29 conservan los códigos originales; HU-30 a HU-47 completan requerimientos, arquitectura, calidad y entregas.
+Versión 1.0 — 10 de octubre de 2026. Estado de aprobación actualizado el 13 de octubre de 2026. **11 épicas, 47 historias y 141 tareas.** Incluye todo el alcance documentado y el trabajo del sprint 1. HU-01 a HU-29 conservan los códigos originales; HU-30 a HU-47 completan requerimientos, arquitectura, calidad y entregas.
 
 ## Estado y uso
 
@@ -239,8 +239,8 @@ Como cliente, quiero identificar la versión y anexos que acepto, para establece
 
 - **Épica:** EP-01.
 - **Origen:** S1-09; Sprint1/RevisionYAprobacion.md; RNF-08.
-- **Estado documentado:** Por hacer.
-- **Evidencia actual:** Sin ejecución registrada.
+- **Estado documentado:** Aprobación integral registrada según confirmación del equipo; fecha original del cliente no indicada.
+- **Evidencia actual:** Confirmación «ya esta aprobado» del equipo el 2026-10-13; especificación 0.4 y RNF-08 incluidos. Registro en Sprint1/RevisionYAprobacion.md. El backlog continúa pendiente de prioridad y estimación acordadas.
 - **Dependencias:** HU-33, HU-34, HU-37.
 - **Decisiones aplicadas:** No aplica salvo referencias indicadas.
 - **Planificación:** Sprint 1 de requerimientos; responsable y estimación por acordar.
@@ -1213,7 +1213,7 @@ Como equipo, quiero medir los objetivos aprobados de la maqueta, para comprobar 
 Como cliente, quiero recibir incrementos verificables y documentación de uso, para evaluar el proyecto completo y reproducir su demostración.
 
 - **Épica:** EP-11.
-- **Origen:** RNF-08 (propuesta adicional); RF-29; calendario del curso registrado en especificación §4.3.
+- **Origen:** RNF-08 (incluido en la aprobación integral); RF-29; calendario del curso registrado en especificación §4.3.
 - **Estado documentado:** Por hacer.
 - **Evidencia actual:** Sin ejecución registrada.
 - **Dependencias:** HU-34, HU-38, HU-40 a HU-45; historias incluidas en cada incremento.
@@ -1270,7 +1270,7 @@ Una historia de producto se termina cuando satisface sus criterios, está integr
 | RNF-03 / RNF-04 / RNF-05 | HU-43; HU-04, HU-05, HU-12, HU-18, HU-24 |
 | RNF-06 | HU-28 |
 | RNF-07 | HU-44 |
-| RNF-08 | HU-38 (aceptación específica), HU-41 y HU-46 (realización) |
+| RNF-08 | HU-38 (aceptación integral registrada), HU-41 y HU-46 (realización) |
 | INT-01 a INT-06 | HU-40; HU-03, HU-06, HU-07, HU-08 a HU-23, HU-24, HU-27, HU-29 |
 | RD-01 / RD-02 / RD-03 | HU-40, HU-41, HU-42, HU-29 |
 | DAT-01 / DAT-02 / DAT-03 / DAT-04 | HU-24, HU-21, HU-22/HU-26/HU-27, HU-04/HU-05/HU-43 |
@@ -1278,3 +1278,9 @@ Una historia de producto se termina cuando satisface sus criterios, está integr
 | Arquitectura, incrementos y retrospectiva | HU-40 a HU-42, HU-46, HU-47 |
 
 Los códigos de las tareas permiten dividir la ejecución; no añaden funciones fuera del alcance. Los componentes, rangos físicos y precisión todavía requieren selección y medición en HU-42 conforme a DEC-12 aprobada.
+
+## Confirmación integral del 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.
+
+La preparación del backlog no constituye aprobación de nuevas prioridades, estimaciones ni asignaciones de implementación.

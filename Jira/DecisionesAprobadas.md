@@ -83,3 +83,9 @@ Historias afectadas: HU-07, HU-10, HU-14, HU-24. Estado: aprobada, según confir
 ## Qué se cerró y qué se ejecuta después
 
 Las 13 decisiones ya no bloquean la redacción de las historias. DEC-07, DEC-08 y DEC-12 autorizan reglas y trabajo de diseño: HU-42 concreta componentes, rangos, precisión, brillo, volumen y dimensiones con evidencia; HU-40 define protocolos y recuperación de horarios. No se dan por fabricados ni probados. RNF-08 y la aprobación integral de versión se registran en HU-38; las sesiones reales del Sprint 1, en HU-39.
+
+## Estado vigente al 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.
+
+Entregable consolidado: [Documento del Sprint 1](../Sprint1/EntregableSprint1.docx). Los registros anteriores conservan su contexto histórico. Pendientes actuales: datos históricos de minuta, evidencia de revisión y retrospectiva, validación de prioridades y estimaciones.

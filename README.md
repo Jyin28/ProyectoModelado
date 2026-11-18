@@ -17,4 +17,10 @@ Sistema inteligente de cuido y entretenimiento para bebés.
 
 Los originales del curso están en `Material del profe/`; el resumen inicial está en `Material/`. Se trabaja sobre este repositorio raíz. La carpeta anidada `ProyectoModelado/` contiene otra copia del repositorio y no se actualiza como parte de esta revisión.
 
-Estado: backlog integral preparado y DEC aprobadas según confirmación del equipo. No hay aprobación integral de versión registrada ni cambios realizados en Jira. Las fechas oficiales y los pasos pendientes están en la sección 4.3 de la especificación.
+Estado: backlog integral preparado y DEC aprobadas según confirmación del equipo. Aprobación integral de la especificación 0.4 confirmada por el equipo el 13 de octubre; sin cambios en Jira. Las fechas oficiales y los pasos pendientes están en la sección 4.3 de la especificación.
+
+## Estado vigente al 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.
+
+Entregable consolidado: [Documento del Sprint 1](Sprint1/EntregableSprint1.docx). Los registros anteriores conservan su contexto histórico. Pendientes actuales: datos históricos de minuta, evidencia de revisión y retrospectiva, validación de prioridades y estimaciones.

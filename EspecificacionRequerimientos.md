@@ -1,6 +1,6 @@
 # Especificación de requisitos del sistema
 
-Versión: 0.4, 10 de octubre de 2026. Estado: DEC-01 a DEC-13 aprobadas según confirmación del equipo; aprobación integral de esta versión por registrar. Organización basada en el formato IEEE 830-1998 proporcionado por el curso. La aprobación de decisiones se distingue de la conformidad documental y de las pruebas de producto.
+Versión: 0.4, 10 de octubre de 2026. Estado: versión 0.4 aprobada integralmente según confirmación del equipo del 13 de octubre de 2026; DEC-01 a DEC-13 aprobadas. Registro de sesiones pendiente. Organización basada en el formato IEEE 830-1998 proporcionado por el curso. La aprobación de decisiones se distingue de la conformidad documental y de las pruebas de producto.
 
 ## 1. Introducción
 
@@ -476,7 +476,7 @@ Criterios de aceptación:
 - **RNF-05 (base recopilada, §2.1):** no deberá almacenarse la voz transmitida ni grabarse sonidos del bebé. Verificar RF-12 y los datos persistidos después de una transmisión.
 - **RNF-06 (aprobado por DEC-10):** tras una interrupción, la app deberá distinguir el monitoreo detenido del activo y no presentar lecturas inexistentes como nuevas. Verificar corte, recuperación y rearme de RF-28.
 - **RNF-07 (aprobado por DEC-09):** la interfaz deberá permitir gestionar los módulos desde celular y computadora, mostrando nombres y unidades sin ocultar acciones por solapamiento. Probar las funciones principales en anchos de 360 y 1280 píxeles; navegadores concretos por acordar.
-- **RNF-08 (propuesto por el equipo):** la entrega deberá incluir instrucciones de instalación y configuración, componentes utilizados y evidencia de criterios de aceptación. Verificar que otro integrante pueda reproducir la demostración siguiendo esas instrucciones. Pendiente de revisión del equipo y cliente.
+- **RNF-08 (incluido en la aprobación integral confirmada por el equipo el 2026-10-13):** la entrega deberá incluir instrucciones de instalación y configuración, componentes utilizados y evidencia de criterios de aceptación. Verificar que otro integrante pueda reproducir la demostración siguiendo esas instrucciones. Aceptación integral confirmada por el equipo; ejecución y evidencia de reproducibilidad pendientes.
 
 ### 3.6 Otros requisitos y datos
 
@@ -608,8 +608,8 @@ Historias afectadas: HU-07, HU-10, HU-14, HU-24. Estado: aprobada, según confir
 | Elemento | Estado actual | Evidencia necesaria |
 | --- | --- | --- |
 | Respuestas de Alejandro | Incorporadas | Texto aportado por el equipo, resumido en §8.2 del consolidado. |
-| Especificación v0.4 | Cierre integral por registrar | Fecha y constancia de aprobación o cambios del cliente. |
-| DEC-01 a DEC-13 | Aprobadas según confirmación del equipo | Registro de §4.1. RNF-08 mantiene su revisión específica en HU-38/HU-46. |
+| Especificación v0.4 | Aprobación integral confirmada por el equipo el 2026-10-13 | Constancia incorporada en Sprint1/RevisionYAprobacion.md; fecha original del cliente no indicada. |
+| DEC-01 a DEC-13 | Aprobadas según confirmación del equipo | Registro de §4.1. RNF-08 está incluido en la aprobación integral confirmada el 2026-10-13; su ejecución se conserva en HU-41/HU-46. |
 | Historias HU-01 a HU-47 | Backlog completo preparado | Jira/BacklogCompleto.md: épicas, criterios y tareas; prioridad y estimación por el equipo. |
 | Estimaciones e incrementos | Sin estimar | Puntos acordados por el equipo y reparto del 40-60% para el primer incremento. |
 | Jira | Lista preparada, sin carga externa | Usar Jira/BacklogCompleto.md. |
@@ -622,9 +622,13 @@ El calendario del documento del curso fija requerimientos el 15 de octubre, arqu
 | --- | --- | --- | --- |
 | 0.2 | 2026-10-09 | Incorporación de respuestas, 29 RF/HU y propuestas iniciales. | No registrada. |
 | 0.3 | 2026-10-09 | Redacción EARS, criterios integrados, casos límite, fuentes R/A, DEC-13 y evidencias preparadas del sprint 1. | Pendiente de revisión del cliente. |
-| 0.4 | 2026-10-10 | Registro de aprobación de las 13 DEC informada por el equipo; backlog integral de 47 historias con épicas y tareas. | DEC aprobadas; aprobación integral de versión por registrar. |
+| 0.4 | 2026-10-10 | Registro de aprobación de las 13 DEC informada por el equipo; backlog integral de 47 historias con épicas y tareas. | DEC aprobadas; aprobación integral confirmada por el equipo el 2026-10-13. |
 
 Las respuestas posteriores prevalecen sobre interpretaciones anteriores en el mismo tema. Los antecedentes no se reescriben como si hubieran contenido esas aclaraciones. Un cambio de alcance requiere registrar requisito, motivo, impacto, decisión y versión en el acta del sprint.
 
 
 La lista integral vigente se encuentra en [Jira/BacklogCompleto.md](Jira/BacklogCompleto.md). Los valores físicos aún por seleccionar son entregables de arquitectura, no decisiones funcionales reabiertas.
+
+## Confirmación de aprobación integral del 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.

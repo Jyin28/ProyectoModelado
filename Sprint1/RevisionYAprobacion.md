@@ -64,3 +64,11 @@ Observaciones documentales para discutir, sin atribuirlas al equipo: conservar l
 ## Fuente de la actualización
 
 Aprobación de DEC-01 a DEC-13: confirmada por el usuario el 10 de octubre de 2026 mediante «ya las aprobo», en respuesta a la consulta sobre las 13 decisiones de Alejandro. Se registra como confirmación del equipo; no se conoce la fecha original de aprobación ni se dispone de un mensaje directo de Alejandro. Esta confirmación no acredita por sí sola la aprobación integral de la especificación, RNF-08, reuniones, retrospectivas o pruebas ejecutadas.
+
+## Aprobación integral registrada el 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.
+
+Versión identificada: EspecificacionRequerimientos.md 0.4. Anexos de contenido: las 29 historias funcionales con criterios y las decisiones DEC-01 a DEC-13. El backlog integral 1.0 permanece como instrumento de planificación; prioridades, estimaciones y responsables se validan con el equipo. La aprobación integral incluye RNF-08. Los campos pendientes del acta anterior y la retrospectiva conservan su estado por falta de datos de esas sesiones.
+
+Integrantes del equipo confirmados el 13 de octubre de 2026: Joshua Andrade, Kevin Hernandez, Diego Herrera, Emanuel Rojas, Samuel Ugalde y Jacky Yin. Esta lista no acredita asistencia a la sesión inicial.

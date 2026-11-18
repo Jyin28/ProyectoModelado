@@ -1,6 +1,6 @@
 # Plan de validación de requerimientos
 
-Estado: escenarios preparados durante el sprint 1. Ninguna prueba de producto se ha ejecutado. DEC-01 a DEC-13 aprobadas según confirmación del equipo del 10/10/2026; RNF-08 conserva revisión específica. Los escenarios no se han ejecutado.
+Estado: escenarios preparados durante el sprint 1. Ninguna prueba de producto se ha ejecutado. DEC-01 a DEC-13 aprobadas según confirmación del equipo del 10/10/2026; RNF-08 está incluido en la aprobación integral confirmada por el equipo el 13/10/2026. Los escenarios no se han ejecutado.
 
 ## Funciones
 
@@ -66,7 +66,7 @@ Cada RF-01 a RF-29 incluye los criterios CA correspondientes en la especificaci�
 
 ### PV-RNF-08
 
-- Requisito: RNF-08. Base: Propuesta RNF-08.
+- Requisito: RNF-08. Base: RNF-08 aprobado integralmente.
 - Preparación: Versión de entrega e instrucciones disponibles.
 - Acción: Otro integrante reproduce la demostración siguiendo las instrucciones.
 - Resultado esperado: Puede completar la demostración y localizar evidencia de criterios.

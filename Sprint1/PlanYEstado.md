@@ -49,3 +49,9 @@ Esta carpeta corresponde al primer sprint. Arquitectura, infraestructura, lista 
 Aprobación de DEC-01 a DEC-13: confirmada por el usuario el 10 de octubre de 2026 mediante «ya las aprobo», en respuesta a la consulta sobre las 13 decisiones de Alejandro. Se registra como confirmación del equipo; no se conoce la fecha original de aprobación ni se dispone de un mensaje directo de Alejandro. Esta confirmación no acredita por sí sola la aprobación integral de la especificación, RNF-08, reuniones, retrospectivas o pruebas ejecutadas.
 
 El [backlog integral](../Jira/BacklogCompleto.md) refleja S1-01 a S1-10 como HU-30 a HU-39. Se conservan estados parciales: minuta pendiente de validar datos, backlog pendiente de estimar, aprobación integral y retrospectiva pendientes de evidencia. La preparación de historias de arquitectura e implementación no significa que ese trabajo se haya ejecutado en Sprint 1.
+
+## Estado vigente al 13 de octubre de 2026
+
+El 13 de octubre de 2026 el equipo confirmó en la conversación «ya esta aprobado», en referencia a la aprobación integral de los requerimientos. Se registra la especificación 0.4 como línea base aprobada según confirmación del equipo. RNF-08 queda incluido en esa aprobación integral; su ejecución corresponde a la entrega del producto. La fecha original de aprobación del cliente no fue indicada. Esta constancia no acredita asistencia, celebración de sesiones ni pruebas de producto.
+
+Entregable consolidado: [Documento del Sprint 1](EntregableSprint1.docx). Los registros anteriores conservan su contexto histórico. Pendientes actuales: datos históricos de minuta, evidencia de revisión y retrospectiva, validación de prioridades y estimaciones.
