@@ -174,14 +174,14 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
 | CA-28.1 | Ni `docs/Sprint3/alcance.md` ni el firmware incluyen UPS | D | parcial | Confirmar con la lista de componentes (HU-33). |
-| CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py:363-417`; `lampara_remota.py`) | S | parcial | Sin corte real. |
-| CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware); registros conservados por la base | S | parcial | Recordatorios inexistentes; sin prueba de corte real. |
-| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`, `tests/paginaCuna.test.tsx`) | S | parcial | La web muestra el estado del colchón que informa la Pico (fase 6), sin prueba real. |
+| CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py`; `lampara_remota.py`) · Fase 11: tras cada corte se descartan las órdenes pendientes y se vuelve a informar el estado (`test_recuperacion_firmware.py`). | S | parcial | Sin corte real de red ni de energía. |
+| CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware) · Fase 11: al conectar, la Pico informa su estado real con `reportar_estado_modulo` y el servidor deja de aceptar eventos de un monitoreo apagado; un colchón informado detenido exige armar de nuevo; un recordatorio vencido se omite y el siguiente horario futuro se ejecuta una vez; una lectura atrasada ya no cierra ni reabre un episodio (`supabase/tests/recuperacion.test.mjs`, `src/firmware/tests/test_recuperacion_firmware.py`). | S | parcial | Sin reinicio real de una Pico ni corte real contra Supabase. |
+| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`) · Fase 11: el panel del colchón muestra «detenido al reiniciarse o reconectarse el módulo» (`tests/colchon-fase6.test.tsx`) y la web ya no queda con un monitoreo activo que la Pico perdió. | S | parcial | Sin prueba con una Pico real. |
 | CA-29.1 a CA-29.4 | — | — | pendiente | Guion de demostración (fase 12) y diseño físico (fase 2). |
-| CA-30.1 | — | — | pendiente | |
-| CA-30.2 | — | — | pendiente | |
-| CA-30.3 | `INTERVALO_AMBIENTE_S = 10`, `COLCHON_INTERVALO_MS = 1000` | D | parcial | Parámetros fijados; no hay medición con tiempos. |
-| CA-30.4 | Igual | D | parcial | |
+| CA-30.1 | `supabase/scripts/rendimiento.mjs`: 100 consultas de `historial_bebe` con 2 cuentas, 2 bebés, 6 módulos y 1000 registros; ver [`validacion-fase11.md`](validacion-fase11.md) para los tiempos medidos. | S | parcial | Medido en PGlite (memoria, una conexión), no en el Supabase real ni con la red de la demostración. |
+| CA-30.2 | Misma medición: 100 solicitudes de envío desde la recepción del evento hasta la llamada al envío, con un envío simulado · migración `20261118001000_notificador_inmediato.sql` (disparador con `pg_net`) para no esperar al cron de 1 minuto. | D | parcial | El disparador con `pg_net` no se ejecutó en ninguna prueba; la entrega real de Telegram no se midió. |
+| CA-30.3 | `INTERVALO_AMBIENTE_S = 10` · Fase 11: simulación del ciclo con reloj simulado (`PeriodicidadTests`). | S | parcial | Sin medición en la Pico. |
+| CA-30.4 | `COLCHON_INTERVALO_MS = 1000` · Fase 11: simulación del ciclo con reloj simulado (`PeriodicidadTests`). | S | parcial | Sin medición en la Pico ni con la celda de carga. |
 
 ## HU-31 a HU-33 · Historias técnicas (fases 1 y 2)
 
@@ -206,11 +206,11 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real. Fase 7: las fotos solo las leen los dueños (RLS y políticas del almacén, probadas con PGlite). |
-| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 4: un destinatario no es dueño; retirarlo no cambia los dueños. | S | parcial | Flujo de revocación completo (fase 11). |
-| CA-34.3 | Sin borrado; sin audio | S | parcial | |
-| CA-34.4 | Igual que CA-05.1 y CA-05.2 | S | parcial | |
-| CA-34.5 | No existe ninguna transmisión de voz · Fase 5: la voz no se graba ni se guarda; solo queda el registro de la sesión. | S | parcial | Prueba con Realtime real y con el micrófono. |
+| CA-34.1 | RLS y permisos de RPC · Fase 11: `privacidad.test.mjs`: una persona ajena y una destinataria de Telegram no ven eventos, lecturas, fotos ni objetos del almacén, y 8 funciones las rechazan; ningún rol de la API puede escribir ni borrar tablas del proyecto. | S | parcial | Falta contra la API real (PostgREST y Storage reales). |
+| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 11: retirar a un dueño le quita datos, fotos, órdenes e historial y conserva los registros; una destinataria de Telegram no tiene control (`privacidad.test.mjs`). | S | parcial | Sin API real. |
+| CA-34.3 | Sin borrado ni permisos de escritura en la API · Fase 11: reasignar un módulo conserva todos los registros (`privacidad.test.mjs`). | S | parcial | Sin Supabase real. |
+| CA-34.4 | Igual que CA-05.1 y CA-05.2 · Fase 11: tras reasignar, lo nuevo se vincula al bebé nuevo y el historial de cada bebé muestra solo lo suyo (`privacidad.test.mjs`). | S | parcial | Sin Supabase real. |
+| CA-34.5 | No existe ninguna transmisión de voz guardada · Fase 11: ninguna columna del esquema puede guardar sonido (`bytea`) y una sesión de voz deja solo los registros `voz_inicio` y `voz_fin` sin datos (`privacidad.test.mjs`). | S | parcial | Prueba con Realtime real y con el micrófono. |
 | CA-35.1 | — | — | pendiente | `docs/Sprint3/validacion-base.md` deja pendiente la revisión a 360 y 1280 px. |
 | CA-35.2 | `/cuna` muestra °C, % HR y estados | S | parcial | Solo para las pantallas existentes. |
 | CA-35.3 | — | — | pendiente | |
@@ -222,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 133 |
-| pendiente | 9 |
+| parcial | 135 |
+| pendiente | 7 |
 | bloqueado | 0 |
 | **Total** | **145** |
 

@@ -52,6 +52,19 @@ Catálogo de audio: la Pico solo tiene el sonido `tono_suave` (tono sintetizado)
 - Alimentación: ninguna clave; el pesaje no deja estado confirmado y su resultado es un evento de la toma ([alimentacion.md](alimentacion.md)).
 - Movimiento: `monitoreo` (booleano). Si es `false`, la ingesta ignora los eventos del PIR y responde `409 monitoreo_inactivo` (sin reintento).
 
+### Estado informado por la Pico al conectar
+
+`public.reportar_estado_modulo(p_estado jsonb)` lo llama la cuenta de dispositivo al unirse al canal y tras cada reconexión, antes de tomar órdenes (hasta 3 intentos; si fallan, las órdenes siguen). Devuelve `{actualizados}`. Sin cuenta de dispositivo: `42501 no_autorizado`. Un estado que no cumple el contrato: `22023 estado_invalido`, sin cambiar nada.
+
+| Clave | Valor | Módulo que se actualiza |
+|---|---|---|
+| `monitoreo` | booleano | `cuna-movimiento-NN` |
+| `monitoreo_puerta`, `monitoreo_movimiento` | booleano | `cuna-habitacion-NN` |
+| `secuencia` | `null` o texto `[a-z_]{1,40}` | `cuna-figuras-NN` |
+| `colchon` | `activo`, `alarma` o `detenido` | `cuna-colchon-NN` |
+
+Solo se actualizan los módulos del producto de la cuenta. Para el colchón solo `detenido` cambia algo: queda `{colchon: detenido, motivo: reinicio}` sin tocar `colchon_ts`, salvo que ya figurara detenido (se conserva su motivo real). `activo` y `alarma` no se escriben: los fija el evento de armado o de alarma. Tras un reinicio la Pico informa todo apagado y reanudar el colchón exige armar de nuevo (CA-28.3 y CA-28.4).
+
 ## Horarios que generan órdenes
 
 `public.reemplazar_horarios(p_device_id, p_tipo, p_horas)` acepta, además de `recordatorio_*`, los tipos `figuras_encender` (`led_all` encendido), `figuras_apagar` (`led_stop`), `movimiento_activar` y `movimiento_desactivar` (`motion_set`), y `habitacion_puerta_activar`, `habitacion_puerta_desactivar`, `habitacion_movimiento_activar` y `habitacion_movimiento_desactivar` (`room_monitor_set` del sensor que nombran). `procesar_horarios` crea una orden en el minuto exacto, hora de `America/Costa_Rica`, una vez por día. No recupera horas vencidas (DEC-04, DEC-10): si la Pico no está conectada en esos 15 s, la orden vence.
