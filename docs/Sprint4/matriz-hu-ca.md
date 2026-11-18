@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) y de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -126,14 +126,27 @@ El juego es local: no hay pantalla web, tabla ni evento (decisión de la fase 8)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-20.1 a CA-20.4 | — (el HX711 existente sirve al colchón, no a una balanza de alimentación) | — | pendiente | HU-20 completa. |
-| CA-21.1 a CA-21.7 | — (estados de toma solo en `arquitectura.md` §6.2) | — | pendiente | HU-21 completa. |
-| CA-22.1, CA-22.2 | — (sin pantalla de recordatorios de alimentación) | — | pendiente | Pantalla y módulos de alimentación (fase 9). |
-| CA-22.3 | Fase 4: `procesar_horarios` genera un recordatorio por día a las horas configuradas, en `America/Costa_Rica`. | S | parcial | Pantalla de horarios y módulos de alimentación (fase 9). |
-| CA-22.4 | Fase 4: las horas vencidas se omiten (DEC-04, DEC-10). | S | parcial | Igual. |
-| CA-23.1 a CA-23.4 | — | — | pendiente | HU-23 completa. |
+| CA-20.1 | Fase 9: `feeding_weigh` pide el peso a la Pico (`control_alimentacion.py`, `test_alimentacion.py`); el peso llega como `peso_alimentacion` y `ingestar_alimentacion` lo guarda como peso inicial (`supabase/tests/alimentacion.test.mjs`); botón «Pesar biberón lleno» (`tests/alimentacion-fase9.test.tsx`) | S | parcial | HX711 y celda de carga reales sin calibrar ni probar; fijación del recipiente. |
+| CA-20.2 | Fase 9: «Iniciar toma» llama `iniciar_toma`, que registra `inicio` con la hora del servidor y arranca la duración activa | S | parcial | El criterio habla de un botón; no hay botón físico (la toma se inicia desde la web). Requiere decisión del equipo. |
+| CA-20.3 | Fase 9: `crear_toma` asocia el bebé vigente y el dispositivo (`alimentacion.test.mjs`) | S | parcial | Sin Supabase real. |
+| CA-20.4 | Fase 9: `iniciar_toma` falla con `toma_sin_peso_inicial`; la web muestra «Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.» | S | parcial | Sin Supabase real. |
+| CA-21.1 | Fase 9: `pausar_toma`, `reanudar_toma`, `finalizar_toma`; la misma toma continúa y la pausa no suma a la duración activa | S | parcial | Sin Supabase real. |
+| CA-21.2 | Fase 9: `pedir_peso_toma(final)` solo con la toma `por_cerrar`; la Pico pesa y el peso final queda en la toma | S | parcial | Balanza real sin probar. |
+| CA-21.3 | Fase 9: `corregir_toma` y duración final en el historial (`HistorialTomas`) | S | parcial | Sin Supabase real. |
+| CA-21.4 | Fase 9: 08:00-08:15 con pausa 08:05-08:07 son 13 min activos; 200 g − 150 g = 50 g; la corrección conserva anterior, autor (solo como «Tú» u «Otro dueño»), fecha y motivo (`alimentacion.test.mjs`, `alimentacion-fase9.test.tsx`) | S | parcial | Sin Supabase real. |
+| CA-21.5 | Fase 9: el pesaje de control es solo un evento y no cambia la toma; el cierre es siempre manual (`cerrar_toma`) | S | parcial | Sin Supabase real. |
+| CA-21.6 | Fase 9: `cerrar_toma` falla con `toma_incompleta` si falta el peso final o supera al inicial; `corregir_toma` no admite consumo negativo | S | parcial | Sin Supabase real. |
+| CA-21.7 | Fase 9: `mis_tomas` entrega pesos, ingerido, inicio, fin, pausas, duración y correcciones | S | parcial | Sin Supabase real. |
+| CA-22.1 | Fase 9: `PanelHorarios tipo="recordatorio_alimentacion"` en `/alimentacion` (`alimentacion-fase9.test.tsx`) | S | parcial | Sin Supabase real. |
+| CA-22.2 | Fase 4 y 9: `procesar_horarios` registra el recordatorio a diario y el notificador lo envía por Telegram (doble) | S | parcial | Sin Telegram real. |
+| CA-22.3 | Fase 4: `procesar_horarios` genera un recordatorio por día a las horas configuradas, en `America/Costa_Rica`; fase 9: prueba específica con 08:00 y 11:00 | S | parcial | Sin Supabase real. |
+| CA-22.4 | Fase 4: las horas vencidas se omiten (DEC-04, DEC-10). | S | parcial | Gráficos y exportación (fase 10). |
+| CA-23.1 | Fase 9: la Pico mide el DS18B20 cada 30 s y envía `temperatura_biberon`; no informa 85,0 °C ni lecturas fuera de rango (`test_alimentacion.py`) | S | parcial | Sonda real sin probar. |
+| CA-23.2 | Fase 9: `PanelLimitesBiberon` y `guardar_limites_biberon` (mínimo menor que máximo, -10 a 100 °C) | S | parcial | Sin Supabase real. |
+| CA-23.3 | Fase 9: `evaluar_biberon` abre un episodio de frío o de calor y avisa una vez por episodio y destinatario | S | parcial | Sin Telegram real. |
+| CA-23.4 | Fase 9: el control no tiene ninguna salida; la pantalla no ofrece calentar, enfriar ni dar de comer (prueba de ausencia en firmware y web) | S | parcial | Revisión eléctrica del montaje real. |
 
-Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4), todos pendientes.
+Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verificado. El botón físico de inicio (CA-20.2) no existe.
 
 ## HU-24 a HU-27 · Historial, gráficos y exportación (fase 10)
 
@@ -209,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 105 |
-| pendiente | 37 |
+| parcial | 122 |
+| pendiente | 20 |
 | bloqueado | 0 |
 | **Total** | **145** |
 

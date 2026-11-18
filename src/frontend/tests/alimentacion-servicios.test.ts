@@ -159,7 +159,7 @@ describe('servicio de alimentación: tomas', () => {
 
   it('traduce los errores de toma a mensajes fijos', async () => {
     const casos: Record<string, string> = {
-      toma_sin_peso_inicial: 'Pesa el biberón antes de iniciar la toma.',
+      toma_sin_peso_inicial: 'Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.',
       toma_incompleta: 'Falta el peso final o es mayor que el inicial. Pesa de nuevo o corrige el peso.',
       estado_toma_invalido: 'Esa acción no corresponde al estado actual de la toma.',
       correccion_invalida: 'El peso corregido no es válido para esta toma.',

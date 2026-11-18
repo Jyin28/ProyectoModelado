@@ -186,11 +186,11 @@ describe('Alimentación: pasos de la toma', () => {
   })
 
   it('iniciar sin peso inicial muestra el mensaje fijo del servidor', async () => {
-    const cambiarEstado = vi.fn(() => falla<Toma>('Pesa el biberón antes de iniciar la toma.'))
+    const cambiarEstado = vi.fn(() => falla<Toma>('Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.'))
     abrir({ alimentacion: { listarTomas: () => lista(toma()), cambiarEstado } })
     const p = await panelToma()
     await clic(p, 'Iniciar toma')
-    expect(await within(p).findByRole('alert')).toHaveTextContent('Pesa el biberón antes de iniciar la toma.')
+    expect(await within(p).findByRole('alert')).toHaveTextContent('Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.')
     expect(cambiarEstado).toHaveBeenCalledWith(TOMA_ID, 'iniciar')
   })
 

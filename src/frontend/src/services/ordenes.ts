@@ -41,7 +41,7 @@ const MENSAJES_ORDENES: Record<string, string> = {
   foto_no_subida: 'La imagen todavía no está en el almacén. Vuelve a intentar subirla.',
   foto_ya_resuelta: 'Esa foto ya estaba resuelta.',
   motivo_invalido: 'El motivo indicado no es válido.',
-  toma_sin_peso_inicial: 'Pesa el biberón antes de iniciar la toma.',
+  toma_sin_peso_inicial: 'Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.',
   toma_incompleta: 'Falta el peso final o es mayor que el inicial. Pesa de nuevo o corrige el peso.',
   correccion_invalida: 'El peso corregido no es válido para esta toma.',
   estado_toma_invalido: 'Esa acción no corresponde al estado actual de la toma.',
