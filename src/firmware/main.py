@@ -1,7 +1,7 @@
 """main.py - Programa principal de la Pico 2 W.
 
 Hay una sola Pico y se conecta a UN modulo por vez. config.MODULO dice a cual
-("cuna", "colchon" o "figuras") y solo se atiende lo de ese modulo (modulo.py).
+("cuna", "colchon", "figuras" o "habitacion") y solo se atiende lo de ese modulo (modulo.py).
 
 Que hace:
   1. Valida config.MODULO y se conecta al WiFi.
@@ -17,6 +17,9 @@ Que hace:
   Modulo "figuras":
   6. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo
      o las ordenes remotas si secrets.py define ORDENES_*).
+  Modulo "habitacion":
+  6b. Si config.py lo habilita, vigila la puerta y el PIR del cuarto y informa
+     cada accion durante el monitoreo activo (sin alarma local).
   Todos:
   7. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   8. El LED interno parpadea para indicar el estado.
@@ -29,7 +32,7 @@ import time
 # Las carpetas del proyecto se agregan a la ruta de busqueda para poder
 # escribir "import config", "import wifi", etc. sin paquetes.
 # (figuras-led lleva guion, por eso no se puede importar como paquete.)
-for _carpeta in ("/colchon", "/cuna", "/figuras-led", "/common/communication",
+for _carpeta in ("/colchon", "/cuna", "/habitacion", "/figuras-led", "/common/communication",
                  "/common/sensors", "/common/utilities"):
     if _carpeta not in sys.path:
         sys.path.append(_carpeta)
@@ -39,6 +42,7 @@ import audio
 import comandos
 import config
 import control_colchon
+import control_habitacion
 import demo
 import indicador
 import lampara_remota
@@ -108,6 +112,20 @@ def preparar_perifericos():
     return colchon, reproductor
 
 
+def preparar_habitacion():
+    """Crea la habitacion SOLO si config.py la habilita. Un fallo no detiene el resto."""
+    if not (config.HABITACION_HABILITADO and modulo.usa("habitacion")):
+        return None
+    try:
+        control = control_habitacion.iniciar()
+        comandos.conectar_habitacion(control)
+        print("Habitacion: habilitada (SIN PROBAR EN HARDWARE; pines propuestos)")
+        return control
+    except Exception as error:
+        print("Habitacion: no se pudo iniciar (%s)" % type(error).__name__)
+        return None
+
+
 def preparar_voz(reproductor):
     """Crea la voz solo si config.py la habilita y hay audio. Un fallo no detiene el resto."""
     if not (config.VOZ_HABILITADA and reproductor is not None and modulo.usa("audio")):
@@ -123,7 +141,7 @@ def preparar_voz(reproductor):
 
 
 def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
-                    sesion_voz=None, movimiento_remoto=False):
+                    sesion_voz=None, movimiento_remoto=False, habitacion=None):
     """Bucle infinito: cada tarea corre cuando le toca su turno.
 
     movimiento_remoto: con ordenes remotas configuradas, el aviso de movimiento
@@ -132,6 +150,8 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
     pausa_ms = config.PAUSA_CICLO_MS
     if colchon is not None:
         pausa_ms = min(pausa_ms, config.COLCHON_PAUSA_CICLO_MS)   # boton y muestreo mas agiles
+    if habitacion is not None:
+        pausa_ms = min(pausa_ms, config.HABITACION_PAUSA_CICLO_MS)   # antirrebote de los sensores
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
     ultima_lectura = time.ticks_add(time.ticks_ms(),
                                     -config.INTERVALO_AMBIENTE_S * 1000)
@@ -194,6 +214,23 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
                     pass
                 colchon = None
 
+        # --- Tarea 5b: habitacion (puerta y PIR). Un fallo la deshabilita y el resto sigue.
+        if habitacion is not None:
+            try:
+                habitacion.actualizar(time.ticks_ms())
+                for evento in habitacion.sacar_eventos():
+                    print("Habitacion: %s" % evento["tipo"])
+                    if envio is not None:
+                        envio.registrar_evento_habitacion(
+                            evento["tipo"], evento["datos"], evento["ms"])
+            except Exception as error:
+                print("Habitacion: error (%s); se deshabilita" % type(error).__name__)
+                try:
+                    habitacion.apagar()
+                except Exception:
+                    pass
+                habitacion = None
+
         # --- Tarea 6: audio (cierre al drenar y vigilancia). Un fallo no afecta al resto.
         if reproductor is not None:
             try:
@@ -225,30 +262,33 @@ def ejecutar():
     envio = None
     remota = None
     colchon = None
+    habitacion = None
     reproductor = None
     sesion_voz = None
     try:
         modulo.validar()
     except ValueError as error:
         # Con un modulo desconocido no se inicializa ningun periferico.
-        print("Modulo invalido (%s). Usa 'cuna', 'colchon' o 'figuras' en config.py." % error)
+        print("Modulo invalido (%s). Usa 'cuna', 'colchon', 'figuras' o 'habitacion' en config.py." % error)
         return
     try:
         preparar_modulo()
         iniciar()
         colchon, reproductor = preparar_perifericos()
+        habitacion = preparar_habitacion()
         sesion_voz = preparar_voz(reproductor)
         lampara = (lampara_remota.configurar(comandos.ejecutar)
                    if modulo.usa("lampara") else None)
         ordenes = ordenes_remotas.configurar(comandos.ejecutar, voz=sesion_voz)
         if lampara is not None or ordenes is not None:
             remota = ordenes_remotas.Grupo([lampara, ordenes])
-        if modulo.usa("ambiente") or modulo.usa("colchon") or remota is not None:
+        if (modulo.usa("ambiente") or modulo.usa("colchon") or modulo.usa("habitacion")
+                or remota is not None):
             envio = ambiente.iniciar(remota)
             if envio is None:
                 remota = None        # sin worker de red no hay ordenes remotas
         ciclo_principal(envio, remota, colchon, reproductor, sesion_voz,
-                        movimiento_remoto=ordenes is not None)
+                        movimiento_remoto=ordenes is not None, habitacion=habitacion)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
@@ -256,6 +296,8 @@ def ejecutar():
             envio.detener()
         if colchon is not None:
             colchon.apagar()
+        if habitacion is not None:
+            habitacion.apagar()
         if reproductor is not None:
             reproductor.detener()
         if sesion_voz is not None:

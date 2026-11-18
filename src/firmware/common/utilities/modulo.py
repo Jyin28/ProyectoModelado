@@ -1,7 +1,7 @@
 """modulo.py - Decide que periféricos atiende la Pico segun el modulo conectado.
 
 Hay una sola Pico 2 W y se conecta a UN modulo por vez (cuna, colchon o
-figuras LED); despues se desconecta y se pasa a otro. config.MODULO indica
+figuras LED, habitacion...); despues se desconecta y se pasa a otro. config.MODULO indica
 cual esta conectado, y solo se inicializa lo que pertenece a ese modulo:
 asi un sensor sin cablear no genera lecturas falsas ni toca pines ajenos.
 
@@ -17,6 +17,7 @@ PERIFERICOS = {
     "cuna": ("ambiente", "movimiento", "lampara", "audio"),
     "colchon": ("colchon",),
     "figuras": ("figuras",),
+    "habitacion": ("habitacion",),
 }
 
 # Periferico que necesita cada comando. Los que no aparecen (get_status) valen
@@ -30,6 +31,7 @@ _COMANDOS = {
     "mattress_rearm": "colchon", "mattress_stop": "colchon",
     "audio_play": "audio", "audio_stop": "audio", "audio_status": "audio",
     "motion_set": "movimiento",
+    "room_monitor_set": "habitacion",
 }
 
 

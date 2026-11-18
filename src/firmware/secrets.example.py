@@ -39,3 +39,8 @@ MOVIMIENTO_TOKEN = ""
 # El token se crea con el alta del dispositivo; nunca se sube a git.
 COLCHON_DEVICE_ID = "cuna-colchon-01"
 COLCHON_TOKEN = ""
+
+# Informe de eventos de la habitacion (solo con HABITACION_HABILITADO = True y MODULO = "habitacion").
+# El token se crea con el alta del dispositivo; nunca se sube a git.
+HABITACION_DEVICE_ID = "cuna-habitacion-01"
+HABITACION_TOKEN = ""

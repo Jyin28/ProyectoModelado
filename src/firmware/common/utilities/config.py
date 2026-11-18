@@ -12,7 +12,9 @@ DEVICE_ID = "pico-sprint3-01"
 #   "cuna"    AM2301, PIR, lampara y audio
 #   "colchon" HX711, celda de carga, buzzer y boton
 #   "figuras" los seis LED
+#   "habitacion" sensor de puerta (reed) y PIR del cuarto
 # Solo se inicializa lo del modulo elegido (ver modulo.py).
+# Los pines solo deben ser unicos DENTRO de cada modulo: la Pico atiende uno por vez.
 MODULO = "cuna"
 
 # ---- Pines (numero de GPIO) ----
@@ -88,6 +90,16 @@ VOZ_HABILITADA = False
 VOZ_TASA_ENTRADA_HZ = 8000   # PCM 16 bits, mono, que envia la web
 VOZ_BUFER_FRAGMENTOS = 4     # fragmentos en espera; al llenarse se descarta el mas antiguo
 VOZ_SIN_DATOS_MS = 2000      # sin fragmentos tanto tiempo, la sesion se cierra
+
+# ---- Habitacion (HARDWARE APAGADO POR DEFECTO, SIN PROBAR EN HARDWARE) ----
+# Pines PROPUESTOS (docs/Sprint4/diseno-fisico.md 3.4). Sin alarma local: el
+# evento solo avisa por Telegram (CA-17.3). No distingue entrada de salida.
+HABITACION_HABILITADO = False
+PIN_PUERTA = 4               # reed (MC-38) a GND con pull-up interno: abierto = 1
+PIN_PIR_HABITACION = 5       # PIR del cuarto
+PUERTA_ABIERTA_ES_ALTO = True   # con pull-up, el contacto abierto lee 1
+HABITACION_ANTIRREBOTE_MS = 100  # el sensor debe estar estable este tiempo
+HABITACION_PAUSA_CICLO_MS = 20   # pausa del ciclo con la habitacion habilitada
 
 # GPIO que usa el chip WiFi de la Pico W: no asignar a nada.
 PINES_RESERVADOS_WIFI = (23, 24, 25, 29)

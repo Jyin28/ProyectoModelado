@@ -10,25 +10,44 @@ config = _ruta.config
 
 
 class ConfigTests(unittest.TestCase):
-    def pines(self):
+    def pines_por_modulo(self):
+        """Pines de cada modulo. Solo deben ser unicos dentro de un mismo modulo:
+        la Pico atiende un modulo por vez (docs/Sprint4/diseno-fisico.md 5)."""
         return {
-            "AM2301": config.PIN_AM2301, "PIR": config.PIN_PIR,
-            "LAMPARA": config.PIN_LAMPARA,
-            **{"LED%d" % i: p for i, p in enumerate(config.PINES_LEDS)},
-            "HX711_DT": config.PIN_HX711_DT, "HX711_SCK": config.PIN_HX711_SCK,
-            "BUZZER": config.PIN_BUZZER, "BOTON": config.PIN_BOTON,
-            "I2S_BCLK": config.PIN_I2S_BCLK, "I2S_WS": config.PIN_I2S_WS,
-            "I2S_DIN": config.PIN_I2S_DIN,
+            "cuna": {
+                "AM2301": config.PIN_AM2301, "PIR": config.PIN_PIR,
+                "LAMPARA": config.PIN_LAMPARA,
+                "I2S_BCLK": config.PIN_I2S_BCLK, "I2S_WS": config.PIN_I2S_WS,
+                "I2S_DIN": config.PIN_I2S_DIN,
+            },
+            "figuras": {"LED%d" % i: p for i, p in enumerate(config.PINES_LEDS)},
+            "colchon": {
+                "HX711_DT": config.PIN_HX711_DT, "HX711_SCK": config.PIN_HX711_SCK,
+                "BUZZER": config.PIN_BUZZER, "BOTON": config.PIN_BOTON,
+            },
+            "habitacion": {
+                "PUERTA": config.PIN_PUERTA, "PIR_HABITACION": config.PIN_PIR_HABITACION,
+            },
         }
+
+    def pines(self):
+        """Todos los pines con su modulo, solo para revisar los GPIO del WiFi."""
+        return {"%s.%s" % (m, n): p for m, d in self.pines_por_modulo().items()
+                for n, p in d.items()}
 
     def test_ningun_pin_usa_gpio_del_wifi(self):
         self.assertEqual(config.PINES_RESERVADOS_WIFI, (23, 24, 25, 29))
         for nombre, pin in self.pines().items():
             self.assertNotIn(pin, (23, 24, 25, 29), nombre)
 
-    def test_no_hay_pines_repetidos(self):
-        valores = list(self.pines().values())
-        self.assertEqual(len(valores), len(set(valores)))
+    def test_no_hay_pines_repetidos_dentro_de_cada_modulo(self):
+        for nombre, pines in self.pines_por_modulo().items():
+            valores = list(pines.values())
+            self.assertEqual(len(valores), len(set(valores)), nombre)
+
+    def test_pines_de_la_habitacion_son_los_propuestos(self):
+        self.assertEqual((config.PIN_PUERTA, config.PIN_PIR_HABITACION), (4, 5))
+        self.assertFalse(config.HABITACION_HABILITADO)
 
     def test_pines_propuestos_del_colchon_y_audio(self):
         self.assertEqual((config.PIN_HX711_SCK, config.PIN_HX711_DT), (16, 17))
@@ -136,7 +155,8 @@ class FakeAudio:
 
 _FIGURAS_STUB = {"secuencia": None}
 _PERIFERICO_A_MODULO = {"lampara": "cuna", "audio": "cuna",
-                        "figuras": "figuras", "colchon": "colchon"}
+                        "figuras": "figuras", "colchon": "colchon",
+                        "habitacion": "habitacion"}
 
 
 def cargar_comandos():

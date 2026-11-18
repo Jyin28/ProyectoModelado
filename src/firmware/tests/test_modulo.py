@@ -18,6 +18,7 @@ class ModuloTests(unittest.TestCase):
             "cuna": {"ambiente", "movimiento", "lampara", "audio"},
             "colchon": {"colchon"},
             "figuras": {"figuras"},
+            "habitacion": {"habitacion"},
         }
         todos = set().union(*esperado.values())
         for nombre, propios in esperado.items():
@@ -32,8 +33,8 @@ class ModuloTests(unittest.TestCase):
             vistos.extend(lista)
         self.assertEqual(len(vistos), len(set(vistos)))
 
-    def test_validar_acepta_los_tres_modulos(self):
-        for nombre in ("cuna", "colchon", "figuras"):
+    def test_validar_acepta_los_cuatro_modulos(self):
+        for nombre in ("cuna", "colchon", "figuras", "habitacion"):
             self.assertEqual(modulo.validar(nombre), nombre)
 
     def test_validar_sin_argumento_usa_config(self):
@@ -93,6 +94,10 @@ class DemoPorModuloTests(unittest.TestCase):
 
     def test_el_colchon_no_tiene_demo(self):
         config.MODULO = "colchon"
+        self.assertEqual(self.demo.ordenes(), [])
+
+    def test_la_habitacion_no_tiene_demo(self):
+        config.MODULO = "habitacion"
         self.assertEqual(self.demo.ordenes(), [])
 
     def test_modulo_invalido_no_tiene_demo(self):
