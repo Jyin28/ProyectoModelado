@@ -13,32 +13,18 @@ web. (Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
 Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, get_status
 
 Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set y
-audio_* en "cuna", led_* en "figuras", mattress_* en "colchon". Uno de otro modulo
+audio_* en "cuna", led_* en "figuras". Uno de otro modulo
 se rechaza con el error "comando_de_otro_modulo:<modulo>" sin tocar ningun pin.
 get_status sirve siempre e incluye el campo "modulo".
 
-Comandos locales del colchon y del audio (se pueden invocar sin red; solo
-funcionan si main.py los registro con conectar_colchon / conectar_audio, es
-decir, si COLCHON_HABILITADO / AUDIO_HABILITADO estan en True):
-    mattress_tare, mattress_calibrate {known_weight_g}, mattress_arm {duration_s?},
-    mattress_rearm {duration_s?}, mattress_status, mattress_stop,
+Comandos locales del audio (se pueden invocar sin red; solo funcionan si main.py
+los registro con conectar_audio, es decir, si AUDIO_HABILITADO esta en True):
     audio_play {sound}, audio_stop, audio_status
-Las acciones del colchon que miden (tara, calibrar, armar, rearmar) devuelven
-{"pendiente": True}; el resultado aparece en mattress_status > ultimo_resultado.
 """
-import time
-
 import config
 import modulo
 
-_colchon = None
 _audio = None
-
-
-def conectar_colchon(control):
-    """Registra el control del colchon (o None para desconectarlo)."""
-    global _colchon
-    _colchon = control
 
 
 def conectar_audio(reproductor):
@@ -57,12 +43,6 @@ def _figuras():
     """Importa figuras.py solo cuando hace falta: al importarse configura los LED."""
     import figuras
     return figuras
-
-
-def _colchon_activo():
-    if _colchon is None:
-        raise ValueError("colchon_no_habilitado")
-    return _colchon
 
 
 def _audio_activo():
@@ -86,7 +66,6 @@ def estado():
     return {"modulo": config.MODULO,
             "lampara": _lampara().nivel() if modulo.usa("lampara") else None,
             "secuencia": _figuras().secuencia_actual() if modulo.usa("figuras") else None,
-            "colchon": _colchon.monitor.estado if _colchon is not None else None,
             "audio": _audio.estado()["estado"] if _audio is not None else None}
 
 
@@ -135,28 +114,6 @@ def _ejecutar(nombre, params):
 
     if nombre == "get_status":
         return estado()
-
-    if nombre == "mattress_status":
-        return _colchon_activo().estado(time.ticks_ms())
-
-    if nombre == "mattress_tare":
-        return _colchon_activo().tara(time.ticks_ms())
-
-    if nombre == "mattress_calibrate":
-        peso = _numero(params, "known_weight_g", 0, 5000)   # celda de 5 kg
-        return _colchon_activo().calibrar(peso, time.ticks_ms())
-
-    if nombre in ("mattress_arm", "mattress_rearm"):
-        duracion = None                 # sin parametro: se usa la duracion previa/por defecto
-        if "duration_s" in params:      # presente pero nulo/negativo se rechaza (DEC-13)
-            duracion = _numero(params, "duration_s", 0, config.COLCHON_MONITOREO_MAX_S)
-        colchon = _colchon_activo()
-        if nombre == "mattress_arm":
-            return colchon.armar(duracion, time.ticks_ms())
-        return colchon.rearmar(duracion, time.ticks_ms())
-
-    if nombre == "mattress_stop":
-        return _colchon_activo().detener(time.ticks_ms())
 
     if nombre == "audio_play":
         sonido = params.get("sound")

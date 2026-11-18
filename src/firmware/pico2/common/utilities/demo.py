@@ -2,8 +2,7 @@
 
 Cada DEMO_CADA_S segundos ejecuta la siguiente orden de la lista y muestra
 su confirmacion. Al terminar la lista no hace nada mas. Solo corre las ordenes
-del modulo conectado (config.MODULO): el colchon no tiene demo porque necesita
-tara y una pesa conocida reales.
+del modulo conectado (config.MODULO).
 Para desactivarlo: MODO_DEMO = False en config.py. Este archivo se borra
 cuando los comandos lleguen de verdad desde la web.
 """
@@ -28,7 +27,6 @@ _ORDENES_POR_MODULO = {
         {"command_id": "demo-4", "command": "led_set", "params": {"index": 9, "on": True}},  # error a proposito
         {"command_id": "demo-5", "command": "led_stop", "params": {}},
     ],
-    "colchon": [],
 }
 
 _estado = {"indice": 0, "ultimo": None}

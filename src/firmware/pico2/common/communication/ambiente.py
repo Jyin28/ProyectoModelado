@@ -1,4 +1,9 @@
-"""Publica lecturas ambientales sin esperar por la red en el ciclo principal."""
+"""Publica lecturas ambientales en Supabase sin esperar por la red en el ciclo principal.
+
+Usa la misma configuracion que la Pico del colchon (secrets.py): INGESTA_URL y
+DEVICE_TOKEN, con el mismo formato de lote que la Edge Function `ingesta`:
+    {"device_id": ..., "events": [{"event_id", "type": "ambiente", "at", "data"}]}
+"""
 
 import _thread
 import binascii
@@ -60,41 +65,20 @@ def _post(host, autorizacion, contexto, cuerpo, timeout):
 
 
 class EnvioAmbiente:
-    def __init__(self, host, dispositivo, token, contexto, ntp, remota=None, movimiento=None):
+    def __init__(self, host, dispositivo, token, contexto, ntp, remota=None):
         # host=None: no hay envio a Ingesta; solo trabaja la lampara remota.
-        # dispositivo/token=None: ambiente deshabilitado (puede seguir movimiento).
+        # dispositivo/token=None: ambiente deshabilitado.
         self._host = host
         self._dispositivo = dispositivo
         self._token = token
         self._contexto = contexto
         self._ntp = ntp
         self._remota = remota
-        # (device_id, token) del modulo de movimiento, o None si esta deshabilitado.
-        self._movimiento = movimiento
         self._lock = _thread.allocate_lock()
         self._activo = True
         self._wifi_conectado = False
         self._reloj_listo = False
         self._pendiente = None
-        self._pendiente_movimiento = None   # como maximo un evento PIR en RAM
-
-    def registrar_movimiento(self, detectado_ms):
-        """Guarda el flanco ascendente del PIR. Sin hora confiable o con un
-        evento ya pendiente, lo omite: nunca se acumulan eventos."""
-        if self._movimiento is None or self._host is None:
-            return
-        with self._lock:
-            if not self._reloj_listo or self._pendiente_movimiento is not None:
-                return
-            utc = time.gmtime()
-            evento = {
-                "event_id": _uuid4(),
-                "device_id": self._movimiento[0],
-                "tipo": "movimiento",
-                "ts": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
-                "datos": {},
-            }
-            self._pendiente_movimiento = (json.dumps(evento).encode(), detectado_ms)
 
     def registrar(self, temperatura, humedad, medido_ms):
         if self._dispositivo is None or not math.isfinite(temperatura) or not 0 <= humedad <= 100:
@@ -103,14 +87,16 @@ class EnvioAmbiente:
             if not self._reloj_listo:
                 return
             utc = time.gmtime()
-            evento = {
-                "event_id": _uuid4(),
+            lote = {
                 "device_id": self._dispositivo,
-                "tipo": "ambiente",
-                "ts": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
-                "datos": {"temperatura_c": temperatura, "humedad_pct": humedad},
+                "events": [{
+                    "event_id": _uuid4(),
+                    "type": "ambiente",
+                    "at": "%04d-%02d-%02dT%02d:%02d:%02dZ" % utc[:6],
+                    "data": {"temperatura_c": temperatura, "humedad_pct": humedad},
+                }],
             }
-            self._pendiente = (json.dumps(evento).encode(), medido_ms)
+            self._pendiente = (json.dumps(lote).encode(), medido_ms)
 
     def esta_conectado(self):
         with self._lock:
@@ -122,25 +108,23 @@ class EnvioAmbiente:
             self._wifi_conectado = False
             self._reloj_listo = False
             self._pendiente = None
-            self._pendiente_movimiento = None
         if self._remota is not None:
             self._remota.detener()
 
-    def _enviar(self, cuerpo, medido_ms, token=None, nombre="Ambiente"):
-        token = token or self._token
+    def _enviar(self, cuerpo, medido_ms):
         for intento in range(2):
             restante_ms = _INTERVALO_MS - time.ticks_diff(time.ticks_ms(), medido_ms)
             if not self._activo or restante_ms <= 0 or not wifi.esta_conectado():
                 return
             try:
                 estado = _post(
-                    self._host, token, self._contexto, cuerpo,
+                    self._host, self._token, self._contexto, cuerpo,
                     min(_TIMEOUT_HTTPS_S, restante_ms / 1000),
                 )
             except (OSError, ValueError, MemoryError) as error:
-                print("%s: fallo HTTPS (%s)" % (nombre, type(error).__name__))
+                print("Ambiente: fallo HTTPS (%s)" % type(error).__name__)
                 return
-            print("%s: HTTP %d" % (nombre, estado))
+            print("Ambiente: HTTP %d" % estado)
             if estado != 503:
                 return
             if intento == 0:
@@ -159,7 +143,6 @@ class EnvioAmbiente:
                     with self._lock:
                         self._reloj_listo = False
                         self._pendiente = None
-                        self._pendiente_movimiento = None
                     ultimo_ntp = None
                     if time.ticks_diff(ahora, ultima_revision) >= config.REVISAR_WIFI_CADA_S * 1000:
                         try:
@@ -184,12 +167,8 @@ class EnvioAmbiente:
                     with self._lock:
                         pendiente = self._pendiente
                         self._pendiente = None
-                        movimiento = self._pendiente_movimiento
-                        self._pendiente_movimiento = None
                     if pendiente is not None:
                         self._enviar(*pendiente)
-                    if movimiento is not None:
-                        self._enviar(*movimiento, token=self._movimiento[1], nombre="Movimiento")
                 if self._remota is not None:
                     # Polling cooperativo de la lampara remota en este mismo hilo
                     self._remota.paso(self._reloj_listo and wifi.esta_conectado())
@@ -200,27 +179,9 @@ class EnvioAmbiente:
                 self._remota.cerrar_red()
 
 
-def _credencial_movimiento():
-    """(device_id, token) del PIR, o None si el monitoreo esta deshabilitado
-    o la configuracion es invalida."""
-    if not config.MONITOREO_MOVIMIENTO_HABILITADO:
-        return None
-    dispositivo = getattr(secrets, "MOVIMIENTO_DEVICE_ID", "")
-    token = getattr(secrets, "MOVIMIENTO_TOKEN", "")
-    if (len(dispositivo) != 18 or not dispositivo.startswith("cuna-movimiento-")
-            or not dispositivo[16:].isdigit()):
-        print("Movimiento: device_id invalido; monitoreo desactivado")
-        return None
-    if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
-        print("Movimiento: credencial invalida; monitoreo desactivado")
-        return None
-    print("Movimiento: monitoreo habilitado localmente")
-    return (dispositivo, token)
-
-
 def _leer_host():
-    """Servidor de Ingesta (compartido por ambiente y movimiento), o None."""
-    url = getattr(secrets, "AMBIENTE_URL", "")
+    """Servidor de Ingesta (de INGESTA_URL en secrets.py), o None."""
+    url = getattr(secrets, "INGESTA_URL", "")
     if not url:
         print("Ambiente: envio desactivado; falta la configuracion de Supabase")
         return None
@@ -235,14 +196,14 @@ def _leer_host():
 
 
 def _credencial_ambiente():
-    """(dispositivo, token) del envio de ambiente, o None si no esta listo."""
-    dispositivo = getattr(secrets, "AMBIENTE_DEVICE_ID", "")
-    token = getattr(secrets, "AMBIENTE_TOKEN", "")
+    """(device_id, token) para la Ingesta, o None si no esta listo."""
+    dispositivo = config.DEVICE_ID
+    token = getattr(secrets, "DEVICE_TOKEN", "")
     if not dispositivo or not token:
-        print("Ambiente: envio desactivado; falta la configuracion de Supabase")
+        print("Ambiente: envio desactivado; falta DEVICE_TOKEN en secrets.py")
         return None
     if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
-        print("Ambiente: formato de credencial invalido")
+        print("Ambiente: formato de DEVICE_TOKEN invalido (64 caracteres hex)")
         return None
     return dispositivo, token
 
@@ -250,16 +211,14 @@ def _credencial_ambiente():
 def iniciar(remota=None):
     """Inicia el unico worker de red.
 
-    Atiende, como cargas separadas, el envio de ambiente y el de movimiento
-    (PIR), y si se pasa, la lampara remota. Si no hay ni ambiente ni
-    movimiento configurados pero si lampara remota, el worker corre solo para
-    ella (host=None).
+    Envia las lecturas de ambiente a Supabase y, si se pasa, atiende la lampara
+    remota. Sin credenciales de Ingesta pero con lampara remota, el worker corre
+    solo para ella (host=None).
     """
     host = _leer_host()
     ambiente = _credencial_ambiente() if host is not None else None
-    movimiento = _credencial_movimiento() if host is not None else None
-    if ambiente is None and movimiento is None:
-        host = None                 # sin cargas de Ingesta no se usa el host
+    if ambiente is None:
+        host = None                 # sin carga de Ingesta no se usa el host
     if host is None and remota is None:
         return None
     dispositivo, token = ambiente or (None, None)
@@ -274,7 +233,7 @@ def iniciar(remota=None):
             contexto.load_verify_locations(certificado.read())
         if remota is not None:
             remota.contexto = contexto
-        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota, movimiento)
+        envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota)
         # La lampara remota agrega TLS, JSON y WebSocket: pila mayor (pendiente de medir en hardware)
         pila_anterior = _thread.stack_size((16 if remota is not None else 12) * 1024)
         try:

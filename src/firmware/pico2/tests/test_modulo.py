@@ -16,7 +16,6 @@ class ModuloTests(unittest.TestCase):
     def test_cada_modulo_activa_solo_sus_perifericos(self):
         esperado = {
             "cuna": {"ambiente", "movimiento", "lampara", "audio"},
-            "colchon": {"colchon"},
             "figuras": {"figuras"},
         }
         todos = set().union(*esperado.values())
@@ -32,16 +31,16 @@ class ModuloTests(unittest.TestCase):
             vistos.extend(lista)
         self.assertEqual(len(vistos), len(set(vistos)))
 
-    def test_validar_acepta_los_tres_modulos(self):
-        for nombre in ("cuna", "colchon", "figuras"):
+    def test_validar_acepta_los_dos_modulos(self):
+        for nombre in ("cuna", "figuras"):
             self.assertEqual(modulo.validar(nombre), nombre)
 
     def test_validar_sin_argumento_usa_config(self):
-        config.MODULO = "colchon"
-        self.assertEqual(modulo.validar(), "colchon")
+        config.MODULO = "figuras"
+        self.assertEqual(modulo.validar(), "figuras")
 
     def test_validar_rechaza_valores_desconocidos(self):
-        for nombre in ("", "Cuna", "todo", None, 3, "cuna "):
+        for nombre in ("", "Cuna", "todo", "colchon", None, 3, "cuna "):
             config.MODULO = nombre
             with self.assertRaises(ValueError, msg=repr(nombre)):
                 modulo.validar()
@@ -90,10 +89,6 @@ class DemoPorModuloTests(unittest.TestCase):
                 if necesario is not None:
                     config.MODULO = nombre
                     self.assertTrue(modulo.usa(necesario), (nombre, orden["command"]))
-
-    def test_el_colchon_no_tiene_demo(self):
-        config.MODULO = "colchon"
-        self.assertEqual(self.demo.ordenes(), [])
 
     def test_modulo_invalido_no_tiene_demo(self):
         config.MODULO = "todo"

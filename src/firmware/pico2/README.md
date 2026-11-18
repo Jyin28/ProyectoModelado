@@ -1,16 +1,15 @@
 # Firmware de la Pico 2 W
 
 Firmware único de la Pico 2 W. Hay **una sola Pico** y se conecta a **un módulo
-por vez**: se conecta al colchón, se demuestra, se desconecta y se pasa a otro
-módulo. Los módulos están separados; la Pico no los controla a todos a la vez.
+por vez**: se conecta a la cuna o a las figuras LED, se demuestra, se desconecta
+y se pasa a otro módulo. Los módulos están separados; la Pico no los controla a todos a la vez.
 Elige cuál está conectado con `MODULO` en `config.py` (ver abajo).
 
 ## Elegir el módulo
 
 | `MODULO` | Qué hay conectado | Qué atiende el firmware | Credenciales (`secrets.py`) | Comandos que acepta |
 |---|---|---|---|---|
-| `"cuna"` (por defecto) | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento, lámpara remota y audio local | WiFi, `AMBIENTE_*`, `LAMPARA_*`, `MOVIMIENTO_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
-| `"colchon"` | HX711, celda de carga, buzzer y botón | colchón (peso, alarma, botón); sin envío a la nube | solo WiFi | `mattress_*`, `get_status` |
+| `"cuna"` (por defecto) | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento (solo consola), lámpara remota y audio local | WiFi, `INGESTA_URL`, `DEVICE_TOKEN` y `LAMPARA_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
 | `"figuras"` | los seis LED | secuencias de LED | solo WiFi | `led_*`, `get_status` |
 
 Para cambiar de módulo: edita `MODULO` en `common/utilities/config.py`, copia el
@@ -20,12 +19,11 @@ orden de otro módulo se rechaza con el error `comando_de_otro_modulo:<modulo>`,
 y un valor de `MODULO` desconocido detiene el arranque antes de tocar nada.
 `get_status` responde siempre e incluye el campo `modulo`.
 
-`COLCHON_HABILITADO` y `AUDIO_HABILITADO` siguen siendo el "cableado confirmado"
-y están en `False`: además de elegir el módulo, hay que habilitar el periférico.
+`AUDIO_HABILITADO` sigue siendo el "cableado confirmado" y está en `False`:
+además de elegir el módulo, hay que habilitar el periférico.
 
-La calibración del colchón (el factor cuentas/gramo) se guarda en la Pico en
-`calibracion.json` y se carga al arrancar, así no se repite con la pesa conocida
-al volver al módulo. La **tara no se guarda**: se toma de nuevo cada vez.
+> El colchón (HX711, celda de carga, buzzer y botón) ya no forma parte de este
+> firmware; lo atiende la Pico de `src/firmware/pico`.
 
 ## Estructura
 
@@ -33,15 +31,7 @@ al volver al módulo. La **tara no se guarda**: se toma de nuevo cada vez.
 firmware/
 ├─ README.md
 ├─ main.py                      programa principal
-├─ secrets.example.py           plantilla de WiFi y Supabase
 ├─ alimentacion/  habitacion/  juego/     vacías: proyecto completo
-├─ colchon/
-│  ├─ almacen_calibracion.py    guarda y carga el factor de calibración (calibracion.json)
-│  ├─ logica_colchon.py         lógica pura (estados, filtro, calibración, botón): se prueba en CPython
-│  ├─ hx711.py                  lectura no bloqueante del HX711
-│  ├─ control_colchon.py        ciclo, comandos locales, buzzer y botón
-│  ├─ setup_colchon.py          crea el hardware desde config.py (no toca pines al importarse)
-│  └─ prueba_colchon.py         menú de prueba sin red
 ├─ cuna/
 │  ├─ lampara.py                LED blanco regulable 0-100 % (PWM + MOSFET)
 │  └─ audio.py                  reproductor local MAX98357A por I²S (no bloqueante)
@@ -60,6 +50,7 @@ firmware/
       ├─ comandos.py            ejecuta una orden y devuelve su confirmación
       ├─ demo.py                simula órdenes de la web (por módulo); MODO_DEMO = False lo apaga
       ├─ modulo.py              qué periféricos y comandos corresponden a MODULO
+      ├─ secrets.example.py     plantilla de WiFi y Supabase (se copia a secrets.py)
       └─ indicador.py           parpadeo del LED interno de la Pico
 ```
 
@@ -68,13 +59,12 @@ simplemente como `import config` o `import wifi`.
 
 ## Línea de ejecución de main.py
 
-0. Valida `MODULO`; si no es `cuna`, `colchon` ni `figuras`, avisa y termina sin tocar ningún pin.
+0. Valida `MODULO`; si no es `cuna` ni `figuras`, avisa y termina sin tocar ningún pin.
 1. `iniciar()`: parpadea 3 veces, conecta al WiFi (1 parpadeo largo = ok, 5 rápidos = falló).
 2. `ciclo_principal()` repite cada 100 ms, según el módulo:
    - `cuna`: cada 10 s lee temperatura y humedad, las imprime y entrega la lectura al envío;
      avisa si el PIR detecta movimiento; atiende la lámpara remota y, si está habilitado, el audio
    - `figuras`: `figuras.actualizar()` mueve la secuencia de LED si hay una activa
-   - `colchon`: si está habilitado, botón, muestreo y alarma
    - modo demo: `demo.actualizar()` ejecuta la siguiente orden de ejemplo del módulo
    - sin envío configurado: revisa el WiFi cada 5 s y reconecta si se cayó
 3. Cuando se habilita el envío, una tarea en el segundo núcleo maneja la
@@ -87,11 +77,14 @@ simplemente como `import config` o `import wifi`.
    Comprueba en la consola que `import ntptime` funciona. Si falta, instala
    el paquete con `mpremote mip install ntptime` desde la computadora.
    [Gestión de paquetes de MicroPython](https://docs.micropython.org/en/v1.28.0/reference/packages.html)
-2. Conserva tus variables de WiFi en `secrets.py` y agrega
-   `AMBIENTE_URL`, `AMBIENTE_DEVICE_ID` y `AMBIENTE_TOKEN` con los valores
-   entregados por B. Para una configuración nueva, usa `secrets.example.py`
-   como plantilla. Mantén `secrets.py` fuera de Git.
-3. Elige el módulo en `MODULO`. Sube a la Pico `main.py`, `secrets.py` y las carpetas `colchon`, `cuna`, `figuras-led` y `common`
+2. Copia `common/utilities/secrets.example.py` a `secrets.py` (queda fuera de Git)
+   y completa el WiFi y la configuración de Supabase, que es la misma de la Pico
+   del colchón: `INGESTA_URL`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`. Esta Pico
+   tiene su **propio** `DEVICE_TOKEN` (64 caracteres hex) y su `TOKEN_SHA256`
+   (el SHA-256 del token). El `DEVICE_ID` de `config.py` y `TOKEN_SHA256` deben
+   estar registrados en Supabase (`cuna_private.dispositivos`) para que la
+   Ingesta acepte los eventos; hasta entonces responde HTTP 401.
+3. Elige el módulo en `MODULO`. Sube a la Pico `main.py`, `secrets.py` y las carpetas `cuna`, `figuras-led` y `common`
    **conservando la estructura** (en Thonny: crea las carpetas en la Pico y guarda cada archivo dentro).
    Transfiere el archivo binario `gts-root-r4.der` a `/common/communication/`
    usando el panel de archivos de Thonny.
@@ -108,15 +101,19 @@ La compilación oficial de MicroPython 1.28.0 habilita TLS 1.2. El requisito
 de TLS 1.3 de la arquitectura queda pendiente para la prueba en hardware
 con un firmware que lo admita. [Configuración de TLS de MicroPython 1.28.0](https://github.com/micropython/micropython/blob/v1.28.0/extmod/mbedtls/mbedtls_config_common.h)
 
+Formato del envío (igual que el de la Pico del colchón, Edge Function `ingesta`):
+`POST {INGESTA_URL}` con `Authorization: Bearer <DEVICE_TOKEN>` y
+`{"device_id": ..., "events": [{"event_id", "type": "ambiente", "at", "data": {"temperatura_c", "humedad_pct"}}]}`.
+La Ingesta desplegada solo acepta los tipos `ambiente` y los del colchón, por eso
+el PIR solo avisa por consola y no se envía.
+
 [Contrato de ambiente](../shared/contracts/ambiente.md)
 
 ## Lámpara remota (Supabase Auth + Realtime)
 
 Apagada por defecto: sin variables `LAMPARA_*` en `secrets.py` el firmware
 se comporta como antes (demo incluida). Alcance: solo la lámpara de la
-maqueta (`lamp_set`, nivel entero 0..100). El PIR usa el envío de eventos
-descrito en su [contrato](../shared/contracts/movimiento.md).
-Contrato de comandos:
+maqueta (`lamp_set`, nivel entero 0..100). Contrato de comandos:
 [lámpara](../shared/contracts/lampara.md).
 
 ### Configuración
@@ -130,7 +127,7 @@ Agrega a tu `secrets.py` (plantilla en `secrets.example.py`; nunca lo subas a Gi
 | `LAMPARA_DEVICE_ID` | `cuna-lampara-NN` |
 | `LAMPARA_AUTH_EMAIL`, `LAMPARA_AUTH_PASSWORD` | cuenta Auth exclusiva del dispositivo |
 
-Las credenciales de AM2301 (`AMBIENTE_*`) no cambian. La cuenta del
+Las credenciales de Ingesta (`INGESTA_URL`, `DEVICE_TOKEN`) no cambian. La cuenta del
 dispositivo y su vínculo con el módulo los crea el backend; esta fase no los crea.
 Cada variable se valida al arrancar y, si falta algo, la lámpara remota se
 queda desactivada con un aviso sin datos sensibles.
@@ -179,121 +176,37 @@ queda desactivada con un aviso sin datos sensibles.
 ### Pruebas de lógica (computadora, sin hardware ni red)
 
 ```powershell
-cd src\firmware
+cd src\firmware\pico2
 python -m unittest discover -s tests -v
 ```
 
 Cubren frames y handshake WebSocket, vigencia RFC 3339, validación de órdenes,
 respuestas HTTP y el flujo del cliente con RPC simulados. No se suben a la Pico.
 
-## Colchón y audio local
+## Audio local
 
-Ni el colchón ni el audio se habilitan solos: `COLCHON_HABILITADO` y
-`AUDIO_HABILITADO` están en `False` en `config.py`. Con ambos apagados el
-firmware se comporta como antes. Los pines son una **propuesta pendiente de
-confirmación y cableado**; ninguno usa GP23/24/25/29 y `config.py` es el único
-lugar donde se definen:
+El audio no se habilita solo: `AUDIO_HABILITADO` está en `False` en `config.py`.
+Con el audio apagado el firmware se comporta como antes. Los pines son una
+**propuesta pendiente de confirmación y cableado**; ninguno usa GP23/24/25/29 y
+`config.py` es el único lugar donde se definen:
 
 | Función | GPIO propuesto |
 |---|---|
-| HX711 SCK / DT | GP16 / GP17 |
-| Buzzer pasivo (base del NPN) | GP14 |
-| Botón físico (a GND, pull-up interno) | GP15 |
 | I²S BCLK / WS / DIN (MAX98357A) | GP6 / GP7 / GP8 (WS = BCLK + 1, exigido por la RP2) |
 
 No se ha comprobado la revisión eléctrica, ni la potencia sobre el parlante de
-8 Ω / 0,5 W, ni el funcionamiento de I²S en la Pico 2 W, ni la fijación de la
-celda de carga. Antes de habilitar nada, confirma el cableado con el equipo
-de circuitos.
+8 Ω / 0,5 W, ni el funcionamiento de I²S en la Pico 2 W. Antes de habilitar
+nada, confirma el cableado con el equipo de circuitos.
 
-### Reglas del colchón (RF-14 a RF-16, DEC-03, DEC-07, DEC-13)
-
-- Estados: `inactivo`, `activo`, `alarma`, `detenido`.
-- **No hay factor de calibración por defecto.** Sin tara y calibración
-  explícitas no se puede armar. La calibración vive en RAM y se pierde al reiniciar.
-- Armar captura la referencia (promedio de `COLCHON_MUESTRAS_CAPTURA` lecturas
-  válidas) y exige que sea positiva y que la duración sea positiva y ≤ 24 h.
-- Muestreo cada 1 s sin bloquear el ciclo. Si el HX711 no está listo, se
-  salta y se reintenta en la vuelta siguiente; si pasan 2 s sin estar listo,
-  cuenta como lectura inválida. Las interrupciones se deshabilitan solo durante
-  la ráfaga de 25 pulsos del HX711.
-- Alarma: pérdida **estrictamente mayor** que la tolerancia (10 %) en 3
-  lecturas consecutivas. Una lectura dentro de tolerancia o inválida reinicia
-  la cuenta. Con referencia 1000 g: tres de 890 g alarman; tres de 900 g no.
-- La alarma se apaga por botón, por comando `mattress_stop` o a los 60 s
-  (`COLCHON_ALARMA_MAX_S`), y en los tres casos queda `detenido`. El buzzer
-  arranca apagado y se apaga en cada parada y al cerrar el programa.
-  La salida genera PWM a 2 kHz durante el tono y queda como GPIO en bajo
-  con el PWM deshabilitado al silenciarse.
-- Al vencer la duración del monitoreo también queda `detenido`.
-- El botón (con antirrebote) **solo detiene**. Reanudar es explícito
-  (`mattress_arm` o `mattress_rearm`) y siempre toma una referencia nueva.
-- **WiFi:** con `COLCHON_REQUIERE_WIFI = True` (valor por defecto, conforme a
-  la arquitectura), si se corta el WiFi con el monitoreo `activo` o con la
-  alarma sonando, se apaga el buzzer, se detiene
-  (`motivo_parada = "wifi_perdido"`) y hay que rearmar; tampoco se puede armar
-  sin WiFi (arquitectura 4.4).
-  La demostración independiente de la red solo se hace como **prueba
-  controlada**: el menú `prueba_colchon.py` (que no exige WiFi y lo avisa) o
-  poner `COLCHON_REQUIERE_WIFI = False` de forma explícita, lo que `main.py`
-  anuncia en consola. No lo dejes así fuera de la prueba.
-
-### Comandos locales (invocables sin red)
-
-Se ejecutan con `comandos.ejecutar({"command": ..., "params": {...}})`. En
-esta fase ningún canal de red los invoca y `main.py` no los dispara solo (el
-ciclo principal ocupa la consola). Para probarlos sin red usa el menú
-`prueba_colchon.py`, que llama a los mismos métodos, o un script propio que
-registre un `ControlColchon` con `comandos.conectar_colchon`. La carpeta
-`tests/` es solo de escritorio: no se sube a la Pico.
+Comandos locales (se ejecutan con `comandos.ejecutar({"command": ..., "params": {...}})`;
+la carpeta `tests/` es solo de escritorio y no se sube a la Pico):
 
 | Comando | Parámetros | Efecto |
 |---|---|---|
-| `mattress_tare` | — | mide el cero (colchón sin peso) |
-| `mattress_calibrate` | `known_weight_g` (0–5000) | calcula el factor con una pesa conocida |
-| `mattress_arm` | `duration_s` opcional | captura referencia y activa |
-| `mattress_status` | — | estado, referencia, cuenta, `ultimo_resultado` |
-| `mattress_stop` | — | detiene y apaga el buzzer |
-| `mattress_rearm` | `duration_s` opcional | solo desde `detenido`; referencia nueva |
 | `audio_play` / `audio_stop` / `audio_status` | `sound` | audio local |
 
-Las acciones que miden devuelven `{"pendiente": True}`; consulta
-`mattress_status` hasta que `captura` sea `None` y lee `ultimo_resultado`.
-`get_status` conserva sus campos y agrega `colchon` y `audio` (`None` si están
-deshabilitados). Los nombres de comandos son provisionales, como los demás.
-
-### Procedimiento de calibración con pesas conocidas
-
-1. Fija la celda como quedará en la maqueta y deja el colchón estable, sin
-   bebé ni objetos. Ejecuta `mattress_tare`.
-2. Coloca una pesa cuya masa hayas verificado con una balanza de referencia.
-   Ejecuta `mattress_calibrate` con esa masa en gramos. El factor queda en
-   `ultimo_resultado` y se guarda en `calibracion.json` (`guardado: true`); si no se
-   pudo escribir, la calibración vale hasta reiniciar. Usa una masa que represente
-   bien el rango de uso. Al volver a este módulo, solo hace falta `mattress_tare`.
-3. Comprueba con una segunda pesa distinta (`leer peso` del menú o `mattress_arm`
-   y `mattress_status`) que el valor leído coincide con su masa. Anota la
-   diferencia observada: ese dato lo mides tú, no está en este repositorio.
-4. Coloca el peso de trabajo y ejecuta `mattress_arm`. Quita o reduce peso por
-   más de la tolerancia y espera 3 lecturas (≥ 3 s): debe sonar el buzzer.
-5. Prueba el botón, `mattress_stop`, el límite de 60 s y el corte de WiFi.
-
-Menú local (`colchon/prueba_colchon.py`, Run en Thonny): conserva las opciones
-1–6 originales (leer peso, tara, buzzer on/off, probar botón, salir) y suma
-7 calibrar, 8 armar, 9 estado, 10 detener, 11 rearmar. El menú usa el cableado
-del montaje independiente del colchón: DT GP13, SCK GP12, buzzer GP18 y botón
-GP19 (pines físicos 17, 16, 24 y 25, respectivamente). En la Pico del equipo
-se recibieron diez muestras crudas válidas del HX711 y se completó una
-tara con este mapa. GP13,
-GP18 y GP19 también figuran en la configuración integrada de la lámpara y
-los LED. Ejecuta el menú con solo el colchón conectado y acuerda el mapa
-de cada módulo con el equipo de circuitos. Como la Pico se conecta a un módulo
-por vez, un GPIO podría repetirse entre módulos, pero la configuración integrada
-todavía lo evita (hay una prueba que lo exige).
-Si la placa tiene la prueba anterior en la raíz, conserva una copia y
-mueve los archivos anteriores a una carpeta de respaldo antes de cargar
-esta versión con la estructura de arriba. Reinicia el intérprete de Thonny
-para descartar módulos ya cargados de la prueba anterior.
+`get_status` incluye `modulo`, `lampara`, `secuencia` y `audio` (`None` si está
+deshabilitado). Los nombres de comandos son provisionales.
 
 ### Audio local MAX98357A
 
@@ -324,21 +237,19 @@ defecto.
    lámpara y `audio_play`.
 3. Durante `audio_play`, comprueba que el muestreo de ambiente y las órdenes de
    la lámpara siguen respondiendo.
-4. El colchón se prueba aparte, con `MODULO = "colchon"` (calibración, alarma,
-   botón y corte de WiFi). No se prueban a la vez: la Pico va a un módulo por vez.
-5. Registra los resultados reales; hasta entonces, colchón y audio figuran
-   como **sin probar en hardware**.
+4. Registra los resultados reales; hasta entonces, el audio figura como
+   **sin probar en hardware**.
 
 ### Pruebas de escritorio
 
 Con CPython 3 (sin dependencias ni hardware), desde la raíz del repositorio:
 
 ```text
-python -m unittest discover -s src/firmware/tests -v
+python -m unittest discover -s src/firmware/pico2/tests -v
 ```
 
-Cubren la frontera del 10 %, las tres lecturas, duración y timeout, botón y
-rearme, WiFi, errores del HX711 y límites y errores del audio. No sustituyen
+Cubren la configuración, el selector de módulo, los comandos, el formato del lote
+de ambiente, la lámpara remota y los límites y errores del audio. No sustituyen
 la prueba en hardware.
 
 ## Flujo de un comando

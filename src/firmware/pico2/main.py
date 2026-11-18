@@ -1,22 +1,21 @@
 """main.py - Programa principal de la Pico 2 W.
 
 Hay una sola Pico y se conecta a UN modulo por vez. config.MODULO dice a cual
-("cuna", "colchon" o "figuras") y solo se atiende lo de ese modulo (modulo.py).
+("cuna" o "figuras") y solo se atiende lo de ese modulo (modulo.py).
 
 Que hace:
   1. Valida config.MODULO y se conecta al WiFi.
   Modulo "cuna":
-  2. Cada 10 s lee temperatura y humedad, las muestra y las envia si esta configurado.
+  2. Cada 10 s lee temperatura y humedad, las muestra y las envia a Supabase
+     (Ingesta) si secrets.py tiene INGESTA_URL y DEVICE_TOKEN.
   3. Avisa por consola cuando el PIR detecta movimiento.
   4. Si secrets.py configura la lampara remota, ejecuta sus ordenes (la demo
      se desactiva para no pisar el PWM). Si config.py lo habilita, atiende el audio.
-  Modulo "colchon":
-  5. Si config.py lo habilita, atiende el colchon (boton, peso, alarma).
   Modulo "figuras":
-  6. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo).
+  5. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo).
   Todos:
-  7. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
-  8. El LED interno parpadea para indicar el estado.
+  6. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
+  7. El LED interno parpadea para indicar el estado.
 
 Para detenerlo en Thonny: boton Stop (Ctrl+C).
 """
@@ -122,8 +121,6 @@ def ciclo_principal(envio=None, remota=None, reproductor=None):
             hay = sensores.hay_movimiento()
             if hay and not habia_movimiento:
                 print("Movimiento detectado")
-                if envio is not None and config.MONITOREO_MOVIMIENTO_HABILITADO:
-                    envio.registrar_movimiento(time.ticks_ms())
             habia_movimiento = hay
 
         # --- Tarea 3: avanzar la secuencia de los LED (solo modulo figuras) ---
