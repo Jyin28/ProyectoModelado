@@ -10,10 +10,13 @@ Que hace:
   3. Avisa por consola cuando el PIR detecta movimiento.
   4. Si secrets.py configura la lampara remota, ejecuta sus ordenes (la demo
      se desactiva para no pisar el PWM). Si config.py lo habilita, atiende el audio.
+     Con ORDENES_* en secrets.py tambien recibe ordenes de audio y de monitoreo
+     de movimiento, y con VOZ_HABILITADA la voz del cuidador en vivo.
   Modulo "colchon":
   5. Si config.py lo habilita, atiende el colchon (boton, peso, alarma).
   Modulo "figuras":
-  6. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo).
+  6. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo
+     o las ordenes remotas si secrets.py define ORDENES_*).
   Todos:
   7. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   8. El LED interno parpadea para indicar el estado.
@@ -40,6 +43,8 @@ import demo
 import indicador
 import lampara_remota
 import modulo
+import ordenes_remotas
+import voz
 import wifi
 
 # sensores.py y figuras.py crean sus pines al importarse, asi que solo se
@@ -103,8 +108,27 @@ def preparar_perifericos():
     return colchon, reproductor
 
 
-def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None):
-    """Bucle infinito: cada tarea corre cuando le toca su turno."""
+def preparar_voz(reproductor):
+    """Crea la voz solo si config.py la habilita y hay audio. Un fallo no detiene el resto."""
+    if not (config.VOZ_HABILITADA and reproductor is not None and modulo.usa("audio")):
+        return None
+    try:
+        sesion = voz.iniciar(config, reproductor)
+        comandos.conectar_voz(sesion)
+        print("Voz: habilitada (SIN PROBAR EN HARDWARE; comparte los pines del audio)")
+        return sesion
+    except Exception as error:
+        print("Voz: no se pudo iniciar (%s)" % type(error).__name__)
+        return None
+
+
+def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
+                    sesion_voz=None, movimiento_remoto=False):
+    """Bucle infinito: cada tarea corre cuando le toca su turno.
+
+    movimiento_remoto: con ordenes remotas configuradas, el aviso de movimiento
+    solo sale si una orden confirmada activo el monitoreo (arranca apagado).
+    """
     pausa_ms = config.PAUSA_CICLO_MS
     if colchon is not None:
         pausa_ms = min(pausa_ms, config.COLCHON_PAUSA_CICLO_MS)   # boton y muestreo mas agiles
@@ -134,7 +158,8 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None):
             hay = sensores.hay_movimiento()
             if hay and not habia_movimiento:
                 print("Movimiento detectado")
-                if envio is not None and config.MONITOREO_MOVIMIENTO_HABILITADO:
+                if (envio is not None and config.MONITOREO_MOVIMIENTO_HABILITADO
+                        and (not movimiento_remoto or comandos.monitoreo_movimiento())):
                     envio.registrar_movimiento(time.ticks_ms())
             habia_movimiento = hay
 
@@ -177,6 +202,10 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None):
                     pass
                 reproductor = None
 
+        # --- Tarea 7: voz en vivo (abre, escribe y cierra la salida). Un fallo no afecta al resto.
+        if sesion_voz is not None:
+            sesion_voz.actualizar(time.ticks_ms())
+
         # Sin envio configurado, el ciclo principal conserva la revision del WiFi.
         # (La reconexion bloquea hasta 15 s: no se hace mientras suena la alarma.)
         en_alarma = colchon is not None and colchon.en_alarma()
@@ -185,7 +214,7 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None):
             ultima_revision_wifi = time.ticks_ms()
             wifi.asegurar_conexion()
 
-        time.sleep_ms(pausa_ms)
+        time.sleep_ms(min(pausa_ms, 20) if sesion_voz is not None and sesion_voz.activa() else pausa_ms)
 
 
 def ejecutar():
@@ -193,6 +222,7 @@ def ejecutar():
     remota = None
     colchon = None
     reproductor = None
+    sesion_voz = None
     try:
         modulo.validar()
     except ValueError as error:
@@ -202,14 +232,19 @@ def ejecutar():
     try:
         preparar_modulo()
         iniciar()
-        if modulo.usa("ambiente"):
-            remota = (lampara_remota.configurar(comandos.ejecutar)
-                      if modulo.usa("lampara") else None)
+        colchon, reproductor = preparar_perifericos()
+        sesion_voz = preparar_voz(reproductor)
+        lampara = (lampara_remota.configurar(comandos.ejecutar)
+                   if modulo.usa("lampara") else None)
+        ordenes = ordenes_remotas.configurar(comandos.ejecutar, voz=sesion_voz)
+        if lampara is not None or ordenes is not None:
+            remota = ordenes_remotas.Grupo([lampara, ordenes])
+        if modulo.usa("ambiente") or remota is not None:
             envio = ambiente.iniciar(remota)
             if envio is None:
-                remota = None        # sin worker de red no hay lampara remota
-        colchon, reproductor = preparar_perifericos()
-        ciclo_principal(envio, remota, colchon, reproductor)
+                remota = None        # sin worker de red no hay ordenes remotas
+        ciclo_principal(envio, remota, colchon, reproductor, sesion_voz,
+                        movimiento_remoto=ordenes is not None)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
@@ -219,6 +254,9 @@ def ejecutar():
             colchon.apagar()
         if reproductor is not None:
             reproductor.detener()
+        if sesion_voz is not None:
+            sesion_voz.finalizar()
+            sesion_voz.actualizar(time.ticks_ms())
         if remota is not None:
             remota.actualizar()      # deja la lampara apagada
         indicador.apagar()

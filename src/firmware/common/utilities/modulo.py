@@ -29,6 +29,7 @@ _COMANDOS = {
     "mattress_calibrate": "colchon", "mattress_arm": "colchon",
     "mattress_rearm": "colchon", "mattress_stop": "colchon",
     "audio_play": "audio", "audio_stop": "audio", "audio_status": "audio",
+    "motion_set": "movimiento",
 }
 
 

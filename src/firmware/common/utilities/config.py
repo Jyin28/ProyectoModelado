@@ -31,6 +31,8 @@ MONITOREO_MOVIMIENTO_HABILITADO = False
 LAMPARA_FRECUENCIA_HZ = 1000
 SECUENCIAS_LED = ("chase", "alternate", "blink_all")
 LED_INTERVALO_MINIMO_S = 2   # menos que esto da destellos bruscos
+LED_RAMPA_MS = 400           # duracion de cada transicion de brillo (sin destellos bruscos)
+LED_PWM_HZ = 1000
 
 # ---- Demo (simula comandos de la web) ----
 MODO_DEMO = True
@@ -78,6 +80,14 @@ AUDIO_VOLUMEN_PCT = 10       # % de la amplitud digital maxima
 AUDIO_VOLUMEN_MAX_PCT = 25   # tope conservador; valores mayores se recortan
 AUDIO_DURACION_S = 5         # duracion de cada reproduccion
 AUDIO_DURACION_MAX_S = 30    # tope de duracion
+
+# ---- Voz del cuidador (APAGADA POR DEFECTO, SIN PROBAR EN HARDWARE) ----
+# Reutiliza la salida I2S del audio: con VOZ_HABILITADA tambien debe estar
+# AUDIO_HABILITADO. Contrato: src/shared/contracts/voz.md.
+VOZ_HABILITADA = False
+VOZ_TASA_ENTRADA_HZ = 8000   # PCM 16 bits, mono, que envia la web
+VOZ_BUFER_FRAGMENTOS = 4     # fragmentos en espera; al llenarse se descarta el mas antiguo
+VOZ_SIN_DATOS_MS = 2000      # sin fragmentos tanto tiempo, la sesion se cierra
 
 # GPIO que usa el chip WiFi de la Pico W: no asignar a nada.
 PINES_RESERVADOS_WIFI = (23, 24, 25, 29)

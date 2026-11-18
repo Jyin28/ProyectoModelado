@@ -20,6 +20,16 @@ LAMPARA_DEVICE_ID = ""           # cuna-lampara-NN
 LAMPARA_AUTH_EMAIL = ""
 LAMPARA_AUTH_PASSWORD = ""
 
+# Ordenes remotas de figuras, audio, monitoreo de movimiento y colchon (y voz).
+# Apagadas mientras estas variables esten vacias. Cuenta Supabase Auth exclusiva
+# del dispositivo, vinculada a UN modulo del producto (el que esta conectado).
+ORDENES_SUPABASE_URL = ""        # https://<proyecto>.supabase.co (sin ruta)
+ORDENES_PUBLISHABLE_KEY = ""     # clave publicable (nunca la secreta ni service_role)
+ORDENES_DEVICE_ID = ""           # cuna-figuras-NN, cuna-audio-NN, cuna-colchon-NN...
+ORDENES_PRODUCTO_ID = ""         # producto al que pertenece ese modulo, por ejemplo cuna-01
+ORDENES_AUTH_EMAIL = ""
+ORDENES_AUTH_PASSWORD = ""
+
 # Solo se usan si config.MONITOREO_MOVIMIENTO_HABILITADO = True.
 # El token es el dedicado al modulo de movimiento (64 hex), distinto al de ambiente.
 MOVIMIENTO_DEVICE_ID = "cuna-movimiento-01"

@@ -10,10 +10,10 @@ ejecutar(orden) devuelve la confirmacion:
 Por ahora las ordenes las genera demo.py. Mas adelante llegaran desde la
 web. (Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
 
-Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, get_status
+Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, motion_set, get_status
 
-Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set y
-audio_* en "cuna", led_* en "figuras", mattress_* en "colchon". Uno de otro modulo
+Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set,
+motion_set y audio_* en "cuna", led_* en "figuras", mattress_* en "colchon". Uno de otro modulo
 se rechaza con el error "comando_de_otro_modulo:<modulo>" sin tocar ningun pin.
 get_status sirve siempre e incluye el campo "modulo".
 
@@ -33,6 +33,8 @@ import modulo
 
 _colchon = None
 _audio = None
+_voz = None
+_monitoreo_movimiento = False   # arranca apagado; solo lo cambia motion_set
 
 
 def conectar_colchon(control):
@@ -45,6 +47,17 @@ def conectar_audio(reproductor):
     """Registra el reproductor de audio (o None para desconectarlo)."""
     global _audio
     _audio = reproductor
+
+
+def conectar_voz(voz):
+    """Registra la sesion de voz (o None). Mientras hay voz no se reproduce audio local."""
+    global _voz
+    _voz = voz
+
+
+def monitoreo_movimiento():
+    """True si una orden confirmada activo el monitoreo de movimiento."""
+    return _monitoreo_movimiento
 
 
 def _lampara():
@@ -105,6 +118,7 @@ def ejecutar(orden):
 
 
 def _ejecutar(nombre, params):
+    global _monitoreo_movimiento
     necesario = modulo.periferico_de(nombre)
     if necesario is not None and not modulo.usa(necesario):
         raise ValueError("comando_de_otro_modulo:%s" % (config.MODULO,))
@@ -158,10 +172,22 @@ def _ejecutar(nombre, params):
     if nombre == "mattress_stop":
         return _colchon_activo().detener(time.ticks_ms())
 
+    if nombre == "motion_set":
+        activo = params.get("enabled")
+        if not isinstance(activo, bool):
+            raise ValueError("parametro_invalido:enabled")
+        # config.py dice si el PIR esta cableado y habilitado; la orden solo lo enciende o apaga.
+        if not config.MONITOREO_MOVIMIENTO_HABILITADO:
+            raise ValueError("movimiento_no_habilitado")
+        _monitoreo_movimiento = activo
+        return {"enabled": activo}
+
     if nombre == "audio_play":
         sonido = params.get("sound")
         if not isinstance(sonido, str):
             raise ValueError("parametro_invalido:sound")
+        if _voz is not None and _voz.activa():
+            raise ValueError("voz_en_curso")
         return _audio_activo().iniciar(sonido)
 
     if nombre == "audio_stop":
