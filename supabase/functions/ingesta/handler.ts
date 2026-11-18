@@ -22,6 +22,16 @@ export type EventoColchon = {
   datos: Record<string, number | string>
 }
 
+export type TipoHabitacion = 'puerta' | 'movimiento_habitacion'
+
+export type EventoHabitacion = {
+  event_id: string
+  device_id: string
+  tipo: TipoHabitacion
+  ts: string
+  datos: Record<string, never>
+}
+
 export type Resultado =
   | 'creado'
   | 'duplicado'
@@ -34,12 +44,17 @@ export type Resultado =
 type Guardar = (evento: EventoAmbiente, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarMovimiento = (evento: EventoMovimiento, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarColchon = (evento: EventoColchon, tokenHash: string, recibidoEn: string) => Promise<Resultado>
+type GuardarHabitacion = (evento: EventoHabitacion, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const DEVICE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/
 const DEVICE_ID_MOVIMIENTO = /^cuna-movimiento-[0-9]{2}$/
 const DEVICE_ID_COLCHON = /^cuna-colchon-[0-9]{2}$/
-const PREFIJOS_OTROS_MODULOS = ['cuna-movimiento-', 'cuna-lampara-', 'cuna-colchon-']
+const DEVICE_ID_HABITACION = /^cuna-habitacion-[0-9]{2}$/
+const PREFIJOS_OTROS_MODULOS = [
+  'cuna-movimiento-', 'cuna-lampara-', 'cuna-colchon-', 'cuna-habitacion-', 'cuna-alimentacion-',
+]
+const TIPOS_HABITACION: readonly string[] = ['puerta', 'movimiento_habitacion']
 const TIPOS_COLCHON: readonly string[] = ['colchon_armado', 'alarma_colchon', 'colchon_detenido']
 const MOTIVOS_COLCHON: readonly string[] = ['app', 'boton', 'temporizador', 'duracion', 'wifi']
 const UTC =/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,3}))?Z$/
@@ -134,6 +149,20 @@ function colchon(value: unknown): EventoColchon | undefined {
   return { event_id: event_id.toLowerCase(), device_id, tipo, ts, datos }
 }
 
+// Misma forma que public.ingestar_habitacion (SQL): sin datos.
+function habitacion(value: unknown): EventoHabitacion | undefined {
+  if (!objeto(value) || typeof value.tipo !== 'string' || !TIPOS_HABITACION.includes(value.tipo)) return
+  if (!objeto(value.datos) || Object.keys(value.datos).length !== 0) return
+  const { event_id, device_id, ts } = value
+  const tipo = value.tipo as TipoHabitacion
+
+  if (typeof event_id !== 'string' || !UUID.test(event_id)) return
+  if (typeof device_id !== 'string' || !DEVICE_ID_HABITACION.test(device_id)) return
+  if (typeof ts !== 'string' || !fechaUtc(ts)) return
+
+  return { event_id: event_id.toLowerCase(), device_id, tipo, ts, datos: {} }
+}
+
 function error(status: number, codigo: string, mensaje: string, reintentable = false, headers?: HeadersInit) {
   return Response.json({ codigo, mensaje, reintentable }, { status, headers })
 }
@@ -142,6 +171,7 @@ export function crearIngesta(
   guardar: Guardar,
   guardarMovimiento?: GuardarMovimiento,
   guardarColchon?: GuardarColchon,
+  guardarHabitacion?: GuardarHabitacion,
 ) {
   return async (request: Request): Promise<Response> => {
     const recibidoEn = new Date().toISOString()
@@ -161,6 +191,8 @@ export function crearIngesta(
     let esMovimiento = false
     let eventoColchon: EventoColchon | undefined
     let esColchon = false
+    let eventoHabitacion: EventoHabitacion | undefined
+    let esHabitacion = false
     try {
       while (true) {
         const { done, value } = await reader.read()
@@ -179,6 +211,9 @@ export function crearIngesta(
       } else if (objeto(json) && typeof json.tipo === 'string' && TIPOS_COLCHON.includes(json.tipo)) {
         esColchon = true
         eventoColchon = colchon(json)
+      } else if (objeto(json) && typeof json.tipo === 'string' && TIPOS_HABITACION.includes(json.tipo)) {
+        esHabitacion = true
+        eventoHabitacion = habitacion(json)
       } else {
         evento = lectura(json)
       }
@@ -193,7 +228,10 @@ export function crearIngesta(
     if (esColchon && !(eventoColchon && guardarColchon)) {
       return error(400, 'evento_invalido', 'Se requiere un evento colchón válido.')
     }
-    if (!esMovimiento && !esColchon && !evento) {
+    if (esHabitacion && !(eventoHabitacion && guardarHabitacion)) {
+      return error(400, 'evento_invalido', 'Se requiere un evento de habitación válido.')
+    }
+    if (!esMovimiento && !esColchon && !esHabitacion && !evento) {
       return error(400, 'evento_invalido', 'Se requiere un evento ambiente válido.')
     }
     if (evento && PREFIJOS_OTROS_MODULOS.some((prefijo) => evento!.device_id.startsWith(prefijo))) {
@@ -206,10 +244,12 @@ export function crearIngesta(
       const tokenHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
       const resultado = eventoColchon
         ? await guardarColchon!(eventoColchon, tokenHash, recibidoEn)
-        : eventoMovimiento
-          ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
-          : await guardar(evento!, tokenHash, recibidoEn)
-      const idEvento = (eventoColchon ?? eventoMovimiento ?? evento)!.event_id
+        : eventoHabitacion
+          ? await guardarHabitacion!(eventoHabitacion, tokenHash, recibidoEn)
+          : eventoMovimiento
+            ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
+            : await guardar(evento!, tokenHash, recibidoEn)
+      const idEvento = (eventoColchon ?? eventoHabitacion ?? eventoMovimiento ?? evento)!.event_id
       switch (resultado) {
         case 'creado':
           return Response.json({ event_id: idEvento, estado: 'recibido' }, { status: 201 })

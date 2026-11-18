@@ -61,4 +61,13 @@ Deno.serve(crearIngesta(
     p_recibido_en: recibidoEn,
     p_datos: evento.datos,
   }),
+  (evento, tokenHash, recibidoEn) => rpc('ingestar_habitacion', {
+    p_event_id: evento.event_id,
+    p_device_id: evento.device_id,
+    p_token_sha256: tokenHash,
+    p_tipo: evento.tipo,
+    p_ts: evento.ts,
+    p_recibido_en: recibidoEn,
+    p_datos: evento.datos,
+  }),
 ))
