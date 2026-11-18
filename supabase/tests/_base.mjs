@@ -8,6 +8,9 @@ import { PGlite } from '@electric-sql/pglite'
 export const sinPermiso = { code: '42501' }
 export const invalido = { code: '22023' }
 
+// Token (sha256) que el helper guarda para cada módulo: derivado de su id.
+export const tokenDe = (id) => createHash('sha256').update(id).digest('hex')
+
 const ESQUEMAS = `
   create role anon;
   create role authenticated;
@@ -92,7 +95,7 @@ export async function crearBase() {
   async function modulo(id, tipo, producto, duenos = []) {
     await db.query(
       'insert into cuna_private.dispositivos (id, token_sha256, tipo, producto_id) values ($1, $2, $3, $4)',
-      [id, createHash('sha256').update(id).digest('hex'), tipo, producto])
+      [id, tokenDe(id), tipo, producto])
     for (const dueno of duenos) {
       await db.query(
         'insert into cuna_private.duenos_dispositivo (dispositivo_id, usuario_id) values ($1, $2)', [id, dueno])
@@ -115,5 +118,8 @@ export async function crearBase() {
      values ($1, $2, $3, $4::timestamptz, $4::timestamptz, $5, $6)`,
     [l.id ?? randomUUID(), l.device, l.bebe, l.ts, l.temp, l.hum])
 
-  return { db, como, web, servicio, contar, usuario, bebe, modulo, asignar, tutor, evento, lectura }
+  const cuentaDispositivo = (usuarioId, dispositivo) => db.query(
+    'insert into cuna_private.cuentas_dispositivo (usuario_id, device_id) values ($1, $2)', [usuarioId, dispositivo])
+
+  return { db, como, cuentaDispositivo, web, servicio, contar, usuario, bebe, modulo, asignar, tutor, evento, lectura }
 }
