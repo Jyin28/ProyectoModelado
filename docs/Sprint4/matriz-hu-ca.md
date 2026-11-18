@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)) y de la fase 10 (HU-24 a HU-27; ver [`validacion-fase10.md`](validacion-fase10.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -152,22 +152,22 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` · Fase 4: `public.eventos` con tipo, descripción, hora, bebé y módulo. | S | parcial | Unificar ambiente y movimiento y el resto de productores (fase 10). |
-| CA-24.2 | Mediciones de ambiente y movimientos (Migraciones 1 y 4); órdenes de lámpara (Migración 2) · Fase 5: movimiento, audio, voz, alarmas y paradas del colchón van a `eventos`. | S | parcial | Faltan habitación, juego y alimentación. |
-| CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio | S | parcial | Falta probar con el historial completo. |
+| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` · Fase 4: `public.eventos` · Fase 10: `public.historial_bebe` (migración 000800) une `eventos`, `lecturas_ambiente` y `eventos_movimiento` por bebé; `supabase/tests/historial.test.mjs`. | S | parcial | Sin Supabase real ni productores reales. El juego es local y no genera registros (decisión de la fase 8). |
+| CA-24.2 | Mediciones de ambiente y movimiento, órdenes de lámpara · Fases 5 a 9: movimiento, audio, voz, colchón, habitación y alimentación van a `eventos` · Fase 10: el historial los reúne y la web los lista (`tests/historial-pagina.test.tsx`). | S | parcial | Sin datos de dispositivos reales. Las órdenes de lámpara siguen en su tabla y no entran al historial. |
+| CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio · Fase 10: `historial_bebe` es de solo lectura (prueba «es de solo lectura»). | S | parcial | Falta probar con el historial completo de un Supabase real. |
 | CA-24.4 | Igual que CA-05.2 | S | parcial | |
-| CA-24.5 | `event_id` PK; `supabase/tests/ingesta.test.mjs` y `movimiento.test.mjs` («deduplica, rechaza colisiones…») · Fase 4: idempotencia por `event_id` en `registrar_evento`. | S | parcial | Aplicarlo a los productores de las fases 7 a 9. |
-| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento. | S | parcial | Fase 7: fotos ligadas a su evento, dispositivo y bebé. Faltan alimentación y el cierre de la fase 10. |
-| CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) | S | parcial | Falta cubrir retiro de dueño y reasignación. |
-| CA-25.1 | `pages/PaginaCuna.tsx` lee la última lectura de la nube | S | parcial | `PaginaHistorial.tsx` es un marcador sin consulta. |
-| CA-25.2 | RLS por dueño | S | parcial | Sin vista por bebé. |
-| CA-25.3 | — | — | pendiente | |
-| CA-25.4 | — | — | pendiente | |
-| CA-26.1 | — | — | pendiente | Sin gráficos. |
-| CA-26.2 | — | — | pendiente | |
-| CA-26.3 | `utils/tiempo.ts` formatea en `America/Costa_Rica` | S | pendiente | Sin histogramas ni líneas. |
-| CA-26.4 | — | — | pendiente | |
-| CA-27.1 a CA-27.5 | — (sin dependencia `.xlsx` ni exportación) | — | pendiente | HU-27 completa. Columnas en DEC-06. |
+| CA-24.5 | `event_id` PK; `ingesta.test.mjs` y `movimiento.test.mjs` · Fase 4: idempotencia por `event_id` en `registrar_evento` · Fase 10: un movimiento presente en `eventos` y en `eventos_movimiento` se cuenta una sola vez (`historial.test.mjs`). | S | parcial | Sin prueba con reintentos reales de una Pico. |
+| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento · Fase 7: fotos ligadas a su evento · Fase 9: tomas con pesos y duración · Fase 10: cada registro del historial lleva bebé, dispositivo, tipo, valor, unidad, toma y foto (solo para dueños). | S | parcial | Sin Supabase real. |
+| CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) · Fase 10: tras reasignar un módulo, cada registro conserva su bebé original (`historial.test.mjs`). | S | parcial | Falta cubrir el retiro de un dueño con registros (fase 11). |
+| CA-25.1 | `PaginaHistorial.tsx` consulta `historial_bebe` con la sesión de la persona; mensajes fijos si falla (`tests/historial-pagina.test.tsx`, `tests/historial-servicio.test.ts`). | S | parcial | Sin Supabase real; la consulta es a pedido, no hay actualización periódica. |
+| CA-25.2 | `historial_bebe` filtra por `bebe_id` y exige `puede_ver_bebe`; dos bebés separados y reasignación a mitad del intervalo (`historial.test.mjs`); la web consulta solo el bebé elegido. | S | parcial | Sin RLS ni API reales. |
+| CA-25.3 | `ResumenNoche.tsx` se calcula en la web a partir del historial; no existe ningún envío a Telegram desde el historial. | S | parcial | Sin Supabase real. |
+| CA-25.4 | `intervaloNoche` (inicio y fin elegibles; cruza la medianoche) y el mensaje «No hay registros entre … y …» sin ceros inventados (`tests/historial-utils.test.ts`, `tests/historial-pagina.test.tsx`); en SQL, intervalo vacío devuelve lista vacía y la noche 19:00 a 07:00 de CR reúne ambos días. | S | parcial | Sin datos reales. |
+| CA-26.1 | Ambiente, temperatura del biberón y peso como líneas (`GraficoMediciones.tsx`); movimiento, puerta, habitación, colchón, tomas y fotos como eventos por hora y lista. | S | parcial | El juego es local y no tiene registros que graficar. Sin sensores reales. |
+| CA-26.2 | `resumirNoche`: cantidad de movimientos y hora de mayor actividad (`tests/historial-utils.test.ts`). | S | parcial | Sin datos reales. |
+| CA-26.3 | `conteoPorHora`: 08:15 y 08:59 cuentan en [08:00, 09:00) y 09:00 en [09:00, 10:00) (`tests/historial-utils.test.ts`); histograma (`GraficoEventosPorHora.tsx`) y líneas con fecha, hora y unidad (`GraficoMediciones.tsx`); el servidor entrega el intervalo [desde, hasta). | S | parcial | El dibujo en un navegador real no se comprobó (solo la tabla equivalente en jsdom). |
+| CA-26.4 | Una hora sin ningún registro es «Sin datos» y una con mediciones y sin eventos es «0»; las líneas se cortan ante un hueco de más de 30 min (`tests/historial-utils.test.ts`). | S | parcial | El umbral de 30 min para un hueco es una decisión de la fase 10 que conviene confirmar. |
+| CA-27.1 a CA-27.5 | `BotonExportar.tsx`, `utils/excel.ts` y `utils/historial.ts` (`filasExcel`); `tests/historial-excel.test.ts` genera el .xlsx con `write-excel-file`, lo descomprime y comprueba encabezados de DEC-06, una fila por registro, valores de toma, fecha y hora de Costa Rica, intervalo vacío con solo encabezados y ausencia de fotos y enlaces; no se exporta un resultado truncado. | S | parcial | El archivo no se abrió en Excel real ni se probó la descarga en un navegador real. Los valores de las filas salen de la misma consulta del historial. |
 
 ## HU-28 a HU-30 · Recuperación, maqueta y rendimiento (fases 11 y 12)
 
@@ -222,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 122 |
-| pendiente | 20 |
+| parcial | 133 |
+| pendiente | 9 |
 | bloqueado | 0 |
 | **Total** | **145** |
 
