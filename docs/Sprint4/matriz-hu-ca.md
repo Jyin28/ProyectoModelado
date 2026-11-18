@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)) y de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) y de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -114,9 +114,13 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 | CA-18.2 | Fase 7: la imagen se sube al almacén privado `fotos-habitacion` y se ve desde `/habitacion` con un enlace de 60 s | S | parcial | Almacén real en `cuna-inteligente-dev` (requiere autorización); tiempos medidos. |
 | CA-18.3 | Fase 7: una foto por evento; acciones distintas no se agrupan; el reenvío no duplica la foto | S | parcial | |
 | CA-18.4 | Fase 7: sin tablas ni columnas de video ni de imagen; el aviso lleva texto fijo, sin imagen ni ruta | S | parcial | Telegram real. |
-| CA-19.1 a CA-19.5 | — (sin botones ni juego en el firmware) | — | pendiente | HU-19 completa. |
+| CA-19.1 | Fase 8: `Juego.encender` elige un objetivo al azar entre cinco y `ControlJuego` enciende solo su LED; `test_juego.py` | S | parcial | Botones, LED y cableado reales; pines propuestos sin revisión eléctrica. |
+| CA-19.2 | Fase 8: acierto = recompensa sonora de `JUEGO_RECOMPENSA_MS`; error = sin sonido; una pulsación por acción física (antirrebote y flanco) | S | parcial | Buzzer real sin prueba física. |
+| CA-19.3 | Fase 8: tras cada pulsación, acierto o error, se elige otro objetivo distinto del anterior (cubre los otros cuatro botones) | S | parcial | Azar real (`os.urandom`) sin medir en la Pico. |
+| CA-19.4 | Fase 8: sin límite de pulsaciones; solo se detiene con el combo de apagado (`JUEGO_COMBO_ONOFF` mantenido `JUEGO_COMBO_MS`) o al terminar el programa, con LED y buzzer en bajo | S | parcial | El método de apagado es una propuesta; el diseño comercial puede usar un interruptor. |
+| CA-19.5 | `diseno-fisico.md` §3.5: botones grandes (diámetro mínimo propuesto de 30 mm), piezas fijas, sin partes que quepan en el cilindro de partes pequeñas | D | parcial | Requisito de diseño, no verificación: falta elegir los botones, medirlos y probar la fijación; la norma de juguetes está por confirmar. |
 
-Los cinco criterios CA-19.1 a CA-19.5 comparten estado y brecha; se agrupan aquí y se cuentan uno a uno en el resumen.
+El juego es local: no hay pantalla web, tabla ni evento (decisión de la fase 8).
 
 ## HU-20 a HU-23 · Alimentación (fase 9)
 
@@ -205,8 +209,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 100 |
-| pendiente | 42 |
+| parcial | 105 |
+| pendiente | 37 |
 | bloqueado | 0 |
 | **Total** | **145** |
 
