@@ -69,6 +69,9 @@ export const serviciosNoConfigurados: Servicios = {
     guardarLimites: () => fallo(),
     ultimaTemperatura: () => fallo(),
   },
+  historial: {
+    consultar: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),
