@@ -3,3 +3,11 @@ project_id = "cuna-inteligente"
 [functions.ingesta]
 # La función autentica cada dispositivo con su propia credencial.
 verify_jwt = false
+
+[functions.notificador]
+# La invoca pg_cron con un secreto compartido (NOTIFICADOR_SECRET).
+verify_jwt = false
+
+[functions.telegram-webhook]
+# Telegram no envía JWT: la función valida X-Telegram-Bot-Api-Secret-Token.
+verify_jwt = false
