@@ -88,6 +88,24 @@ export function vozHabilitada(): boolean {
   return import.meta.env.VITE_VOZ_HABILITADA?.trim() === 'true'
 }
 
+export const DISPOSITIVO_HABITACION_POR_DEFECTO = 'cuna-habitacion-01'
+
+/** Módulo de la habitación (puerta, movimiento y fotos). Separado de la cuna. */
+export function dispositivoHabitacionId(): string {
+  return identificador(
+    import.meta.env.VITE_HABITACION_DEVICE_ID,
+    DISPOSITIVO_HABITACION_POR_DEFECTO,
+  )
+}
+
+/**
+ * La pantalla que usa el teléfono como cámara es opt-in:
+ * VITE_CAMARA_HABILITADA=true (exactamente). Se lee al llamar, no al importar.
+ */
+export function camaraHabilitada(): boolean {
+  return import.meta.env.VITE_CAMARA_HABILITADA?.trim() === 'true'
+}
+
 /** Módulo del colchón. Es un módulo separado de la cuna. */
 export function dispositivoColchonId(): string {
   return identificador(import.meta.env.VITE_COLCHON_DEVICE_ID, DISPOSITIVO_COLCHON_POR_DEFECTO)

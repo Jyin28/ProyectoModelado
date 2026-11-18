@@ -52,6 +52,13 @@ export const serviciosNoConfigurados: Servicios = {
     guardarConfig: () => fallo(),
     listarEventos: () => fallo(),
   },
+  habitacion: {
+    listarEventos: () => fallo(),
+    listarFotos: () => fallo(),
+    urlFoto: () => fallo(),
+    subirFoto: () => fallo(),
+    marcarFallida: () => fallo(),
+  },
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),

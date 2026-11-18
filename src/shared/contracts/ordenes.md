@@ -27,6 +27,7 @@ Estados de la orden: `pendiente`, `enviado`, `confirmado`, `error`. La web los m
 | `cuna-movimiento-NN` | `motion_set` | `enabled` booleano | `{enabled}` |
 | `cuna-colchon-NN` | `mattress_arm`, `mattress_rearm` | opcionales: `duration_s` mayor que 0 y hasta 86400; `tolerance_pct` mayor que 0 y menor que 100; `alarm_s` mayor que 0 y hasta 60 | `{pendiente: true}` |
 | | `mattress_stop` | ninguno | estado del colchón |
+| `cuna-habitacion-NN` | `room_monitor_set` | `sensor` en `puerta` o `movimiento`, `enabled` booleano (las dos claves son obligatorias) | `{sensor, enabled}` |
 
 Claves de más, tipos distintos o valores fuera de rango se rechazan con `22023` (`parametros_invalidos`). Un comando de otro módulo se rechaza con `comando_de_otro_modulo`.
 
@@ -46,11 +47,12 @@ Catálogo de audio: la Pico solo tiene el sonido `tono_suave` (tono sintetizado)
 `public.estado_de_modulo(p_device_id)` devuelve `{estado, actualizado_en}`. Sin confirmación previa: `{estado: {}, actualizado_en: null}`; la web muestra «Sin confirmación». Claves hoy:
 
 - Figuras: `secuencia` (nombre o `null`).
+- Habitación: `monitoreo_puerta` y `monitoreo_movimiento` (booleanos, uno por sensor; ver [habitacion.md](habitacion.md)).
 - Movimiento: `monitoreo` (booleano). Si es `false`, la ingesta ignora los eventos del PIR y responde `409 monitoreo_inactivo` (sin reintento).
 
 ## Horarios que generan órdenes
 
-`public.reemplazar_horarios(p_device_id, p_tipo, p_horas)` acepta, además de `recordatorio_*`, los tipos `figuras_encender` (`led_all` encendido), `figuras_apagar` (`led_stop`), `movimiento_activar` y `movimiento_desactivar` (`motion_set`). `procesar_horarios` crea una orden en el minuto exacto, hora de `America/Costa_Rica`, una vez por día. No recupera horas vencidas (DEC-04, DEC-10): si la Pico no está conectada en esos 15 s, la orden vence.
+`public.reemplazar_horarios(p_device_id, p_tipo, p_horas)` acepta, además de `recordatorio_*`, los tipos `figuras_encender` (`led_all` encendido), `figuras_apagar` (`led_stop`), `movimiento_activar` y `movimiento_desactivar` (`motion_set`), y `habitacion_puerta_activar`, `habitacion_puerta_desactivar`, `habitacion_movimiento_activar` y `habitacion_movimiento_desactivar` (`room_monitor_set` del sensor que nombran). `procesar_horarios` crea una orden en el minuto exacto, hora de `America/Costa_Rica`, una vez por día. No recupera horas vencidas (DEC-04, DEC-10): si la Pico no está conectada en esos 15 s, la orden vence.
 
 ## Actividad de audio
 

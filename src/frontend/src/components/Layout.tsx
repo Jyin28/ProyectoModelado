@@ -10,6 +10,7 @@ const ENLACES = [
   { ruta: '/bebes', texto: 'Bebés y dispositivos' },
   { ruta: '/colchon', texto: 'Colchón' },
   { ruta: '/figuras', texto: 'Figuras LED' },
+  { ruta: '/habitacion', texto: 'Habitación' },
   { ruta: '/historial', texto: 'Historial' },
 ]
 

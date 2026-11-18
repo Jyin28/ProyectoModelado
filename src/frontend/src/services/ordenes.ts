@@ -37,6 +37,10 @@ const MENSAJES_ORDENES: Record<string, string> = {
     'Los límites no son válidos: el mínimo debe ser menor que el máximo y estar en rango.',
   horario_invalido: 'Alguna hora del horario no es válida.',
   actividad_invalida: 'No se pudo registrar la actividad de voz.',
+  foto_invalida: 'La foto no corresponde a ese evento.',
+  foto_no_subida: 'La imagen todavía no está en el almacén. Vuelve a intentar subirla.',
+  foto_ya_resuelta: 'Esa foto ya estaba resuelta.',
+  motivo_invalido: 'El motivo indicado no es válido.',
   config_colchon_invalida:
     'La configuración no es válida: revisa la duración, la tolerancia y la alarma.',
 }

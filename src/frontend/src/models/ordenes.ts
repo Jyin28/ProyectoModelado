@@ -42,16 +42,23 @@ export type ComandoColchon =
     }
   | { command: 'mattress_stop'; params: Record<string, never> }
 
+export type ComandoHabitacion = {
+  command: 'room_monitor_set'
+  params: { sensor: 'puerta' | 'movimiento'; enabled: boolean }
+}
+
 export type ComandoModulo =
   | ComandoFiguras
   | ComandoAudio
   | ComandoMovimiento
   | ComandoColchon
+  | ComandoHabitacion
 
 export const COMANDOS_FIGURAS = ['led_set', 'led_all', 'led_sequence', 'led_stop']
 export const COMANDOS_AUDIO = ['audio_play', 'audio_stop']
 export const COMANDOS_MOVIMIENTO = ['motion_set']
 export const COMANDOS_COLCHON = ['mattress_arm', 'mattress_rearm', 'mattress_stop']
+export const COMANDOS_HABITACION = ['room_monitor_set']
 
 /** Estado guardado por el servidor. */
 export type EstadoOrden = 'pendiente' | 'enviado' | 'confirmado' | 'error'

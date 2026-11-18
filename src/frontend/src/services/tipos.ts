@@ -18,6 +18,11 @@ import type {
   ModuloAsociado,
 } from '../models/cuentas.ts'
 import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
+import type {
+  EventoHabitacion,
+  FotoHabitacion,
+  MotivoFoto,
+} from '../models/habitacion.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
 import type {
   ComandoModulo,
@@ -211,6 +216,29 @@ export interface ServicioColchon {
   ): Promise<Resultado<EventoColchon[]>>
 }
 
+export interface ServicioHabitacion {
+  /** Eventos de puerta y movimiento, del más reciente al más antiguo. */
+  listarEventos(
+    dispositivoId: string,
+    limite: number,
+  ): Promise<Resultado<EventoHabitacion[]>>
+  /** Solicitudes de foto y su estado, de la más reciente a la más antigua. */
+  listarFotos(
+    dispositivoId: string,
+    limite: number,
+  ): Promise<Resultado<FotoHabitacion[]>>
+  /** Enlace temporal (60 s) a una foto guardada; solo lo obtiene un dueño. */
+  urlFoto(ruta: string): Promise<Resultado<string>>
+  /** Sube la imagen al almacén privado y la registra para su evento. */
+  subirFoto(
+    dispositivoId: string,
+    eventId: string,
+    archivo: Blob,
+  ): Promise<Resultado<null>>
+  /** Deja constancia de que la foto no se pudo tomar. */
+  marcarFallida(eventId: string, motivo: MotivoFoto): Promise<Resultado<null>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -220,6 +248,7 @@ export type Servicios = {
   horarios: ServicioHorarios
   voz: ServicioVoz
   colchon: ServicioColchon
+  habitacion: ServicioHabitacion
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram

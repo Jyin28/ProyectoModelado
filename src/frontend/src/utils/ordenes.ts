@@ -61,6 +61,12 @@ export function comandoValido(comando: ComandoModulo): boolean {
       )
     case 'mattress_stop':
       return Object.keys(p).length === 0
+    case 'room_monitor_set':
+      return (
+        Object.keys(p).length === 2 &&
+        (p.sensor === 'puerta' || p.sensor === 'movimiento') &&
+        typeof p.enabled === 'boolean'
+      )
     default:
       return false
   }

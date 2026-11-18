@@ -4,8 +4,10 @@ import ProveedorSesion from './components/ProveedorSesion.tsx'
 import RutaProtegida from './components/RutaProtegida.tsx'
 import PaginaBebesDispositivos from './pages/PaginaBebesDispositivos.tsx'
 import PaginaColchon from './pages/PaginaColchon.tsx'
+import PaginaCamara from './pages/PaginaCamara.tsx'
 import PaginaCuna from './pages/PaginaCuna.tsx'
 import PaginaFiguras from './pages/PaginaFiguras.tsx'
+import PaginaHabitacion from './pages/PaginaHabitacion.tsx'
 import PaginaHistorial from './pages/PaginaHistorial.tsx'
 import PaginaLogin from './pages/PaginaLogin.tsx'
 import PaginaNoEncontrada from './pages/PaginaNoEncontrada.tsx'
@@ -26,6 +28,8 @@ function App() {
             <Route path="/bebes" element={<PaginaBebesDispositivos />} />
             <Route path="/colchon" element={<PaginaColchon />} />
             <Route path="/figuras" element={<PaginaFiguras />} />
+            <Route path="/habitacion" element={<PaginaHabitacion />} />
+            <Route path="/habitacion/camara" element={<PaginaCamara />} />
             <Route path="/historial" element={<PaginaHistorial />} />
             <Route path="*" element={<PaginaNoEncontrada />} />
           </Route>

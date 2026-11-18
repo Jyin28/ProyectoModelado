@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_AUDIO_DEVICE_ID?: string
   readonly VITE_CUNA_PRODUCTO_ID?: string
   readonly VITE_COLCHON_DEVICE_ID?: string
+  readonly VITE_HABITACION_DEVICE_ID?: string
+  readonly VITE_CAMARA_HABILITADA?: string
 }
 
 interface ImportMeta {
