@@ -1,0 +1,50 @@
+/* Pantallas de cuentas, bebés y dispositivos. */
+.formulario-cuentas {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  margin-top: 12px;
+}
+
+.formulario-cuentas label,
+.tarjeta-modulo label,
+.administrar-duenos label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.95rem;
+}
+
+.rejilla-modulos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (min-width: 700px) {
+  .rejilla-modulos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.tarjeta-modulo {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.administrar-duenos ul {
+  padding-left: 16px;
+}
+
+.administrar-duenos li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  overflow-wrap: anywhere;
+}

@@ -22,6 +22,8 @@ describe('rutas', () => {
   it.each([
     ['/login', 'Inicio de sesión'],
     ['/cuna', 'Cuna'],
+    ['/bebes', 'Bebés y dispositivos'],
+    ['/registro', 'Crear cuenta'],
     ['/colchon', 'Colchón'],
     ['/figuras', 'Figuras LED'],
     ['/historial', 'Historial'],
@@ -58,15 +60,18 @@ describe('rutas', () => {
 })
 
 describe('Layout', () => {
-  it('muestra la marca y los cuatro enlaces de navegación', () => {
+  it('muestra la marca y los siete enlaces de navegación', () => {
     renderizarEn('/cuna')
     expect(screen.getByText('Cuna Inteligente IoT')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Principal' })
     const enlaces = within(nav).getAllByRole('link')
     expect(enlaces.map((enlace) => enlace.textContent)).toEqual([
       'Cuna',
+      'Bebés y dispositivos',
       'Colchón',
       'Figuras LED',
+      'Habitación',
+      'Alimentación',
       'Historial',
     ])
   })

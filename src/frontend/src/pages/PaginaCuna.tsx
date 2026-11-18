@@ -1,15 +1,23 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
 import BannerConexion from '../components/BannerConexion.tsx'
+import PanelAudio from '../components/PanelAudio.tsx'
 import PanelLampara from '../components/PanelLampara.tsx'
+import PanelLimites from '../components/PanelLimites.tsx'
+import PanelMonitoreoMovimiento from '../components/PanelMonitoreoMovimiento.tsx'
 import PanelMovimiento from '../components/PanelMovimiento.tsx'
+import PanelVoz from '../components/PanelVoz.tsx'
 import TarjetaLectura from '../components/TarjetaLectura.tsx'
 import { useUltimaAmbiental } from '../hooks/useUltimaAmbiental.ts'
 import {
   dispositivoAmbienteId,
+  dispositivoAudioId,
   dispositivoLamparaId,
   dispositivoMovimientoId,
   lamparaHabilitada,
   movimientoHabilitado,
+  ordenesHabilitadas,
+  productoCunaId,
+  vozHabilitada,
 } from '../services/configuracion.ts'
 import './paginas.css'
 
@@ -55,6 +63,19 @@ function PaginaCuna() {
         dispositivoId={dispositivoMovimientoId}
         habilitado={movimientoHabilitado}
       />
+      <PanelLimites dispositivoId={dispositivoAmbienteId} />
+      {ordenesHabilitadas() && (
+        <>
+          <PanelMonitoreoMovimiento dispositivoId={dispositivoMovimientoId} />
+          <PanelAudio dispositivoId={dispositivoAudioId()} />
+        </>
+      )}
+      {vozHabilitada() && (
+        <PanelVoz
+          dispositivoId={dispositivoAudioId()}
+          productoId={productoCunaId()}
+        />
+      )}
 
       {!activo && (
         <p>

@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -30,108 +30,134 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 | CA-01.1 | `services/auth.ts:39` (`signInWithPassword`), `pages/PaginaLogin.tsx`, `tests/auth.test.ts`, `tests/sesion.test.tsx` (Web) | S | parcial | Sin prueba contra Supabase Auth real. |
 | CA-01.2 | `PaginaLogin.tsx` muestra error de credenciales; `tests/auth.test.ts` | S | parcial | Igual. |
 | CA-01.3 | `components/Layout.tsx:21-31` (`auth.signOut`); `tests/sesion.test.tsx` | S | parcial | Igual. |
-| CA-01.4 | — (no hay pantalla ni llamada de registro) | — | pendiente | Falta registro y manejo de correo repetido. |
-| CA-02.1 | `bebe_id` en `lecturas_ambiente` y `eventos_movimiento` (Migración 1 y 4); `supabase/tests/ingesta.test.mjs` | S | parcial | Solo modelo de datos. No hay alta de bebés ni vista por bebé. |
-| CA-02.2 | `asignaciones_bebe.bebe_id` admite nulo (Migración 1) | S | parcial | Sin RPC ni web para asociar accesorios sin cuna. |
-| CA-02.3 | `cuna_private.bebes(id, nombre)` (Migración 1) | — | pendiente | Sin formulario; falta fecha de nacimiento opcional. |
-| CA-03.1 | `cuna_private.dispositivos` y `duenos_dispositivo` (Migración 1) | — | parcial | Sin RPC ni web. El alta es por SQL manual (`supabase/README.md`). |
-| CA-03.2 | — | — | pendiente | No hay restricción de una cuna por bebé. |
-| CA-03.3 | `components/Layout.tsx` muestra navegación fija, no módulos asociados | — | pendiente | La interfaz no lista módulos de la cuenta. |
-| CA-03.4 | — | — | pendiente | Sin regla de rechazo. |
-| CA-04.1 | `cuna_private.es_dueno_activo()` y políticas `select` (Migración 1); `supabase/tests/lampara.test.mjs` («RLS: solo el dueño activo lee») | S | parcial | Falta probar dos dueños simultáneos y configuración compartida. |
-| CA-04.2 | — | — | pendiente | No existe «Administrar dueños». |
-| CA-04.3 | `duenos_dispositivo.activo` (Migración 1) | — | pendiente | Sin invitación, aceptación, revocación ni regla del último dueño. |
-| CA-05.1 | La ingesta usa la asignación vigente en `ts` (Migración 1; `supabase/tests/movimiento.test.mjs` «conserva la asignación histórica») | S | parcial | Sin RPC ni web de reasignación. |
-| CA-05.2 | Igual: la fila conserva su `bebe_id` | S | parcial | Igual. |
-| CA-05.3 | No hay permiso de borrado para roles de API en las migraciones | S | parcial | Falta probar un flujo real de reasignación. |
+| CA-01.4 | Fase 3: `auth.registrarse`, `tests/paginaRegistro.test.tsx` (campos vacíos y correo repetido). | S | parcial | Prueba con Supabase Auth real y confirmación por correo configurada. |
+| CA-02.1 | `bebe_id` en `lecturas_ambiente` y `eventos_movimiento` (Migración 1 y 4); `supabase/tests/ingesta.test.mjs` · Fase 3: `supabase/tests/cuentas.test.mjs`: dos bebés separados por cuenta. | S | parcial | Vista de historial por bebé (fase 10). |
+| CA-02.2 | `asignaciones_bebe.bebe_id` admite nulo (Migración 1) · Fase 3: un colchón se asigna a un bebé sin cuna (`cuentas.test.mjs`). | S | parcial | Prueba con Supabase real. |
+| CA-02.3 | `cuna_private.bebes(id, nombre)` (Migración 1) · Fase 3: nombre obligatorio y fecha opcional no futura, en RPC y en web. | S | parcial | Prueba con Supabase real. |
+| CA-03.1 | `cuna_private.dispositivos` y `duenos_dispositivo` (Migración 1) · Fase 3: `reclamar_dispositivo` con código de un solo uso. | S | parcial | El alta física del módulo y de su código la sigue haciendo un administrador. |
+| CA-03.2 | Fase 3: una cuna por bebé vía `producto_id`; la segunda se rechaza sin tocar la primera. | S | parcial | Confirmar con el equipo que «una cuna» equivale a un `producto_id`. |
+| CA-03.3 | `components/Layout.tsx` muestra navegación fija, no módulos asociados · Fase 3: `/bebes` lista los módulos asociados con su bebé. | S | parcial | Prueba con Supabase real. |
+| CA-03.4 | Fase 3: misma regla que CA-03.2. | S | parcial | Igual que CA-03.2. |
+| CA-04.1 | `cuna_private.es_dueno_activo()` y políticas `select` (Migración 1); `supabase/tests/lampara.test.mjs` («RLS: solo el dueño activo lee») · Fase 3: dos dueños leen la misma fila por RLS. | S | parcial | Configuración compartida de módulos futuros. |
+| CA-04.2 | Fase 3: «Administrar dueños» en cada módulo. | S | parcial | Prueba con Supabase real. |
+| CA-04.3 | `duenos_dispositivo.activo` (Migración 1) · Fase 3: la invitación concede acceso solo al aceptarla; retirar revoca y conserva filas; no se retira al último dueño. | S | parcial | No existe el envío del correo de invitación (sin SMTP): la persona la ve al iniciar sesión con ese correo. |
+| CA-05.1 | La ingesta usa la asignación vigente en `ts` (Migración 1; `supabase/tests/movimiento.test.mjs` «conserva la asignación histórica») · Fase 3: reasignación con vigencia (`cuentas.test.mjs`). | S | parcial | Prueba con Supabase real. |
+| CA-05.2 | Igual: la fila conserva su `bebe_id` · Fase 3: las filas anteriores conservan su bebé. | S | parcial | Prueba con Supabase real. |
+| CA-05.3 | No hay permiso de borrado para roles de API en las migraciones · Fase 3: `delete` y `update` rechazados con `42501`. | S | parcial | Prueba con Supabase real. |
 
 ## HU-06 y HU-07 · Telegram y avisos (fase 4)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-06.1 | — (`src/backend/Integrations/Telegram/` vacío) | — | pendiente | Todo HU-06. |
-| CA-06.2 | — | — | pendiente | |
-| CA-06.3 | — | — | pendiente | |
-| CA-07.1 | — | — | pendiente | No hay notificador. |
-| CA-07.2 | — | — | pendiente | Depende del servicio en Supabase. |
-| CA-07.3 | La idempotencia por `event_id` existe en ingesta, no en avisos | — | pendiente | Falta registro de avisos por evento y destinatario. |
-| CA-07.4 | — | — | pendiente | Depende de fotos (fase 7). |
-| CA-07.5 | — | — | pendiente | Sin límites ni episodios. Diseño en `arquitectura.md` §6.3. |
+| CA-06.1 | Fase 4: varios destinatarios por módulo; sección en `/bebes` (`avisos.test.mjs`). | S | parcial | Prueba con Supabase real y un bot real. |
+| CA-06.2 | Fase 4: la lista es del módulo y la ven los dos dueños. | S | parcial | Igual. |
+| CA-06.3 | Fase 4: código de un solo uso con hash y vencimiento; retirar evita avisos futuros. | S | parcial | Vinculación con un bot real. |
+| CA-07.1 | Fase 4: un evento crea un aviso por destinatario; `notificador.test.mjs` con Telegram simulado. | S | parcial | Ninguna entrega real a Telegram. |
+| CA-07.2 | Fase 4: el envío depende de `pg_cron` y del notificador, no de la web. | S | parcial | **Sin verificar**: `20261118000300_cron.sql` no se aplicó ni se probó. |
+| CA-07.3 | La idempotencia por `event_id` existe en ingesta, no en avisos · Fase 4: el reenvío del mismo `event_id` no duplica eventos ni avisos. | S | parcial | Aplicarlo a cada productor de eventos. |
+| CA-07.4 | Fase 4: el aviso se arma solo con tipo y descripción; sin imagen. | S | parcial | Fase 7: el aviso `foto_tomada` lleva texto fijo, sin imagen ni ruta (PGlite). Revalidar con Telegram real. |
+| CA-07.5 | Fase 4: `actualizar_episodio`; F5: conectado a la ingesta de ambiente. | S | parcial | Una lectura atrasada puede cerrar un episodio antes de tiempo. |
 
 ## HU-08 a HU-13 · Cuna y figuras (fase 5)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-08.1 | PIR en GP3 (`config.py:20`; se crea en `common/sensors/sensores.py:17`); envío en `main.py:133-139` y `common/communication/ambiente.py`; Migración 4; `supabase/tests/movimiento.test.mjs`; `components/PanelMovimiento.tsx` | S | parcial | El monitoreo se activa por bandera de configuración (`config.py:28`, apagada). No hay activación manual ni por horario desde la web. Sin prueba física. |
-| CA-08.2 | `src/shared/contracts/movimiento.md` lo excluye | — | pendiente | Depende de HU-06 y HU-07. |
-| CA-08.3 | Con la bandera apagada el firmware no envía (`ambiente.py:206`) | S | parcial | Control solo local, no desde la web. |
+| CA-08.1 | PIR en GP3 (`config.py:20`; se crea en `common/sensors/sensores.py:17`); envío en `main.py:133-139` y `common/communication/ambiente.py`; Migración 4; `supabase/tests/movimiento.test.mjs`; `components/PanelMovimiento.tsx` · Fase 5: activación manual y por horario (`motion_set`); el backend omite movimientos con el monitoreo apagado. | S | parcial | Prueba con PIR y Pico reales. Al reiniciarse, la Pico vuelve a apagado sin avisar. |
+| CA-08.2 | `src/shared/contracts/movimiento.md` lo excluye · Fase 5: cada movimiento registrado crea un evento y un aviso con la hora. | S | parcial | Entrega real a Telegram. |
+| CA-08.3 | Con la bandera apagada el firmware no envía (`ambiente.py:206`) · Fase 5: apagado: no se registra ni se avisa (`monitoreo_inactivo`). | S | parcial | Control confirmado solo por la Pico; sin prueba física. |
 | CA-09.1 | `pages/PaginaCuna.tsx`, `services/lecturas.ts:74-92`, `tests/paginaCuna.test.tsx`, `tests/lecturas.test.ts` | S | parcial | Nunca verificado con Supabase real ni con un AM2301 real. |
 | CA-09.2 | `bebe_id` y `device_id` en `lecturas_ambiente` (Migración 1); `supabase/tests/ingesta.test.mjs` | S | parcial | Igual. |
 | CA-09.3 | `INTERVALO_AMBIENTE_S = 10` (`config.py:87`); unidades °C y % HR en `PaginaCuna`; `ts` UTC guardado | S | parcial | La cadencia de 10 s no se midió con marcas reales (fase 11). |
-| CA-10.1 | — | — | pendiente | Sin tabla de límites ni pantalla. |
-| CA-10.2 | — | — | pendiente | Depende de HU-07. |
-| CA-10.3 | — | — | pendiente | |
-| CA-10.4 | — | — | pendiente | Regla mínimo < máximo solo en DEC-13. |
-| CA-11.1 | Ciclo completo web → `solicitar_lampara` → Realtime → Pico → `confirmar_orden_lampara`: Migraciones 2 y 3; `common/communication/lampara_remota.py`; `components/PanelLampara.tsx`; `supabase/tests/lampara*.test.mjs`; `firmware/tests/test_lampara_remota.py` | S | parcial | Funciona solo con `VITE_LAMPARA_HABILITADA=true`. Nunca probado con Realtime real ni con la Pico. Pantalla solicita nivel 0–100; no hay botones de encender y apagar separados. |
-| CA-11.2 | `cuna/audio.py` (tono sintético, MAX98357A); `firmware/tests/test_audio.py` | S | parcial | Solo local. Sin web. Sin prueba de I²S real. |
-| CA-11.3 | — | — | pendiente | No se registra la reproducción como actividad. |
-| CA-11.4 | `audio_play` y `audio_stop` locales (`comandos.py`) | S | pendiente | No hay catálogo; un solo tono. Sin selección desde la web. |
-| CA-12.1 | — | — | pendiente | Voz sin diseño de transporte. Ver `arquitectura.md` §8. |
-| CA-12.2 | — | — | pendiente | |
-| CA-12.3 | — | — | pendiente | |
-| CA-13.1 | `figuras-led/figuras.py` (6 LED en GP18–22 y GP26) | S | parcial | Solo demostración local. Sin canal de red, sin web, sin horario. `pages/PaginaFiguras.tsx` es un marcador sin controles. |
-| CA-13.2 | `led_sequence` con `step_s` en `comandos.py` | S | parcial | Sin web. |
-| CA-13.3 | `MODULO = "figuras"` aísla el módulo (`common/utilities/modulo.py:16-32`); `firmware/tests/test_modulo.py` | S | parcial | Falta demostración física modular. |
-| CA-13.4 | Mínimo de 2 s en firmware (`figuras.py`, `comandos.py`) y `models/validarComando.ts` (sin uso en pantallas) | S | parcial | Sin rechazo desde la web. Transiciones suaves sin medir. |
+| CA-10.1 | Fase 5: `limites_ambiente`, `guardar_limites`, panel en `/cuna`. | S | parcial | Prueba con Supabase real. |
+| CA-10.2 | Fase 5: salir del rango abre un episodio y avisa una vez (`ordenes-modulo.test.mjs`). | S | parcial | Entrega real a Telegram. |
+| CA-10.3 | Fase 5: la web muestra los límites guardados en el servidor. | S | parcial | Prueba con Supabase real. |
+| CA-10.4 | Fase 5: mínimo igual o mayor que máximo se rechaza en web y base; se conserva el límite anterior. | S | parcial | Prueba con Supabase real. |
+| CA-11.1 | Ciclo completo web → `solicitar_lampara` → Realtime → Pico → `confirmar_orden_lampara`: Migraciones 2 y 3; `common/communication/lampara_remota.py`; `components/PanelLampara.tsx`; `supabase/tests/lampara*.test.mjs`; `firmware/tests/test_lampara_remota.py` · Fase 5: el ciclo de lámpara queda intacto junto a `ordenes_modulo`. | S | parcial | Funciona solo con `VITE_LAMPARA_HABILITADA=true`. Nunca probado con Realtime real ni con la Pico. Pantalla solicita nivel 0–100; no hay botones de encender y apagar separados. |
+| CA-11.2 | `cuna/audio.py` (tono sintético, MAX98357A); `firmware/tests/test_audio.py` · Fase 5: `audio_play` por orden remota con confirmación. | S | parcial | I²S real sin probar. |
+| CA-11.3 | Fase 5: la confirmación de `audio_play` registra un evento de audio, sin sonido. | S | parcial | Prueba con Supabase real. |
+| CA-11.4 | `audio_play` y `audio_stop` locales (`comandos.py`) · Fase 5: selector con el catálogo real de la Pico. | S | parcial | El catálogo es **solo `tono_suave`**; no hay sonidos pregrabados. |
+| CA-12.1 | Fase 5: canal privado `voz:<producto>` con PCM de 16 bits a 8 kHz (`voz.md`). | S | parcial | **Sin prueba con micrófono, red y parlante reales.** |
+| CA-12.2 | Fase 5: botón «Hablar» y fragmentos de 40 ms; `useVoz`. | S | parcial | Latencia y memoria sin medir. |
+| CA-12.3 | Fase 5: solo se registra el inicio y el fin; la voz no se guarda. | S | parcial | Falta confirmar que Realtime no guarda los mensajes difundidos. |
+| CA-13.1 | `figuras-led/figuras.py` (6 LED en GP18–22 y GP26) · Fase 5: encender, apagar y un LED desde la web. | S | parcial | Pico y LED reales. |
+| CA-13.2 | `led_sequence` con `step_s` en `comandos.py` · Fase 5: secuencias con intervalo desde la web. | S | parcial | Pico y LED reales. |
+| CA-13.3 | `MODULO = "figuras"` aísla el módulo (`common/utilities/modulo.py:16-32`); `firmware/tests/test_modulo.py` · Fase 5: figuras separadas; horarios de figuras. | S | parcial | Demostración física modular. |
+| CA-13.4 | Mínimo de 2 s en firmware (`figuras.py`, `comandos.py`) y `models/validarComando.ts` (sin uso en pantallas) · Fase 5: intervalo menor que 2 s rechazado en web, base y firmware; rampas de 400 ms. | S | parcial | Transiciones sin medir en LED reales. |
 
 ## HU-14 a HU-16 · Colchón independiente (fase 6)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-14.1 | `Monitor.armar` (`colchon/logica_colchon.py:120`); `firmware/tests/test_control_colchon.py` («referencia_valida_positiva_tras_calibrar») | S | parcial | Referencia solo local; no se guarda en la nube ni se configura desde la web. |
-| CA-14.2 | `mattress_stop` en `comandos.py`; botón físico | S | parcial | Sin web. |
-| CA-14.3 | `MODULO = "colchon"` | S | parcial | Falta alimentación independiente comprobada (HU-29). |
-| CA-14.4 | El peso se mide y procesa solo en la Pico; no se envía | D | parcial | Verificar al integrar que no se persistan lecturas de peso como movimientos. |
-| CA-14.5 | `logica_colchon.py:116-135`; `test_logica_colchon.py` (líneas 103–111); `test_control_colchon.py` («duracion_del_monitoreo_lo_detiene») | S | parcial | Sin validación desde la web. |
-| CA-15.1 | `COLCHON_TOLERANCIA_PCT = 10` (`config.py:49`) | S | parcial | Fija en configuración; no editable desde la web. |
-| CA-15.2 | Buzzer integrado en GP14 (`config.py:44`, PWM 2 kHz); GP18 es el pin del montaje de banco (`colchon/prueba_colchon.py:117`) | S | parcial | Aviso a Telegram pendiente (HU-07). Sin prueba física con evidencia. |
-| CA-15.3 | `registrar_lectura` no alarma si no está ACTIVO (`logica_colchon.py:161-162`) | S | parcial | |
-| CA-15.4 | `test_logica_colchon.py:30-66` y `test_control_colchon.py:173-188` (890 g × 3 dispara; 900 g × 3 no; 890 g y 1000 g no completan) | S | parcial | Falta con pesos reales en banco y con HX711 real. |
-| CA-16.1 | Botón y `mattress_stop` (`test_control_colchon.py:261-308`) | S | parcial | Detención desde la app pendiente. |
-| CA-16.2 | `mattress_rearm` local (`test_control_colchon.py:314-331`) | S | parcial | Sin web. |
-| CA-16.3 | `COLCHON_ALARMA_MAX_S = 60` (`config.py:54`); `test_control_colchon.py:293-331` | S | parcial | Duración editable solo en configuración, no desde la app. |
+| CA-14.1 | `Monitor.armar` (`colchon/logica_colchon.py:120`); `firmware/tests/test_control_colchon.py` («referencia_valida_positiva_tras_calibrar») · Fase 6: `colchon_armado` informa la referencia que midió la Pico; la web la muestra solo entonces. | S | parcial | Prueba física con HX711 y pesos reales. |
+| CA-14.2 | `mattress_stop` en `comandos.py`; botón físico · Fase 6: `mattress_stop` desde la web; evento `colchon_detenido`. | S | parcial | Prueba con Supabase real y con la Pico. |
+| CA-14.3 | `MODULO = "colchon"` · Fase 6: módulo `cuna-colchon-NN` separado, con su propia pantalla. | S | parcial | Falta alimentación independiente comprobada (HU-29). |
+| CA-14.4 | El peso se mide y procesa solo en la Pico; no se envía · Fase 6: ninguna tabla ni columna de lecturas de peso (prueba de esquema); la web no muestra pesos. | S | parcial | La alarma envía un solo valor (`ultimo_peso_g`), no una serie. |
+| CA-14.5 | `logica_colchon.py:116-135`; `test_logica_colchon.py` (líneas 103–111); `test_control_colchon.py` («duracion_del_monitoreo_lo_detiene») · Fase 6: duración, tolerancia y alarma se validan en web, base y firmware antes de medir. | S | parcial | Prueba con Supabase real. |
+| CA-15.1 | `COLCHON_TOLERANCIA_PCT = 10` (`config.py:49`) · Fase 6: tolerancia editable y guardada; viaja en `mattress_arm`. | S | parcial | Prueba con Supabase real y con la Pico. |
+| CA-15.2 | Buzzer integrado en GP14 (`config.py:44`, PWM 2 kHz); GP18 es el pin del montaje de banco (`colchon/prueba_colchon.py:117`) · Fase 6: `alarma_colchon` crea un aviso por destinatario (`colchon.test.mjs`). | S | parcial | Entrega real a Telegram; buzzer sin prueba física con evidencia. |
+| CA-15.3 | `registrar_lectura` no alarma si no está ACTIVO (`logica_colchon.py:161-162`) · Fase 6: sin monitoreo activo no hay evento de alarma. | S | parcial |  |
+| CA-15.4 | `test_logica_colchon.py:30-66` y `test_control_colchon.py:173-188` (890 g × 3 dispara; 900 g × 3 no; 890 g y 1000 g no completan) · Fase 6: `test_colchon_fase6.py`: la tolerancia pedida decide la alarma. | S | parcial | Falta con pesos reales en banco y con HX711 real. |
+| CA-16.1 | Botón y `mattress_stop` (`test_control_colchon.py:261-308`) · Fase 6: detener desde la app y por botón; `colchon_detenido` con motivo. | S | parcial | Prueba con la Pico real. |
+| CA-16.2 | `mattress_rearm` local (`test_control_colchon.py:314-331`) · Fase 6: `mattress_rearm` desde la web con referencia nueva. | S | parcial | Prueba con la Pico real. |
+| CA-16.3 | `COLCHON_ALARMA_MAX_S = 60` (`config.py:54`); `test_control_colchon.py:293-331` · Fase 6: duración de la alarma editable (hasta 60 s) y guardada. | S | parcial | Prueba con la Pico real. |
 
 ## HU-17 a HU-19 · Habitación y juego (fases 7 y 8)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-17.1 a CA-17.5 | — (el firmware no tiene sensor de puerta ni módulo de habitación) | — | pendiente | HU-17 completa. El PIR existente pertenece a la cuna (HU-08). |
-| CA-18.1 a CA-18.4 | — (sin Storage ni cámara) | — | pendiente | HU-18 completa. |
-| CA-19.1 a CA-19.5 | — (sin botones ni juego en el firmware) | — | pendiente | HU-19 completa. |
+| CA-17.1 | Fase 7: `room_monitor_set {sensor, enabled}` y cuatro horarios (`habitacion_*_activar/desactivar`); `test_habitacion.py`, `habitacion.test.mjs`, `habitacion-fase7.test.tsx` | S | parcial | Reed y PIR reales; Supabase real y `pg_cron` (el horario corre en el minuto exacto). |
+| CA-17.2 | Fase 7: `ControlHabitacion` informa un evento por apertura de puerta o flanco del PIR con el monitoreo de ese sensor activo; `ingestar_habitacion` lo guarda | S | parcial | Sensores reales y cableado sin revisar. |
+| CA-17.3 | Fase 7: el evento crea un aviso por destinatario; el módulo no tiene buzzer ni salida sonora | S | parcial | Entrega real a Telegram. |
+| CA-17.4 | Fase 7: el evento no lleva datos (`datos = {}`) y el firmware no distingue dirección | S | parcial | |
+| CA-17.5 | Fase 7: puerta y movimiento con la misma hora son dos eventos y dos solicitudes de foto | S | parcial | Dos sensores reales a la vez. |
+| CA-18.1 | Fase 7: cada evento nuevo crea una solicitud en `public.fotos` | S | parcial | Prueba P3 (teléfono) sin ejecutar; hace falta el almacén real. |
+| CA-18.2 | Fase 7: la imagen se sube al almacén privado `fotos-habitacion` y se ve desde `/habitacion` con un enlace de 60 s | S | parcial | Almacén real en `cuna-inteligente-dev` (requiere autorización); tiempos medidos. |
+| CA-18.3 | Fase 7: una foto por evento; acciones distintas no se agrupan; el reenvío no duplica la foto | S | parcial | |
+| CA-18.4 | Fase 7: sin tablas ni columnas de video ni de imagen; el aviso lleva texto fijo, sin imagen ni ruta | S | parcial | Telegram real. |
+| CA-19.1 | Fase 8: `Juego.encender` elige un objetivo al azar entre cinco y `ControlJuego` enciende solo su LED; `test_juego.py` | S | parcial | Botones, LED y cableado reales; pines propuestos sin revisión eléctrica. |
+| CA-19.2 | Fase 8: acierto = recompensa sonora de `JUEGO_RECOMPENSA_MS`; error = sin sonido; una pulsación por acción física (antirrebote y flanco) | S | parcial | Buzzer real sin prueba física. |
+| CA-19.3 | Fase 8: tras cada pulsación, acierto o error, se elige otro objetivo distinto del anterior (cubre los otros cuatro botones) | S | parcial | Azar real (`os.urandom`) sin medir en la Pico. |
+| CA-19.4 | Fase 8: sin límite de pulsaciones; solo se detiene con el combo de apagado (`JUEGO_COMBO_ONOFF` mantenido `JUEGO_COMBO_MS`) o al terminar el programa, con LED y buzzer en bajo | S | parcial | El método de apagado es una propuesta; el diseño comercial puede usar un interruptor. |
+| CA-19.5 | `diseno-fisico.md` §3.5: botones grandes (diámetro mínimo propuesto de 30 mm), piezas fijas, sin partes que quepan en el cilindro de partes pequeñas | D | parcial | Requisito de diseño, no verificación: falta elegir los botones, medirlos y probar la fijación; la norma de juguetes está por confirmar. |
 
-Los 14 criterios CA-17.1 a CA-17.5, CA-18.1 a CA-18.4 y CA-19.1 a CA-19.5 comparten estado y brecha; se agrupan aquí y se cuentan uno a uno en el resumen.
+El juego es local: no hay pantalla web, tabla ni evento (decisión de la fase 8).
 
 ## HU-20 a HU-23 · Alimentación (fase 9)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-20.1 a CA-20.4 | — (el HX711 existente sirve al colchón, no a una balanza de alimentación) | — | pendiente | HU-20 completa. |
-| CA-21.1 a CA-21.7 | — (estados de toma solo en `arquitectura.md` §6.2) | — | pendiente | HU-21 completa. |
-| CA-22.1 a CA-22.4 | — (sin planificador; la zona horaria de presentación sí existe en `utils/tiempo.ts`) | — | pendiente | HU-22 completa. |
-| CA-23.1 a CA-23.4 | — | — | pendiente | HU-23 completa. |
+| CA-20.1 | Fase 9: `feeding_weigh` pide el peso a la Pico (`control_alimentacion.py`, `test_alimentacion.py`); el peso llega como `peso_alimentacion` y `ingestar_alimentacion` lo guarda como peso inicial (`supabase/tests/alimentacion.test.mjs`); botón «Pesar biberón lleno» (`tests/alimentacion-fase9.test.tsx`) | S | parcial | HX711 y celda de carga reales sin calibrar ni probar; fijación del recipiente. |
+| CA-20.2 | Fase 9: «Iniciar toma» llama `iniciar_toma`, que registra `inicio` con la hora del servidor y arranca la duración activa | S | parcial | El criterio habla de un botón; no hay botón físico (la toma se inicia desde la web). Requiere decisión del equipo. |
+| CA-20.3 | Fase 9: `crear_toma` asocia el bebé vigente y el dispositivo (`alimentacion.test.mjs`) | S | parcial | Sin Supabase real. |
+| CA-20.4 | Fase 9: `iniciar_toma` falla con `toma_sin_peso_inicial`; la web muestra «Pesa el biberón antes de iniciar la toma. Coloca el mismo recipiente que usarás para el pesaje final.» | S | parcial | Sin Supabase real. |
+| CA-21.1 | Fase 9: `pausar_toma`, `reanudar_toma`, `finalizar_toma`; la misma toma continúa y la pausa no suma a la duración activa | S | parcial | Sin Supabase real. |
+| CA-21.2 | Fase 9: `pedir_peso_toma(final)` solo con la toma `por_cerrar`; la Pico pesa y el peso final queda en la toma | S | parcial | Balanza real sin probar. |
+| CA-21.3 | Fase 9: `corregir_toma` y duración final en el historial (`HistorialTomas`) | S | parcial | Sin Supabase real. |
+| CA-21.4 | Fase 9: 08:00-08:15 con pausa 08:05-08:07 son 13 min activos; 200 g − 150 g = 50 g; la corrección conserva anterior, autor (solo como «Tú» u «Otro dueño»), fecha y motivo (`alimentacion.test.mjs`, `alimentacion-fase9.test.tsx`) | S | parcial | Sin Supabase real. |
+| CA-21.5 | Fase 9: el pesaje de control es solo un evento y no cambia la toma; el cierre es siempre manual (`cerrar_toma`) | S | parcial | Sin Supabase real. |
+| CA-21.6 | Fase 9: `cerrar_toma` falla con `toma_incompleta` si falta el peso final o supera al inicial; `corregir_toma` no admite consumo negativo | S | parcial | Sin Supabase real. |
+| CA-21.7 | Fase 9: `mis_tomas` entrega pesos, ingerido, inicio, fin, pausas, duración y correcciones | S | parcial | Sin Supabase real. |
+| CA-22.1 | Fase 9: `PanelHorarios tipo="recordatorio_alimentacion"` en `/alimentacion` (`alimentacion-fase9.test.tsx`) | S | parcial | Sin Supabase real. |
+| CA-22.2 | Fase 4 y 9: `procesar_horarios` registra el recordatorio a diario y el notificador lo envía por Telegram (doble) | S | parcial | Sin Telegram real. |
+| CA-22.3 | Fase 4: `procesar_horarios` genera un recordatorio por día a las horas configuradas, en `America/Costa_Rica`; fase 9: prueba específica con 08:00 y 11:00 | S | parcial | Sin Supabase real. |
+| CA-22.4 | Fase 4: las horas vencidas se omiten (DEC-04, DEC-10). | S | parcial | Gráficos y exportación (fase 10). |
+| CA-23.1 | Fase 9: la Pico mide el DS18B20 cada 30 s y envía `temperatura_biberon`; no informa 85,0 °C ni lecturas fuera de rango (`test_alimentacion.py`) | S | parcial | Sonda real sin probar. |
+| CA-23.2 | Fase 9: `PanelLimitesBiberon` y `guardar_limites_biberon` (mínimo menor que máximo, -10 a 100 °C) | S | parcial | Sin Supabase real. |
+| CA-23.3 | Fase 9: `evaluar_biberon` abre un episodio de frío o de calor y avisa una vez por episodio y destinatario | S | parcial | Sin Telegram real. |
+| CA-23.4 | Fase 9: el control no tiene ninguna salida; la pantalla no ofrece calentar, enfriar ni dar de comer (prueba de ausencia en firmware y web) | S | parcial | Revisión eléctrica del montaje real. |
 
-Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4), todos pendientes.
+Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verificado. El botón físico de inicio (CA-20.2) no existe.
 
 ## HU-24 a HU-27 · Historial, gráficos y exportación (fase 10)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` | S | parcial | Sin tipo ni descripción unificados; faltan los demás eventos. |
-| CA-24.2 | Mediciones de ambiente y movimientos (Migraciones 1 y 4); órdenes de lámpara (Migración 2) | S | parcial | Faltan activaciones, alertas y el resto de módulos. |
+| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` · Fase 4: `public.eventos` con tipo, descripción, hora, bebé y módulo. | S | parcial | Unificar ambiente y movimiento y el resto de productores (fase 10). |
+| CA-24.2 | Mediciones de ambiente y movimientos (Migraciones 1 y 4); órdenes de lámpara (Migración 2) · Fase 5: movimiento, audio, voz, alarmas y paradas del colchón van a `eventos`. | S | parcial | Faltan habitación, juego y alimentación. |
 | CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio | S | parcial | Falta probar con el historial completo. |
 | CA-24.4 | Igual que CA-05.2 | S | parcial | |
-| CA-24.5 | `event_id` PK; `supabase/tests/ingesta.test.mjs` y `movimiento.test.mjs` («deduplica, rechaza colisiones…») | S | parcial | Falta demostrar dos eventos distintos con la misma hora en todos los tipos. |
-| CA-24.6 | Datos por fila, bebé y dispositivo guardados | S | parcial | Sin descripción; fotos pendientes. |
+| CA-24.5 | `event_id` PK; `supabase/tests/ingesta.test.mjs` y `movimiento.test.mjs` («deduplica, rechaza colisiones…») · Fase 4: idempotencia por `event_id` en `registrar_evento`. | S | parcial | Aplicarlo a los productores de las fases 7 a 9. |
+| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento. | S | parcial | Fase 7: fotos ligadas a su evento, dispositivo y bebé. Faltan alimentación y el cierre de la fase 10. |
 | CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) | S | parcial | Falta cubrir retiro de dueño y reasignación. |
 | CA-25.1 | `pages/PaginaCuna.tsx` lee la última lectura de la nube | S | parcial | `PaginaHistorial.tsx` es un marcador sin consulta. |
 | CA-25.2 | RLS por dueño | S | parcial | Sin vista por bebé. |
@@ -150,7 +176,7 @@ Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4
 | CA-28.1 | Ni `docs/Sprint3/alcance.md` ni el firmware incluyen UPS | D | parcial | Confirmar con la lista de componentes (HU-33). |
 | CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py:363-417`; `lampara_remota.py`) | S | parcial | Sin corte real. |
 | CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware); registros conservados por la base | S | parcial | Recordatorios inexistentes; sin prueba de corte real. |
-| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`, `tests/paginaCuna.test.tsx`) | S | parcial | La web no muestra estado del colchón. |
+| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`, `tests/paginaCuna.test.tsx`) | S | parcial | La web muestra el estado del colchón que informa la Pico (fase 6), sin prueba real. |
 | CA-29.1 a CA-29.4 | — | — | pendiente | Guion de demostración (fase 12) y diseño físico (fase 2). |
 | CA-30.1 | — | — | pendiente | |
 | CA-30.2 | — | — | pendiente | |
@@ -180,11 +206,11 @@ Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real y para fotos y controles futuros. |
-| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC | S | parcial | No existe flujo de revocación ni destinatarios. |
+| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real. Fase 7: las fotos solo las leen los dueños (RLS y políticas del almacén, probadas con PGlite). |
+| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 4: un destinatario no es dueño; retirarlo no cambia los dueños. | S | parcial | Flujo de revocación completo (fase 11). |
 | CA-34.3 | Sin borrado; sin audio | S | parcial | |
 | CA-34.4 | Igual que CA-05.1 y CA-05.2 | S | parcial | |
-| CA-34.5 | No existe ninguna transmisión de voz | — | pendiente | Depende de HU-12. |
+| CA-34.5 | No existe ninguna transmisión de voz · Fase 5: la voz no se graba ni se guarda; solo queda el registro de la sesión. | S | parcial | Prueba con Realtime real y con el micrófono. |
 | CA-35.1 | — | — | pendiente | `docs/Sprint3/validacion-base.md` deja pendiente la revisión a 360 y 1280 px. |
 | CA-35.2 | `/cuna` muestra °C, % HR y estados | S | parcial | Solo para las pantallas existentes. |
 | CA-35.3 | — | — | pendiente | |
@@ -196,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 63 |
-| pendiente | 79 |
+| parcial | 122 |
+| pendiente | 20 |
 | bloqueado | 0 |
 | **Total** | **145** |
 

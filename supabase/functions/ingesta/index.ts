@@ -27,6 +27,8 @@ async function rpc(nombre: string, cuerpo: Record<string, unknown>): Promise<Res
     case 'no_autorizado':
     case 'id_reutilizado':
     case 'sin_asignacion':
+    case 'monitoreo_inactivo':
+    case 'evento_invalido':
       return resultado
     default:
       throw new Error('Respuesta inesperada de Ingesta.')
@@ -49,5 +51,32 @@ Deno.serve(crearIngesta(
     p_token_sha256: tokenHash,
     p_ts: evento.ts,
     p_recibido_en: recibidoEn,
+  }),
+  (evento, tokenHash, recibidoEn) => rpc('ingestar_colchon', {
+    p_event_id: evento.event_id,
+    p_device_id: evento.device_id,
+    p_token_sha256: tokenHash,
+    p_tipo: evento.tipo,
+    p_ts: evento.ts,
+    p_recibido_en: recibidoEn,
+    p_datos: evento.datos,
+  }),
+  (evento, tokenHash, recibidoEn) => rpc('ingestar_habitacion', {
+    p_event_id: evento.event_id,
+    p_device_id: evento.device_id,
+    p_token_sha256: tokenHash,
+    p_tipo: evento.tipo,
+    p_ts: evento.ts,
+    p_recibido_en: recibidoEn,
+    p_datos: evento.datos,
+  }),
+  (evento, tokenHash, recibidoEn) => rpc('ingestar_alimentacion', {
+    p_event_id: evento.event_id,
+    p_device_id: evento.device_id,
+    p_token_sha256: tokenHash,
+    p_tipo: evento.tipo,
+    p_ts: evento.ts,
+    p_recibido_en: recibidoEn,
+    p_datos: evento.datos,
   }),
 ))

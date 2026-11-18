@@ -1,9 +1,20 @@
 import { useMemo, type ReactNode } from 'react'
 import { ContextoServicios } from '../hooks/useServicios.ts'
 import { crearServicioAuth } from '../services/auth.ts'
+import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
+import { crearServicioColchon } from '../services/colchon.ts'
+import { crearServicioAlimentacion } from '../services/alimentacion.ts'
+import { crearServicioHabitacion } from '../services/habitacion.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
+import {
+  crearServicioHorarios,
+  crearServicioLimites,
+  crearServicioOrdenes,
+  crearServicioVoz,
+} from '../services/ordenes.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
+import { crearServicioTelegram } from '../services/telegram.ts'
 import { backendConfigurado, supabase } from '../services/supabase.ts'
 import type { Servicios } from '../services/tipos.ts'
 
@@ -28,8 +39,17 @@ function ProveedorServicios({
         ? {
             ...serviciosNoConfigurados,
             auth: crearServicioAuth(supabase),
+            cuentas: crearServicioCuentas(supabase),
             lecturas: crearServicioLecturas(supabase),
             lampara: crearServicioLampara(supabase),
+            ordenes: crearServicioOrdenes(supabase),
+            limites: crearServicioLimites(supabase),
+            horarios: crearServicioHorarios(supabase),
+            voz: crearServicioVoz(supabase),
+            colchon: crearServicioColchon(supabase),
+            habitacion: crearServicioHabitacion(supabase),
+            alimentacion: crearServicioAlimentacion(supabase),
+            telegram: crearServicioTelegram(supabase),
           }
         : serviciosNoConfigurados)
     return { servicios: efectivos, backendConfigurado: configurado }

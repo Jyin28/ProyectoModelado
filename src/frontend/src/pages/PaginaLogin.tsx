@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Link, Navigate, useLocation } from 'react-router'
 import { useSesion } from '../hooks/useSesion.ts'
 import './paginas.css'
 import './PaginaLogin.css'
@@ -86,6 +86,9 @@ function PaginaLogin() {
             <button type="submit" disabled={enviando}>
               {enviando ? 'Ingresando…' : 'Iniciar sesión'}
             </button>
+            <p>
+              ¿No tienes cuenta? <Link to="/registro">Crear cuenta</Link>
+            </p>
           </form>
         )}
       </section>

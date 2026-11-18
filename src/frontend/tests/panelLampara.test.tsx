@@ -50,6 +50,11 @@ function montar(
   const solicitarLampara = vi.fn((_id: string, _nivel: number) => solicitud())
   const servicios: Servicios = {
     ...serviciosNoConfigurados,
+    // La pantalla Cuna también consulta los límites; sin límites guardados no muestra alertas.
+    limites: {
+      obtener: () => Promise.resolve({ ok: true, datos: null }),
+      guardar: serviciosNoConfigurados.limites.guardar,
+    },
     lampara: { obtenerUltimaOrdenLampara, solicitarLampara },
     auth: {
       ...serviciosNoConfigurados.auth,

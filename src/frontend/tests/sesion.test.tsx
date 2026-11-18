@@ -40,6 +40,10 @@ function crearAuth(opciones: Opciones = {}) {
         ((): Promise<Resultado<Sesion>> =>
           Promise.resolve({ ok: true, datos: SESION })),
     ),
+    registrarse: vi.fn(
+      (): Promise<Resultado<{ requiereConfirmacion: boolean }>> =>
+        Promise.resolve({ ok: true, datos: { requiereConfirmacion: true } }),
+    ),
     cerrarSesion: vi.fn(
       opciones.alCerrar ??
         ((): Promise<Resultado<null>> =>
@@ -47,7 +51,15 @@ function crearAuth(opciones: Opciones = {}) {
     ),
     suscribirCambiosSesion: suscribir,
   }
-  const servicios: Servicios = { ...serviciosNoConfigurados, auth }
+  const servicios: Servicios = {
+    ...serviciosNoConfigurados,
+    // La pantalla Cuna también consulta los límites; sin límites guardados no muestra alertas.
+    limites: {
+      obtener: () => Promise.resolve({ ok: true, datos: null }),
+      guardar: serviciosNoConfigurados.limites.guardar,
+    },
+    auth,
+  }
   return {
     auth,
     servicios,
