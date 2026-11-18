@@ -28,6 +28,11 @@ class ConfigTests(unittest.TestCase):
             "habitacion": {
                 "PUERTA": config.PIN_PUERTA, "PIR_HABITACION": config.PIN_PIR_HABITACION,
             },
+            "juego": {
+                **{"BOTON%d" % i: p for i, p in enumerate(config.PINES_JUEGO_BOTONES)},
+                **{"LED%d" % i: p for i, p in enumerate(config.PINES_JUEGO_LEDS)},
+                "BUZZER": config.PIN_JUEGO_BUZZER,
+            },
         }
 
     def pines(self):

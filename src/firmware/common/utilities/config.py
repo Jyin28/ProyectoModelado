@@ -13,6 +13,7 @@ DEVICE_ID = "pico-sprint3-01"
 #   "colchon" HX711, celda de carga, buzzer y boton
 #   "figuras" los seis LED
 #   "habitacion" sensor de puerta (reed) y PIR del cuarto
+#   "juego"   cinco botones con luz y un buzzer (funciona sin red)
 # Solo se inicializa lo del modulo elegido (ver modulo.py).
 # Los pines solo deben ser unicos DENTRO de cada modulo: la Pico atiende uno por vez.
 MODULO = "cuna"
@@ -100,6 +101,24 @@ PIN_PIR_HABITACION = 5       # PIR del cuarto
 PUERTA_ABIERTA_ES_ALTO = True   # con pull-up, el contacto abierto lee 1
 HABITACION_ANTIRREBOTE_MS = 100  # el sensor debe estar estable este tiempo
 HABITACION_PAUSA_CICLO_MS = 20   # pausa del ciclo con la habitacion habilitada
+
+# ---- Juego de cinco botones (HARDWARE APAGADO POR DEFECTO, SIN PROBAR EN HARDWARE) ----
+# Funciona solo en la Pico, sin WiFi ni Supabase. Pines PROPUESTOS
+# (docs/Sprint4/diseno-fisico.md 3.5): botones a GND con pull-up, un LED por boton.
+JUEGO_HABILITADO = False
+PINES_JUEGO_BOTONES = (2, 3, 4, 5, 6)     # cinco botones arcade
+PINES_JUEGO_LEDS = (7, 8, 9, 10, 11)      # un LED con resistencia por boton
+PIN_JUEGO_BUZZER = 14                     # base del NPN del buzzer pasivo
+JUEGO_BOTON_ACTIVO_BAJO = True            # pulsado = 0 (boton a GND con pull-up)
+JUEGO_ANTIRREBOTE_MS = 30                 # el boton debe estar estable este tiempo
+JUEGO_TONO_HZ = 1500                      # tono de la recompensa
+JUEGO_RECOMPENSA_MS = 400                 # duracion de la recompensa
+JUEGO_INICIA_ENCENDIDO = True             # al darle corriente, el juego empieza
+# Apagar y volver a encender sin otro boton: mantener pulsados estos dos botones
+# (indices 0 a 4) a la vez. PROPUESTA: el diseno comercial puede usar un interruptor.
+JUEGO_COMBO_ONOFF = (0, 4)
+JUEGO_COMBO_MS = 2000
+JUEGO_PAUSA_CICLO_MS = 10                 # pausa del ciclo con el juego habilitado
 
 # GPIO que usa el chip WiFi de la Pico W: no asignar a nada.
 PINES_RESERVADOS_WIFI = (23, 24, 25, 29)

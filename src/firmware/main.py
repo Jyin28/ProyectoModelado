@@ -1,7 +1,7 @@
 """main.py - Programa principal de la Pico 2 W.
 
 Hay una sola Pico y se conecta a UN modulo por vez. config.MODULO dice a cual
-("cuna", "colchon", "figuras" o "habitacion") y solo se atiende lo de ese modulo (modulo.py).
+("cuna", "colchon", "figuras", "habitacion" o "juego") y solo se atiende lo de ese modulo (modulo.py).
 
 Que hace:
   1. Valida config.MODULO y se conecta al WiFi.
@@ -20,7 +20,10 @@ Que hace:
   Modulo "habitacion":
   6b. Si config.py lo habilita, vigila la puerta y el PIR del cuarto y informa
      cada accion durante el monitoreo activo (sin alarma local).
-  Todos:
+  Modulo "juego":
+  6c. Si config.py lo habilita, corre el juego de cinco botones. Funciona solo
+     en la Pico: no se conecta al WiFi, no abre hilo de red ni recibe ordenes.
+  Los demas modulos:
   7. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   8. El LED interno parpadea para indicar el estado.
 
@@ -32,7 +35,7 @@ import time
 # Las carpetas del proyecto se agregan a la ruta de busqueda para poder
 # escribir "import config", "import wifi", etc. sin paquetes.
 # (figuras-led lleva guion, por eso no se puede importar como paquete.)
-for _carpeta in ("/colchon", "/cuna", "/habitacion", "/figuras-led", "/common/communication",
+for _carpeta in ("/colchon", "/cuna", "/habitacion", "/juego", "/figuras-led", "/common/communication",
                  "/common/sensors", "/common/utilities"):
     if _carpeta not in sys.path:
         sys.path.append(_carpeta)
@@ -43,6 +46,7 @@ import comandos
 import config
 import control_colchon
 import control_habitacion
+import control_juego
 import demo
 import indicador
 import lampara_remota
@@ -76,7 +80,9 @@ def iniciar():
 
     indicador.parpadear(3, 100)          # 3 parpadeos rapidos = arrancando
 
-    if wifi.conectar():
+    if not modulo.requiere_red():
+        print("Este modulo funciona sin WiFi")
+    elif wifi.conectar():
         indicador.parpadear(1, 600)      # 1 parpadeo largo = WiFi listo
     else:
         indicador.parpadear(5, 100)      # 5 rapidos = sin WiFi (se reintenta luego)
@@ -124,6 +130,31 @@ def preparar_habitacion():
     except Exception as error:
         print("Habitacion: no se pudo iniciar (%s)" % type(error).__name__)
         return None
+
+
+def preparar_juego():
+    """Crea el juego SOLO si config.py lo habilita. Un fallo no detiene el programa."""
+    if not (config.JUEGO_HABILITADO and modulo.usa("juego")):
+        return None
+    try:
+        control = control_juego.iniciar()
+        print("Juego: habilitado (SIN PROBAR EN HARDWARE; pines propuestos)")
+        return control
+    except Exception as error:
+        print("Juego: no se pudo iniciar (%s)" % type(error).__name__)
+        return None
+
+
+def ciclo_juego(juego):
+    """Bucle del juego: sin red, solo botones, LED y buzzer. Un fallo apaga el juego."""
+    while True:
+        try:
+            juego.actualizar(time.ticks_ms())
+        except Exception as error:
+            print("Juego: error (%s)" % type(error).__name__)
+            juego.apagar()
+            return
+        time.sleep_ms(config.JUEGO_PAUSA_CICLO_MS)
 
 
 def preparar_voz(reproductor):
@@ -263,17 +294,24 @@ def ejecutar():
     remota = None
     colchon = None
     habitacion = None
+    juego = None
     reproductor = None
     sesion_voz = None
     try:
         modulo.validar()
     except ValueError as error:
         # Con un modulo desconocido no se inicializa ningun periferico.
-        print("Modulo invalido (%s). Usa 'cuna', 'colchon', 'figuras' o 'habitacion' en config.py." % error)
+        print("Modulo invalido (%s). Usa 'cuna', 'colchon', 'figuras', 'habitacion' o 'juego' en config.py." % error)
         return
     try:
         preparar_modulo()
         iniciar()
+        if modulo.usa("juego"):
+            # Sin red: no hay hilo de WiFi ni ordenes remotas en este modulo.
+            juego = preparar_juego()
+            if juego is not None:
+                ciclo_juego(juego)
+            return
         colchon, reproductor = preparar_perifericos()
         habitacion = preparar_habitacion()
         sesion_voz = preparar_voz(reproductor)
@@ -298,6 +336,8 @@ def ejecutar():
             colchon.apagar()
         if habitacion is not None:
             habitacion.apagar()
+        if juego is not None:
+            juego.apagar()
         if reproductor is not None:
             reproductor.detener()
         if sesion_voz is not None:

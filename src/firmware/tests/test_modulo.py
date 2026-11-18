@@ -19,6 +19,7 @@ class ModuloTests(unittest.TestCase):
             "colchon": {"colchon"},
             "figuras": {"figuras"},
             "habitacion": {"habitacion"},
+            "juego": {"juego"},
         }
         todos = set().union(*esperado.values())
         for nombre, propios in esperado.items():
@@ -33,8 +34,8 @@ class ModuloTests(unittest.TestCase):
             vistos.extend(lista)
         self.assertEqual(len(vistos), len(set(vistos)))
 
-    def test_validar_acepta_los_cuatro_modulos(self):
-        for nombre in ("cuna", "colchon", "figuras", "habitacion"):
+    def test_validar_acepta_los_cinco_modulos(self):
+        for nombre in ("cuna", "colchon", "figuras", "habitacion", "juego"):
             self.assertEqual(modulo.validar(nombre), nombre)
 
     def test_validar_sin_argumento_usa_config(self):
@@ -99,6 +100,16 @@ class DemoPorModuloTests(unittest.TestCase):
     def test_la_habitacion_no_tiene_demo(self):
         config.MODULO = "habitacion"
         self.assertEqual(self.demo.ordenes(), [])
+
+    def test_el_juego_no_tiene_demo_ni_requiere_red(self):
+        config.MODULO = "juego"
+        self.assertEqual(self.demo.ordenes(), [])
+        self.assertFalse(modulo.requiere_red())
+
+    def test_los_demas_modulos_requieren_red(self):
+        for nombre in ("cuna", "colchon", "figuras", "habitacion"):
+            config.MODULO = nombre
+            self.assertTrue(modulo.requiere_red(), nombre)
 
     def test_modulo_invalido_no_tiene_demo(self):
         config.MODULO = "todo"

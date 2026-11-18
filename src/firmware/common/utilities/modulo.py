@@ -18,6 +18,7 @@ PERIFERICOS = {
     "colchon": ("colchon",),
     "figuras": ("figuras",),
     "habitacion": ("habitacion",),
+    "juego": ("juego",),
 }
 
 # Periferico que necesita cada comando. Los que no aparecen (get_status) valen
@@ -47,6 +48,11 @@ def validar(nombre=None):
 def usa(periferico):
     """True si 'periferico' pertenece al modulo conectado. Un modulo invalido no usa ninguno."""
     return periferico in PERIFERICOS.get(config.MODULO, ())
+
+
+def requiere_red():
+    """False en el juego: funciona solo en la Pico, sin WiFi (HU-19)."""
+    return config.MODULO != "juego"
 
 
 def periferico_de(comando):

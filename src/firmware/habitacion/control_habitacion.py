@@ -17,49 +17,12 @@ Reglas:
 SIN PROBAR EN HARDWARE.
 """
 
+from entrada import EntradaEstable
+
 SENSORES = ("puerta", "movimiento")
 # Sensor -> tipo de evento que se informa (contrato habitacion.md).
 TIPOS_EVENTO = {"puerta": "puerta", "movimiento": "movimiento_habitacion"}
 MAX_EVENTOS = 8
-
-
-def _diferencia_ms(a, b):
-    """a - b con vuelta de contador (equivale a time.ticks_diff)."""
-    periodo = 1 << 30
-    d = (a - b) & (periodo - 1)
-    if d >= periodo // 2:
-        d -= periodo
-    return d
-
-
-class EntradaEstable:
-    """Filtra rebotes: el valor cambia solo si se mantiene 'estable_ms'.
-
-    actualizar(valor, ahora_ms) devuelve True una sola vez cuando el estado estable
-    pasa de False a True (flanco de subida).
-    """
-
-    def __init__(self, estable_ms):
-        self._estable_ms = estable_ms
-        self.valor = False          # estado estable actual
-        self._candidato = False
-        self._desde = None
-
-    def actualizar(self, leido, ahora_ms):
-        leido = bool(leido)
-        if leido == self.valor:
-            self._candidato = leido
-            self._desde = None
-            return False
-        if leido != self._candidato or self._desde is None:
-            self._candidato = leido
-            self._desde = ahora_ms
-            return False
-        if _diferencia_ms(ahora_ms, self._desde) >= self._estable_ms:
-            self.valor = leido
-            self._desde = None
-            return leido
-        return False
 
 
 class ControlHabitacion:
