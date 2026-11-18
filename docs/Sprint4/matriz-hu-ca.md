@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -62,7 +62,7 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-08.1 | PIR en GP3 (`common/sensors/sensores.py:30`); envío en `main.py:133-139` y `common/communication/ambiente.py`; Migración 4; `supabase/tests/movimiento.test.mjs`; `components/PanelMovimiento.tsx` | S | parcial | El monitoreo se activa por bandera de configuración (`config.py:28`, apagada). No hay activación manual ni por horario desde la web. Sin prueba física. |
+| CA-08.1 | PIR en GP3 (`config.py:20`; se crea en `common/sensors/sensores.py:17`); envío en `main.py:133-139` y `common/communication/ambiente.py`; Migración 4; `supabase/tests/movimiento.test.mjs`; `components/PanelMovimiento.tsx` | S | parcial | El monitoreo se activa por bandera de configuración (`config.py:28`, apagada). No hay activación manual ni por horario desde la web. Sin prueba física. |
 | CA-08.2 | `src/shared/contracts/movimiento.md` lo excluye | — | pendiente | Depende de HU-06 y HU-07. |
 | CA-08.3 | Con la bandera apagada el firmware no envía (`ambiente.py:206`) | S | parcial | Control solo local, no desde la web. |
 | CA-09.1 | `pages/PaginaCuna.tsx`, `services/lecturas.ts:74-92`, `tests/paginaCuna.test.tsx`, `tests/lecturas.test.ts` | S | parcial | Nunca verificado con Supabase real ni con un AM2301 real. |
@@ -94,7 +94,7 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 | CA-14.4 | El peso se mide y procesa solo en la Pico; no se envía | D | parcial | Verificar al integrar que no se persistan lecturas de peso como movimientos. |
 | CA-14.5 | `logica_colchon.py:116-135`; `test_logica_colchon.py` (líneas 103–111); `test_control_colchon.py` («duracion_del_monitoreo_lo_detiene») | S | parcial | Sin validación desde la web. |
 | CA-15.1 | `COLCHON_TOLERANCIA_PCT = 10` (`config.py:49`) | S | parcial | Fija en configuración; no editable desde la web. |
-| CA-15.2 | Buzzer en GP18 (PWM 2 kHz) | S | parcial | Aviso a Telegram pendiente (HU-07). Sin prueba física con evidencia. |
+| CA-15.2 | Buzzer integrado en GP14 (`config.py:44`, PWM 2 kHz); GP18 es el pin del montaje de banco (`colchon/prueba_colchon.py:117`) | S | parcial | Aviso a Telegram pendiente (HU-07). Sin prueba física con evidencia. |
 | CA-15.3 | `registrar_lectura` no alarma si no está ACTIVO (`logica_colchon.py:161-162`) | S | parcial | |
 | CA-15.4 | `test_logica_colchon.py:30-66` y `test_control_colchon.py:173-188` (890 g × 3 dispara; 900 g × 3 no; 890 g y 1000 g no completan) | S | parcial | Falta con pesos reales en banco y con HX711 real. |
 | CA-16.1 | Botón y `mattress_stop` (`test_control_colchon.py:261-308`) | S | parcial | Detención desde la app pendiente. |
@@ -169,7 +169,12 @@ Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4
 | CA-32.2 | `git ls-files`, `git check-ignore` y búsqueda de patrones en HEAD y en los 73 commits: sin credenciales | D | verificado | La búsqueda cubre patrones conocidos (JWT, `sb_secret_`, tokens de bot). No sustituye una revisión humana. |
 | CA-32.3 | `supabase/tests/*.test.mjs` (simulado) | S | pendiente | Falta enviar un evento a Supabase real y leerlo. Guía en `entorno.md` §5. Requiere acceso al proyecto de desarrollo. |
 | CA-32.4 | `arquitectura.md` §3; Supabase en uso (`supabase/`) | D | verificado | Falta revisión del equipo. |
-| CA-33.1 a CA-33.6 | `docs/Sprint3/alcance.md` lista componentes del Sprint 3 (sin cámara, botones, balanza de alimentación ni baterías) | D | pendiente | HU-33 es la fase 2. La lista del Sprint 3 no cubre CA-33.1. |
+| CA-33.1 | [`diseno-fisico.md`](diseno-fisico.md) §3 y §4: componentes de los seis módulos, ambas balanzas, cámara, luces, audio, botones y alimentación | D | parcial | Faltan confirmación del equipo y existencia de los componentes propuestos para habitación, juego y alimentación. |
+| CA-33.2 | [`diseno-fisico.md`](diseno-fisico.md) §3: rango, precisión objetivo, calibración, método de temperatura, brillo, volumen y seguridad mecánica; [`protocolo-banco.md`](protocolo-banco.md) B1 a B8 | D | parcial | Las cifras son objetivos, no mediciones. Falta el banco y cotejar normas de cuna y juguetes. |
+| CA-33.3 | [`diseno-fisico.md`](diseno-fisico.md) §2, §3.3, §3.5 y §7 | D | parcial | Sustituciones sin coordinar con el profesor. |
+| CA-33.4 | [`diseno-fisico.md`](diseno-fisico.md) §2 y §3 | D | parcial | Sin maqueta construida que lo demuestre. |
+| CA-33.5 | [`diseno-fisico.md`](diseno-fisico.md) §3.1 | D | parcial | Dimensiones de norma sin cotejar; sin plano de la maqueta a escala. |
+| CA-33.6 | [`diseno-fisico.md`](diseno-fisico.md) §3.6 | D | parcial | Cable y conector sin elegir ni probar. |
 
 ## HU-34 y HU-35 · Privacidad y uso web (fase 11)
 
@@ -191,12 +196,12 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 57 |
-| pendiente | 85 |
+| parcial | 63 |
+| pendiente | 79 |
 | bloqueado | 0 |
 | **Total** | **145** |
 
-Los bloqueos aparecerán cuando se intente probar con hardware o con el Supabase real: CA-32.3 depende de acceso al proyecto de desarrollo y de un token propio, y la fase 2 depende de componentes que el equipo aún no ha confirmado.
+Los bloqueos aparecerán cuando se intente probar con hardware o con el Supabase real: CA-32.3 depende de acceso al proyecto de desarrollo y de un token propio, y la fase 2 depende de componentes que el equipo aún no ha confirmado (ver [`diseno-fisico.md`](diseno-fisico.md) §3 y [`protocolo-banco.md`](protocolo-banco.md) §5).
 
 ## Discrepancias detectadas
 
