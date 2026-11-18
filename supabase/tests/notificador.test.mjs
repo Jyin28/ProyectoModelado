@@ -267,7 +267,10 @@ test('notificador: texto, autenticación, reintentos y recorrido completo con la
     fallaPapa = false
     await db.query("update cuna_private.avisos set proximo_intento_en = now() - interval '1 second' where estado = 'pendiente'")
     assert.deepEqual(await correr(), { recibidos: 1, enviados: 1, fallidos: 0, sin_registrar: 0 })
-    assert.deepEqual(enviados.map(([chat]) => chat), [1001, 1002, 1002])
+    // La primera pasada no tiene orden definido (comparten marca de tiempo);
+    // lo que importa es que Papá recibe una sola vez más y Mamá no repite.
+    assert.deepEqual(enviados.slice(0, 2).map(([chat]) => chat).sort(), [1001, 1002])
+    assert.deepEqual(enviados.slice(2).map(([chat]) => chat), [1002])
 
     const estados = (await db.query('select d.nombre, a.estado, a.intentos from cuna_private.avisos a join cuna_private.destinatarios_telegram d on d.id = a.destinatario_id order by d.nombre')).rows
     assert.deepEqual(estados, [

@@ -52,6 +52,8 @@ const MENSAJES_ORDENES: Record<string, string> = {
   command_id_en_uso: 'Esa solicitud ya se registró.',
   command_id_requerido: 'No se pudo identificar la solicitud.',
   limite_invalido: 'Los límites de temperatura no son válidos.',
+  intervalo_invalido:
+    'El intervalo no es válido: el inicio debe ser anterior al fin y abarcar como máximo 31 días.',
   reintentar: 'El servidor estaba ocupado. Vuelve a intentarlo.',
   config_colchon_invalida:
     'La configuración no es válida: revisa la duración, la tolerancia y la alarma.',

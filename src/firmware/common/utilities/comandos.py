@@ -137,6 +137,41 @@ def estado():
     return resumen
 
 
+def estado_para_nube():
+    """Estado que la Pico informa al servidor al conectarse o reconectarse.
+
+    Solo claves del contrato reportar_estado_modulo (src/shared/contracts/ordenes.md):
+    monitoreo, monitoreo_puerta, monitoreo_movimiento, secuencia y colchon. Lo
+    que este apagado se informa apagado: asi el servidor no sigue mostrando un
+    monitoreo que se perdio al reiniciar. El colchon inactivo o detenido se
+    informa "detenido" (reanudar exige armar de nuevo). No lleva lecturas ni fotos.
+    """
+    informe = {}
+    if modulo.usa("movimiento"):
+        informe["monitoreo"] = bool(_monitoreo_movimiento)
+    if modulo.usa("habitacion") and _habitacion is not None:
+        actual = _habitacion.estado()
+        informe["monitoreo_puerta"] = bool(actual.get("monitoreo_puerta"))
+        informe["monitoreo_movimiento"] = bool(actual.get("monitoreo_movimiento"))
+    if modulo.usa("figuras"):
+        nombre = _figuras().secuencia_actual()
+        informe["secuencia"] = nombre if _nombre_valido(nombre) else None
+    if modulo.usa("colchon") and _colchon is not None:
+        actual = _colchon.monitor.estado
+        informe["colchon"] = actual if actual in ("activo", "alarma") else "detenido"
+    return informe
+
+
+def _nombre_valido(nombre):
+    """Nombre de secuencia aceptado por el servidor: 1 a 40 letras minusculas o _."""
+    if not isinstance(nombre, str) or not 1 <= len(nombre) <= 40:
+        return False
+    for caracter in nombre:
+        if not ("a" <= caracter <= "z" or caracter == "_"):
+            return False
+    return True
+
+
 def ejecutar(orden):
     """Ejecuta una orden y devuelve su confirmacion (nunca lanza error)."""
     confirmacion = {"command_id": orden.get("command_id"),

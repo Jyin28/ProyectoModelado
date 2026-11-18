@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)) y de la fase 10 (HU-24 a HU-27; ver [`validacion-fase10.md`](validacion-fase10.md)), de la fase 11 (HU-28, HU-30 y HU-34; ver [`validacion-fase11.md`](validacion-fase11.md)) y de la fase 12 (HU-29; ver [`guion-demostracion.md`](guion-demostracion.md) y [`cierre.md`](cierre.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -152,36 +152,36 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` · Fase 4: `public.eventos` con tipo, descripción, hora, bebé y módulo. | S | parcial | Unificar ambiente y movimiento y el resto de productores (fase 10). |
-| CA-24.2 | Mediciones de ambiente y movimientos (Migraciones 1 y 4); órdenes de lámpara (Migración 2) · Fase 5: movimiento, audio, voz, alarmas y paradas del colchón van a `eventos`. | S | parcial | Faltan habitación, juego y alimentación. |
-| CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio | S | parcial | Falta probar con el historial completo. |
+| CA-24.1 | `ts`, `recibido_en` y datos en `lecturas_ambiente` y `eventos_movimiento` · Fase 4: `public.eventos` · Fase 10: `public.historial_bebe` (migración 000800) une `eventos`, `lecturas_ambiente` y `eventos_movimiento` por bebé; `supabase/tests/historial.test.mjs`. | S | parcial | Sin Supabase real ni productores reales. El juego es local y no genera registros (decisión de la fase 8). |
+| CA-24.2 | Mediciones de ambiente y movimiento, órdenes de lámpara · Fases 5 a 9: movimiento, audio, voz, colchón, habitación y alimentación van a `eventos` · Fase 10: el historial los reúne y la web los lista (`tests/historial-pagina.test.tsx`). | S | parcial | Sin datos de dispositivos reales. Las órdenes de lámpara siguen en su tabla y no entran al historial. |
+| CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio · Fase 10: `historial_bebe` es de solo lectura (prueba «es de solo lectura»). | S | parcial | Falta probar con el historial completo de un Supabase real. |
 | CA-24.4 | Igual que CA-05.2 | S | parcial | |
-| CA-24.5 | `event_id` PK; `supabase/tests/ingesta.test.mjs` y `movimiento.test.mjs` («deduplica, rechaza colisiones…») · Fase 4: idempotencia por `event_id` en `registrar_evento`. | S | parcial | Aplicarlo a los productores de las fases 7 a 9. |
-| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento. | S | parcial | Fase 7: fotos ligadas a su evento, dispositivo y bebé. Faltan alimentación y el cierre de la fase 10. |
-| CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) | S | parcial | Falta cubrir retiro de dueño y reasignación. |
-| CA-25.1 | `pages/PaginaCuna.tsx` lee la última lectura de la nube | S | parcial | `PaginaHistorial.tsx` es un marcador sin consulta. |
-| CA-25.2 | RLS por dueño | S | parcial | Sin vista por bebé. |
-| CA-25.3 | — | — | pendiente | |
-| CA-25.4 | — | — | pendiente | |
-| CA-26.1 | — | — | pendiente | Sin gráficos. |
-| CA-26.2 | — | — | pendiente | |
-| CA-26.3 | `utils/tiempo.ts` formatea en `America/Costa_Rica` | S | pendiente | Sin histogramas ni líneas. |
-| CA-26.4 | — | — | pendiente | |
-| CA-27.1 a CA-27.5 | — (sin dependencia `.xlsx` ni exportación) | — | pendiente | HU-27 completa. Columnas en DEC-06. |
+| CA-24.5 | `event_id` PK; `ingesta.test.mjs` y `movimiento.test.mjs` · Fase 4: idempotencia por `event_id` en `registrar_evento` · Fase 10: un movimiento presente en `eventos` y en `eventos_movimiento` se cuenta una sola vez (`historial.test.mjs`). | S | parcial | Sin prueba con reintentos reales de una Pico. |
+| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento · Fase 7: fotos ligadas a su evento · Fase 9: tomas con pesos y duración · Fase 10: cada registro del historial lleva bebé, dispositivo, tipo, valor, unidad, toma y foto (solo para dueños). | S | parcial | Sin Supabase real. |
+| CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) · Fase 10: tras reasignar un módulo, cada registro conserva su bebé original (`historial.test.mjs`). | S | parcial | Falta cubrir el retiro de un dueño con registros (fase 11). |
+| CA-25.1 | `PaginaHistorial.tsx` consulta `historial_bebe` con la sesión de la persona; mensajes fijos si falla (`tests/historial-pagina.test.tsx`, `tests/historial-servicio.test.ts`). | S | parcial | Sin Supabase real; la consulta es a pedido, no hay actualización periódica. |
+| CA-25.2 | `historial_bebe` filtra por `bebe_id` y exige `puede_ver_bebe`; dos bebés separados y reasignación a mitad del intervalo (`historial.test.mjs`); la web consulta solo el bebé elegido. | S | parcial | Sin RLS ni API reales. |
+| CA-25.3 | `ResumenNoche.tsx` se calcula en la web a partir del historial; no existe ningún envío a Telegram desde el historial. | S | parcial | Sin Supabase real. |
+| CA-25.4 | `intervaloNoche` (inicio y fin elegibles; cruza la medianoche) y el mensaje «No hay registros entre … y …» sin ceros inventados (`tests/historial-utils.test.ts`, `tests/historial-pagina.test.tsx`); en SQL, intervalo vacío devuelve lista vacía y la noche 19:00 a 07:00 de CR reúne ambos días. | S | parcial | Sin datos reales. |
+| CA-26.1 | Ambiente, temperatura del biberón y peso como líneas (`GraficoMediciones.tsx`); movimiento, puerta, habitación, colchón, tomas y fotos como eventos por hora y lista. | S | parcial | El juego es local y no tiene registros que graficar. Sin sensores reales. |
+| CA-26.2 | `resumirNoche`: cantidad de movimientos y hora de mayor actividad (`tests/historial-utils.test.ts`). | S | parcial | Sin datos reales. |
+| CA-26.3 | `conteoPorHora`: 08:15 y 08:59 cuentan en [08:00, 09:00) y 09:00 en [09:00, 10:00) (`tests/historial-utils.test.ts`); histograma (`GraficoEventosPorHora.tsx`) y líneas con fecha, hora y unidad (`GraficoMediciones.tsx`); el servidor entrega el intervalo [desde, hasta). | S | parcial | El dibujo en un navegador real no se comprobó (solo la tabla equivalente en jsdom). |
+| CA-26.4 | Una hora sin ningún registro es «Sin datos» y una con mediciones y sin eventos es «0»; las líneas se cortan ante un hueco de más de 30 min (`tests/historial-utils.test.ts`). | S | parcial | El umbral de 30 min para un hueco es una decisión de la fase 10 que conviene confirmar. |
+| CA-27.1 a CA-27.5 | `BotonExportar.tsx`, `utils/excel.ts` y `utils/historial.ts` (`filasExcel`); `tests/historial-excel.test.ts` genera el .xlsx con `write-excel-file`, lo descomprime y comprueba encabezados de DEC-06, una fila por registro, valores de toma, fecha y hora de Costa Rica, intervalo vacío con solo encabezados y ausencia de fotos y enlaces; no se exporta un resultado truncado. | S | parcial | El archivo no se abrió en Excel real ni se probó la descarga en un navegador real. Los valores de las filas salen de la misma consulta del historial. |
 
 ## HU-28 a HU-30 · Recuperación, maqueta y rendimiento (fases 11 y 12)
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
 | CA-28.1 | Ni `docs/Sprint3/alcance.md` ni el firmware incluyen UPS | D | parcial | Confirmar con la lista de componentes (HU-33). |
-| CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py:363-417`; `lampara_remota.py`) | S | parcial | Sin corte real. |
-| CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware); registros conservados por la base | S | parcial | Recordatorios inexistentes; sin prueba de corte real. |
-| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`, `tests/paginaCuna.test.tsx`) | S | parcial | La web muestra el estado del colchón que informa la Pico (fase 6), sin prueba real. |
-| CA-29.1 a CA-29.4 | — | — | pendiente | Guion de demostración (fase 12) y diseño físico (fase 2). |
-| CA-30.1 | — | — | pendiente | |
-| CA-30.2 | — | — | pendiente | |
-| CA-30.3 | `INTERVALO_AMBIENTE_S = 10`, `COLCHON_INTERVALO_MS = 1000` | D | parcial | Parámetros fijados; no hay medición con tiempos. |
-| CA-30.4 | Igual | D | parcial | |
+| CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py`; `lampara_remota.py`) · Fase 11: tras cada corte se descartan las órdenes pendientes y se vuelve a informar el estado (`test_recuperacion_firmware.py`). | S | parcial | Sin corte real de red ni de energía. |
+| CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware) · Fase 11: al conectar, la Pico informa su estado real con `reportar_estado_modulo` y el servidor deja de aceptar eventos de un monitoreo apagado; un colchón informado detenido exige armar de nuevo; un recordatorio vencido se omite y el siguiente horario futuro se ejecuta una vez; una lectura atrasada ya no cierra ni reabre un episodio (`supabase/tests/recuperacion.test.mjs`, `src/firmware/tests/test_recuperacion_firmware.py`). | S | parcial | Sin reinicio real de una Pico ni corte real contra Supabase. |
+| CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`) · Fase 11: el panel del colchón muestra «detenido al reiniciarse o reconectarse el módulo» (`tests/colchon-fase6.test.tsx`) y la web ya no queda con un monitoreo activo que la Pico perdió. | S | parcial | Sin prueba con una Pico real. |
+| CA-29.1 a CA-29.4 | [`guion-demostracion.md`](guion-demostracion.md): guion por módulo (cuna, figuras, colchón independiente, habitación, juego y alimentación con pesaje), cuándo cambiar de protoboard, acción del adulto, respuesta física y registro esperado; baterías del juego y alimentación del colchón; dimensiones y materiales remitidos a [`diseno-fisico.md`](diseno-fisico.md). | D | parcial | El guion no se ha ejecutado con hardware ni con cuentas de demostración; la tabla de resultados está vacía. Las dimensiones son propuestas sin cotejar y una sustitución de sensor aún no se coordina con el profesor. |
+| CA-30.1 | `supabase/scripts/rendimiento.mjs`: 100 consultas de `historial_bebe` con 2 cuentas, 2 bebés, 6 módulos y 1000 registros; ver [`validacion-fase11.md`](validacion-fase11.md) para los tiempos medidos. | S | parcial | Medido en PGlite (memoria, una conexión), no en el Supabase real ni con la red de la demostración. |
+| CA-30.2 | Misma medición: 100 solicitudes de envío desde la recepción del evento hasta la llamada al envío, con un envío simulado · migración `20261118001000_notificador_inmediato.sql` (disparador con `pg_net`) para no esperar al cron de 1 minuto. | D | parcial | El disparador con `pg_net` no se ejecutó en ninguna prueba; la entrega real de Telegram no se midió. |
+| CA-30.3 | `INTERVALO_AMBIENTE_S = 10` · Fase 11: simulación del ciclo con reloj simulado (`PeriodicidadTests`). | S | parcial | Sin medición en la Pico. |
+| CA-30.4 | `COLCHON_INTERVALO_MS = 1000` · Fase 11: simulación del ciclo con reloj simulado (`PeriodicidadTests`). | S | parcial | Sin medición en la Pico ni con la celda de carga. |
 
 ## HU-31 a HU-33 · Historias técnicas (fases 1 y 2)
 
@@ -206,11 +206,11 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real. Fase 7: las fotos solo las leen los dueños (RLS y políticas del almacén, probadas con PGlite). |
-| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 4: un destinatario no es dueño; retirarlo no cambia los dueños. | S | parcial | Flujo de revocación completo (fase 11). |
-| CA-34.3 | Sin borrado; sin audio | S | parcial | |
-| CA-34.4 | Igual que CA-05.1 y CA-05.2 | S | parcial | |
-| CA-34.5 | No existe ninguna transmisión de voz · Fase 5: la voz no se graba ni se guarda; solo queda el registro de la sesión. | S | parcial | Prueba con Realtime real y con el micrófono. |
+| CA-34.1 | RLS y permisos de RPC · Fase 11: `privacidad.test.mjs`: una persona ajena y una destinataria de Telegram no ven eventos, lecturas, fotos ni objetos del almacén, y 8 funciones las rechazan; ningún rol de la API puede escribir ni borrar tablas del proyecto. | S | parcial | Falta contra la API real (PostgREST y Storage reales). |
+| CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 11: retirar a un dueño le quita datos, fotos, órdenes e historial y conserva los registros; una destinataria de Telegram no tiene control (`privacidad.test.mjs`). | S | parcial | Sin API real. |
+| CA-34.3 | Sin borrado ni permisos de escritura en la API · Fase 11: reasignar un módulo conserva todos los registros (`privacidad.test.mjs`). | S | parcial | Sin Supabase real. |
+| CA-34.4 | Igual que CA-05.1 y CA-05.2 · Fase 11: tras reasignar, lo nuevo se vincula al bebé nuevo y el historial de cada bebé muestra solo lo suyo (`privacidad.test.mjs`). | S | parcial | Sin Supabase real. |
+| CA-34.5 | No existe ninguna transmisión de voz guardada · Fase 11: ninguna columna del esquema puede guardar sonido (`bytea`) y una sesión de voz deja solo los registros `voz_inicio` y `voz_fin` sin datos (`privacidad.test.mjs`). | S | parcial | Prueba con Realtime real y con el micrófono. |
 | CA-35.1 | — | — | pendiente | `docs/Sprint3/validacion-base.md` deja pendiente la revisión a 360 y 1280 px. |
 | CA-35.2 | `/cuna` muestra °C, % HR y estados | S | parcial | Solo para las pantallas existentes. |
 | CA-35.3 | — | — | pendiente | |
@@ -222,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 122 |
-| pendiente | 20 |
+| parcial | 139 |
+| pendiente | 3 |
 | bloqueado | 0 |
 | **Total** | **145** |
 

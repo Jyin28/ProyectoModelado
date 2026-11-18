@@ -83,11 +83,19 @@ En una terminal que no sea PowerShell (por ejemplo, Git Bash) puede usarse
 
 ## Variables de entorno
 
-La web lee estas variables, definidas en `.env.example`:
-`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y, opcional,
-`VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_HABILITADA`, `VITE_LAMPARA_DEVICE_ID`,
-`VITE_MOVIMIENTO_HABILITADO` y `VITE_MOVIMIENTO_DEVICE_ID` (opcionales; ver
-«Lámpara en Cuna» y «Último movimiento en Cuna»).
+La web lee estas variables, definidas en `.env.example` (la tabla completa,
+con su uso, está en el [README de la raíz](../../README.md#ejecutar-la-web)):
+
+- Conexión: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- Identificadores de módulo (opcionales, por defecto `cuna-<módulo>-01`):
+  `VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_DEVICE_ID`,
+  `VITE_MOVIMIENTO_DEVICE_ID`, `VITE_FIGURAS_DEVICE_ID`, `VITE_AUDIO_DEVICE_ID`,
+  `VITE_COLCHON_DEVICE_ID`, `VITE_HABITACION_DEVICE_ID`,
+  `VITE_ALIMENTACION_DEVICE_ID` y `VITE_CUNA_PRODUCTO_ID`.
+- Banderas que activan controles de hardware real (solo el valor exacto
+  `true`): `VITE_ORDENES_HABILITADAS`, `VITE_LAMPARA_HABILITADA`,
+  `VITE_MOVIMIENTO_HABILITADO`, `VITE_VOZ_HABILITADA` y `VITE_CAMARA_HABILITADA`.
+- Opcional: `VITE_TELEGRAM_BOT`.
 
 ```powershell
 Copy-Item .env.example .env.local

@@ -111,6 +111,7 @@ describe('Colchón: pantalla', () => {
     [{ colchon: 'alarma', referencia_g: 1000 }, /ALARMA: el peso bajó más que la tolerancia\. Informado por la Pico el .*08:15:00/],
     [{ colchon: 'detenido', motivo: 'boton' }, /Monitoreo detenido con el botón\. Informado por la Pico el .*08:15:00/],
     [{ colchon: 'detenido', motivo: 'wifi' }, /Monitoreo detenido por pérdida de WiFi/],
+    [{ colchon: 'detenido', motivo: 'reinicio' }, /Monitoreo detenido al reiniciarse o reconectarse el módulo/],
     [{ colchon: 'detenido', motivo: 'app' }, /Monitoreo detenido desde la app/],
     [{ colchon: 'detenido', motivo: 'temporizador' }, /al terminar el tiempo de la alarma/],
     [{ colchon: 'detenido', motivo: 'duracion' }, /al terminar la duración/],
