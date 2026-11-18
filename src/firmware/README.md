@@ -5,6 +5,13 @@ por vez**: se conecta al colchón, se demuestra, se desconecta y se pasa a otro
 módulo. Los módulos están separados; la Pico no los controla a todos a la vez.
 Elige cuál está conectado con `MODULO` en `config.py` (ver abajo).
 
+> **Dos firmwares conviven en esta carpeta.** Este directorio (`src/firmware/`) es
+> el firmware completo de la Pico 2 W: todos los módulos (cuna, figuras, colchón,
+> habitación, juego y alimentación), órdenes remotas y pruebas en
+> `src/firmware/tests/`. `src/firmware/pico/` es un firmware simplificado de
+> colchón y figuras LED aportado por otra persona del equipo; es independiente,
+> tiene su propio README y no se prueba con las suites de esta carpeta.
+
 ## Elegir el módulo
 
 | `MODULO` | Qué hay conectado | Qué atiende el firmware | Credenciales (`secrets.py`) | Comandos que acepta |
