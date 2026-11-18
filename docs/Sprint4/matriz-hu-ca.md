@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)) y de la fase 10 (HU-24 a HU-27; ver [`validacion-fase10.md`](validacion-fase10.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)), de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)) de la fase 8 (HU-19; ver [`validacion-fase8.md`](validacion-fase8.md)) y de la fase 9 (HU-20 a HU-23; ver [`validacion-fase9.md`](validacion-fase9.md)) y de la fase 10 (HU-24 a HU-27; ver [`validacion-fase10.md`](validacion-fase10.md)), de la fase 11 (HU-28, HU-30 y HU-34; ver [`validacion-fase11.md`](validacion-fase11.md)) y de la fase 12 (HU-29; ver [`guion-demostracion.md`](guion-demostracion.md) y [`cierre.md`](cierre.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -177,7 +177,7 @@ Son 4 + 7 + 4 + 4 = 19 criterios, todos con prueba simulada (S) y ninguno verifi
 | CA-28.2 | Perder Wi-Fi apaga la lámpara y detiene el colchón (`test_control_colchon.py`; `lampara_remota.py`) · Fase 11: tras cada corte se descartan las órdenes pendientes y se vuelve a informar el estado (`test_recuperacion_firmware.py`). | S | parcial | Sin corte real de red ni de energía. |
 | CA-28.3 | Colchón detenido y rearme con referencia nueva (firmware) · Fase 11: al conectar, la Pico informa su estado real con `reportar_estado_modulo` y el servidor deja de aceptar eventos de un monitoreo apagado; un colchón informado detenido exige armar de nuevo; un recordatorio vencido se omite y el siguiente horario futuro se ejecuta una vez; una lectura atrasada ya no cierra ni reabre un episodio (`supabase/tests/recuperacion.test.mjs`, `src/firmware/tests/test_recuperacion_firmware.py`). | S | parcial | Sin reinicio real de una Pico ni corte real contra Supabase. |
 | CA-28.4 | `/cuna` marca «Desactualizado» a los 30 s (`PaginaCuna.tsx`) · Fase 11: el panel del colchón muestra «detenido al reiniciarse o reconectarse el módulo» (`tests/colchon-fase6.test.tsx`) y la web ya no queda con un monitoreo activo que la Pico perdió. | S | parcial | Sin prueba con una Pico real. |
-| CA-29.1 a CA-29.4 | — | — | pendiente | Guion de demostración (fase 12) y diseño físico (fase 2). |
+| CA-29.1 a CA-29.4 | [`guion-demostracion.md`](guion-demostracion.md): guion por módulo (cuna, figuras, colchón independiente, habitación, juego y alimentación con pesaje), cuándo cambiar de protoboard, acción del adulto, respuesta física y registro esperado; baterías del juego y alimentación del colchón; dimensiones y materiales remitidos a [`diseno-fisico.md`](diseno-fisico.md). | D | parcial | El guion no se ha ejecutado con hardware ni con cuentas de demostración; la tabla de resultados está vacía. Las dimensiones son propuestas sin cotejar y una sustitución de sensor aún no se coordina con el profesor. |
 | CA-30.1 | `supabase/scripts/rendimiento.mjs`: 100 consultas de `historial_bebe` con 2 cuentas, 2 bebés, 6 módulos y 1000 registros; ver [`validacion-fase11.md`](validacion-fase11.md) para los tiempos medidos. | S | parcial | Medido en PGlite (memoria, una conexión), no en el Supabase real ni con la red de la demostración. |
 | CA-30.2 | Misma medición: 100 solicitudes de envío desde la recepción del evento hasta la llamada al envío, con un envío simulado · migración `20261118001000_notificador_inmediato.sql` (disparador con `pg_net`) para no esperar al cron de 1 minuto. | D | parcial | El disparador con `pg_net` no se ejecutó en ninguna prueba; la entrega real de Telegram no se midió. |
 | CA-30.3 | `INTERVALO_AMBIENTE_S = 10` · Fase 11: simulación del ciclo con reloj simulado (`PeriodicidadTests`). | S | parcial | Sin medición en la Pico. |
@@ -222,8 +222,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 135 |
-| pendiente | 7 |
+| parcial | 139 |
+| pendiente | 3 |
 | bloqueado | 0 |
 | **Total** | **145** |
 
