@@ -1,6 +1,6 @@
 # Matriz HU/CA · Línea base del Sprint 4
 
-**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
+**Fase 1 del [plan de ejecución](PLAN-PROYECTO.md); actualizada en la fase 2 (filas CA-33.x y dos correcciones de pines) y al cierre de la fase 6 (HU-01 a HU-16 y filas relacionadas, con prueba simulada; ver [`validacion-fase3.md`](validacion-fase3.md) a [`validacion-fase6.md`](validacion-fase6.md)) y de la fase 7 (HU-17 y HU-18; ver [`validacion-fase7.md`](validacion-fase7.md)).** Base: rama `development`, commit `386ca9a`. Fecha: 2026-11-17.
 Fuente de aceptación: `docs/Sprint1/EntregableSprint1.pdf` (HU-01 a HU-35, 145 criterios). Los identificadores son los del PDF.
 
 ## Cómo leer la matriz
@@ -55,7 +55,7 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 | CA-07.1 | Fase 4: un evento crea un aviso por destinatario; `notificador.test.mjs` con Telegram simulado. | S | parcial | Ninguna entrega real a Telegram. |
 | CA-07.2 | Fase 4: el envío depende de `pg_cron` y del notificador, no de la web. | S | parcial | **Sin verificar**: `20261118000300_cron.sql` no se aplicó ni se probó. |
 | CA-07.3 | La idempotencia por `event_id` existe en ingesta, no en avisos · Fase 4: el reenvío del mismo `event_id` no duplica eventos ni avisos. | S | parcial | Aplicarlo a cada productor de eventos. |
-| CA-07.4 | Fase 4: el aviso se arma solo con tipo y descripción; sin imagen. | S | parcial | Revalidar con fotos reales (fase 7). |
+| CA-07.4 | Fase 4: el aviso se arma solo con tipo y descripción; sin imagen. | S | parcial | Fase 7: el aviso `foto_tomada` lleva texto fijo, sin imagen ni ruta (PGlite). Revalidar con Telegram real. |
 | CA-07.5 | Fase 4: `actualizar_episodio`; F5: conectado a la ingesta de ambiente. | S | parcial | Una lectura atrasada puede cerrar un episodio antes de tiempo. |
 
 ## HU-08 a HU-13 · Cuna y figuras (fase 5)
@@ -105,11 +105,18 @@ Rutas relativas a la raíz. «Web» = `src/frontend/src`; «Firmware» = `src/fi
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-17.1 a CA-17.5 | — (el firmware no tiene sensor de puerta ni módulo de habitación) | — | pendiente | HU-17 completa. El PIR existente pertenece a la cuna (HU-08). |
-| CA-18.1 a CA-18.4 | — (sin Storage ni cámara) | — | pendiente | HU-18 completa. |
+| CA-17.1 | Fase 7: `room_monitor_set {sensor, enabled}` y cuatro horarios (`habitacion_*_activar/desactivar`); `test_habitacion.py`, `habitacion.test.mjs`, `habitacion-fase7.test.tsx` | S | parcial | Reed y PIR reales; Supabase real y `pg_cron` (el horario corre en el minuto exacto). |
+| CA-17.2 | Fase 7: `ControlHabitacion` informa un evento por apertura de puerta o flanco del PIR con el monitoreo de ese sensor activo; `ingestar_habitacion` lo guarda | S | parcial | Sensores reales y cableado sin revisar. |
+| CA-17.3 | Fase 7: el evento crea un aviso por destinatario; el módulo no tiene buzzer ni salida sonora | S | parcial | Entrega real a Telegram. |
+| CA-17.4 | Fase 7: el evento no lleva datos (`datos = {}`) y el firmware no distingue dirección | S | parcial | |
+| CA-17.5 | Fase 7: puerta y movimiento con la misma hora son dos eventos y dos solicitudes de foto | S | parcial | Dos sensores reales a la vez. |
+| CA-18.1 | Fase 7: cada evento nuevo crea una solicitud en `public.fotos` | S | parcial | Prueba P3 (teléfono) sin ejecutar; hace falta el almacén real. |
+| CA-18.2 | Fase 7: la imagen se sube al almacén privado `fotos-habitacion` y se ve desde `/habitacion` con un enlace de 60 s | S | parcial | Almacén real en `cuna-inteligente-dev` (requiere autorización); tiempos medidos. |
+| CA-18.3 | Fase 7: una foto por evento; acciones distintas no se agrupan; el reenvío no duplica la foto | S | parcial | |
+| CA-18.4 | Fase 7: sin tablas ni columnas de video ni de imagen; el aviso lleva texto fijo, sin imagen ni ruta | S | parcial | Telegram real. |
 | CA-19.1 a CA-19.5 | — (sin botones ni juego en el firmware) | — | pendiente | HU-19 completa. |
 
-Los 14 criterios CA-17.1 a CA-17.5, CA-18.1 a CA-18.4 y CA-19.1 a CA-19.5 comparten estado y brecha; se agrupan aquí y se cuentan uno a uno en el resumen.
+Los cinco criterios CA-19.1 a CA-19.5 comparten estado y brecha; se agrupan aquí y se cuentan uno a uno en el resumen.
 
 ## HU-20 a HU-23 · Alimentación (fase 9)
 
@@ -133,7 +140,7 @@ Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4
 | CA-24.3 | Sin permisos de borrado en las migraciones; no hay audio | S | parcial | Falta probar con el historial completo. |
 | CA-24.4 | Igual que CA-05.2 | S | parcial | |
 | CA-24.5 | `event_id` PK; `supabase/tests/ingesta.test.mjs` y `movimiento.test.mjs` («deduplica, rechaza colisiones…») · Fase 4: idempotencia por `event_id` en `registrar_evento`. | S | parcial | Aplicarlo a los productores de las fases 7 a 9. |
-| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento. | S | parcial | Fotos pendientes (fase 7). |
+| CA-24.6 | Datos por fila, bebé y dispositivo guardados · Fase 4: tipo, descripción y datos por evento. | S | parcial | Fase 7: fotos ligadas a su evento, dispositivo y bebé. Faltan alimentación y el cierre de la fase 10. |
 | CA-24.7 | Ningún flujo de borrado; «eliminar la cuenta solicitante conserva la orden original» (`lampara.test.mjs`) | S | parcial | Falta cubrir retiro de dueño y reasignación. |
 | CA-25.1 | `pages/PaginaCuna.tsx` lee la última lectura de la nube | S | parcial | `PaginaHistorial.tsx` es un marcador sin consulta. |
 | CA-25.2 | RLS por dueño | S | parcial | Sin vista por bebé. |
@@ -182,7 +189,7 @@ Son 4 + 7 + 4 + 4 = 19 criterios (CA-20.x: 4, CA-21.x: 7, CA-22.x: 4, CA-23.x: 4
 
 | CA | Evidencia | Prueba | Estado | Brecha |
 |---|---|---|---|---|
-| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real y para fotos y controles futuros. |
+| CA-34.1 | RLS y permisos de RPC (`supabase/tests/lampara.test.mjs`: usuario ajeno, módulo ajeno, sesión ausente) | S | parcial | Falta contra la API real. Fase 7: las fotos solo las leen los dueños (RLS y políticas del almacén, probadas con PGlite). |
 | CA-34.2 | `duenos_dispositivo.activo` condiciona `select` y RPC · Fase 4: un destinatario no es dueño; retirarlo no cambia los dueños. | S | parcial | Flujo de revocación completo (fase 11). |
 | CA-34.3 | Sin borrado; sin audio | S | parcial | |
 | CA-34.4 | Igual que CA-05.1 y CA-05.2 | S | parcial | |
@@ -198,8 +205,8 @@ Conteo de los 145 criterios del PDF, expandiendo las filas agrupadas (comprobado
 | Estado | Criterios |
 |---|---|
 | verificado | 3 (CA-31.1, CA-32.2, CA-32.4; los tres solo con evidencia documental) |
-| parcial | 91 |
-| pendiente | 51 |
+| parcial | 100 |
+| pendiente | 42 |
 | bloqueado | 0 |
 | **Total** | **145** |
 
