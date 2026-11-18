@@ -79,8 +79,13 @@ def resultado_para_confirmar(resultado):
 
 
 class OrdenesRemotas(lr.LamparaRemota):
-    def __init__(self, host, device_id, producto, clave, email, password, ejecutar, voz=None):
+    def __init__(self, host, device_id, producto, clave, email, password, ejecutar, voz=None,
+                 estado_para_nube=None):
         lr.LamparaRemota.__init__(self, host, device_id, clave, email, password, ejecutar)
+        self._estado_para_nube = estado_para_nube
+        self._informar = True          # informar el estado real al conectar (CA-28.3)
+        self._informar_fallos = 0
+        self._informar_no_antes = None
         self._topic = "realtime:modulo:" + producto
         self._voz = voz
         self._topic_voz = "realtime:voz:" + producto
@@ -139,6 +144,9 @@ class OrdenesRemotas(lr.LamparaRemota):
     def _perder(self, motivo, penalizar=True, grave=False):
         if self._voz is not None:
             self._voz.finalizar()
+        self._informar = True          # tras cualquier corte se vuelve a informar
+        self._informar_fallos = 0
+        self._informar_no_antes = None
         lr.LamparaRemota._perder(self, motivo, penalizar, grave)
 
     def _abrir(self):
@@ -190,8 +198,44 @@ class OrdenesRemotas(lr.LamparaRemota):
 
     # -- RPC -----------------------------------------------------------------
 
+    def _informar_si_toca(self, ahora):
+        """Informa al servidor el estado real del modulo, antes de tomar ordenes.
+
+        Hasta que lo logra (o agota los intentos) no se toman ordenes: asi una
+        orden pendiente no se aplica sobre un estado que el servidor desconoce.
+        """
+        if not self._informar:
+            return True
+        if self._estado_para_nube is None:
+            self._informar = False
+            return True
+        if self._informar_no_antes is not None and time.ticks_diff(ahora, self._informar_no_antes) < 0:
+            return False
+        with self._lock:
+            gen = self._gen
+        try:
+            estado, _ = self._rpc("reportar_estado_modulo", {"p_estado": self._estado_para_nube()})
+        except (OSError, ValueError):
+            estado = 0
+        with self._lock:
+            if gen != self._gen:
+                return False
+        if 200 <= estado < 300:
+            self._informar = False
+            print("Ordenes: estado informado al servidor")
+            return True
+        self._informar_fallos += 1
+        if self._informar_fallos >= lr._INTENTOS_TOMAR:
+            self._informar = False      # no bloquea las ordenes por un fallo del reporte
+            print("Ordenes: no se pudo informar el estado (HTTP %d)" % estado)
+            return True
+        self._informar_no_antes = time.ticks_add(ahora, 2000)
+        return False
+
     def _tomar_si_toca(self, ahora):
         if not self._tomar:
+            return
+        if not self._informar_si_toca(ahora):
             return
         if self._tomar_no_antes is not None and time.ticks_diff(ahora, self._tomar_no_antes) < 0:
             return
@@ -292,7 +336,7 @@ class Grupo:
             cliente.cerrar_red()
 
 
-def configurar(ejecutar, ajustes=None, voz=None):
+def configurar(ejecutar, ajustes=None, voz=None, estado_para_nube=None):
     """OrdenesRemotas si secrets.py tiene la configuracion ORDENES_*; si no, None."""
     if ajustes is None:
         import secrets as ajustes
@@ -318,5 +362,6 @@ def configurar(ejecutar, ajustes=None, voz=None):
         print("Ordenes remotas: falta la cuenta del dispositivo")
     else:
         print("Ordenes remotas: habilitadas para", dispositivo)
-        return OrdenesRemotas(host, dispositivo, producto, clave, email, password, ejecutar, voz)
+        return OrdenesRemotas(host, dispositivo, producto, clave, email, password, ejecutar, voz,
+                              estado_para_nube)
     return None

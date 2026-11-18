@@ -357,7 +357,8 @@ def ejecutar():
         sesion_voz = preparar_voz(reproductor)
         lampara = (lampara_remota.configurar(comandos.ejecutar)
                    if modulo.usa("lampara") else None)
-        ordenes = ordenes_remotas.configurar(comandos.ejecutar, voz=sesion_voz)
+        ordenes = ordenes_remotas.configurar(comandos.ejecutar, voz=sesion_voz,
+                                              estado_para_nube=comandos.estado_para_nube)
         if lampara is not None or ordenes is not None:
             remota = ordenes_remotas.Grupo([lampara, ordenes])
         if (modulo.usa("ambiente") or modulo.usa("colchon") or modulo.usa("habitacion")
