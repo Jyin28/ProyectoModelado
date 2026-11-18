@@ -12,7 +12,13 @@ export type EventoMovimiento = {
   datos: Record<string, never>
 }
 
-export type Resultado = 'creado' | 'duplicado' | 'no_autorizado' | 'id_reutilizado' | 'sin_asignacion'
+export type Resultado =
+  | 'creado'
+  | 'duplicado'
+  | 'no_autorizado'
+  | 'id_reutilizado'
+  | 'sin_asignacion'
+  | 'monitoreo_inactivo'
 
 type Guardar = (evento: EventoAmbiente, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarMovimiento = (evento: EventoMovimiento, tokenHash: string, recibidoEn: string) => Promise<Resultado>
@@ -131,6 +137,9 @@ export function crearIngesta(guardar: Guardar, guardarMovimiento?: GuardarMovimi
           return error(400, 'id_reutilizado', 'El identificador ya corresponde a otro evento.')
         case 'sin_asignacion':
           return error(422, 'sin_asignacion', 'El dispositivo no tenía un bebé asignado a la hora de medición.')
+        case 'monitoreo_inactivo':
+          // La última confirmación real dice que el monitoreo está apagado: no se reintenta.
+          return error(409, 'monitoreo_inactivo', 'El monitoreo de movimiento está desactivado.')
       }
     } catch {
       return error(503, 'ingesta_no_disponible', 'La ingesta está temporalmente indisponible.', true)
