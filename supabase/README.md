@@ -75,6 +75,13 @@ El repositorio incluye la migración PostgreSQL y la función Edge `ingesta`. El
    commit;
    ```
 
+   **Alta para reclamo desde la web (fase 3 del Sprint 4, migración `20261118000100`).** En lugar de insertar al dueño, el producto se entrega con un código de reclamo de un solo uso (mínimo 12 caracteres, generado al azar) y la persona lo usa en «Bebés y dispositivos». Solo se guarda su hash. Columnas nuevas de `dispositivos`: `tipo` (`cuna`, `figuras`, `colchon`, `habitacion`, `juego` o `alimentacion`), `producto_id` (igual para los módulos lógicos de una misma cuna, por ejemplo `cuna-01`) y `codigo_reclamo_sha256`. No guardes el código en el repositorio.
+
+   ```sql
+   insert into cuna_private.dispositivos (id, token_sha256, tipo, producto_id, codigo_reclamo_sha256)
+   values ('cuna-ambiente-01', '<hash-del-token>', 'cuna', 'cuna-01', '<hash-del-codigo-de-reclamo>');
+   ```
+
 5. Envía una lectura real desde la Pico a la URL de la función y verifica `201`. Repite el mismo evento para verificar `409` y una sola fila. Inicia sesión en la web con el usuario asociado y comprueba temperatura, humedad y hora. Repite la consulta con un usuario sin acceso y comprueba que no obtiene la fila.
 
 La función valida la credencial en la base. `verify_jwt = false` se aplica solo a `ingesta` para permitir el token de la Pico. El RPC de escritura se concede exclusivamente a `service_role`. Las variables de servidor `SUPABASE_URL` y `SUPABASE_SECRET_KEYS`, o `SUPABASE_SERVICE_ROLE_KEY` en entornos que usan claves heredadas, las aporta el entorno Edge. [Autenticación de funciones Edge](https://supabase.com/docs/guides/functions/auth) · [Variables de entorno](https://supabase.com/docs/guides/functions/secrets) · [Permisos de la Data API](https://supabase.com/docs/guides/api/securing-your-api)
