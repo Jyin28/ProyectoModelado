@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs tests/movimiento.test.mjs tests/cuentas.test.mjs tests/avisos.test.mjs tests/notificador.test.mjs tests/ordenes-modulo.test.mjs tests/colchon.test.mjs tests/habitacion.test.mjs"
+    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs tests/movimiento.test.mjs tests/cuentas.test.mjs tests/avisos.test.mjs tests/notificador.test.mjs tests/ordenes-modulo.test.mjs tests/colchon.test.mjs tests/habitacion.test.mjs tests/alimentacion.test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.16"

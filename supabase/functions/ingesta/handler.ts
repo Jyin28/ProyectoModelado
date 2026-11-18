@@ -32,6 +32,16 @@ export type EventoHabitacion = {
   datos: Record<string, never>
 }
 
+export type TipoAlimentacion = 'peso_alimentacion' | 'peso_alimentacion_fallido' | 'temperatura_biberon'
+
+export type EventoAlimentacion = {
+  event_id: string
+  device_id: string
+  tipo: TipoAlimentacion
+  ts: string
+  datos: Record<string, number | string>
+}
+
 export type Resultado =
   | 'creado'
   | 'duplicado'
@@ -45,16 +55,21 @@ type Guardar = (evento: EventoAmbiente, tokenHash: string, recibidoEn: string) =
 type GuardarMovimiento = (evento: EventoMovimiento, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarColchon = (evento: EventoColchon, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 type GuardarHabitacion = (evento: EventoHabitacion, tokenHash: string, recibidoEn: string) => Promise<Resultado>
+type GuardarAlimentacion = (evento: EventoAlimentacion, tokenHash: string, recibidoEn: string) => Promise<Resultado>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const DEVICE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/
 const DEVICE_ID_MOVIMIENTO = /^cuna-movimiento-[0-9]{2}$/
 const DEVICE_ID_COLCHON = /^cuna-colchon-[0-9]{2}$/
 const DEVICE_ID_HABITACION = /^cuna-habitacion-[0-9]{2}$/
+const DEVICE_ID_ALIMENTACION = /^cuna-alimentacion-[0-9]{2}$/
 const PREFIJOS_OTROS_MODULOS = [
   'cuna-movimiento-', 'cuna-lampara-', 'cuna-colchon-', 'cuna-habitacion-', 'cuna-alimentacion-',
 ]
 const TIPOS_HABITACION: readonly string[] = ['puerta', 'movimiento_habitacion']
+const TIPOS_ALIMENTACION: readonly string[] = ['peso_alimentacion', 'peso_alimentacion_fallido', 'temperatura_biberon']
+const MOMENTOS_TOMA: readonly string[] = ['inicial', 'control', 'final']
+const MOTIVOS_PESO: readonly string[] = ['sin_lectura', 'sin_calibracion']
 const TIPOS_COLCHON: readonly string[] = ['colchon_armado', 'alarma_colchon', 'colchon_detenido']
 const MOTIVOS_COLCHON: readonly string[] = ['app', 'boton', 'temporizador', 'duracion', 'wifi']
 const UTC =/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,3}))?Z$/
@@ -163,6 +178,45 @@ function habitacion(value: unknown): EventoHabitacion | undefined {
   return { event_id: event_id.toLowerCase(), device_id, tipo, ts, datos: {} }
 }
 
+// Misma forma y rangos que public.ingestar_alimentacion (SQL).
+function datosAlimentacion(tipo: TipoAlimentacion, datos: Record<string, unknown>): Record<string, number | string> | undefined {
+  if (tipo === 'temperatura_biberon') {
+    if (!mismasClaves(datos, ['temperatura_c'])) return
+    const { temperatura_c } = datos
+    if (!numero(temperatura_c, -55, 125, true)) return
+    return { temperatura_c }
+  }
+  const { toma_id, momento } = datos
+  if (typeof toma_id !== 'string' || !UUID.test(toma_id)) return
+  if (typeof momento !== 'string' || !MOMENTOS_TOMA.includes(momento)) return
+  if (tipo === 'peso_alimentacion_fallido') {
+    if (!mismasClaves(datos, ['momento', 'motivo', 'toma_id'])) return
+    const { motivo } = datos
+    if (typeof motivo !== 'string' || !MOTIVOS_PESO.includes(motivo)) return
+    return { toma_id: toma_id.toLowerCase(), momento, motivo }
+  }
+  if (!mismasClaves(datos, ['gramos', 'momento', 'toma_id'])) return
+  const { gramos } = datos
+  // El peso inicial y el final deben ser mayores que 0; el de control puede ser 0.
+  if (!numero(gramos, 0, 5000, momento === 'control')) return
+  return { toma_id: toma_id.toLowerCase(), momento, gramos }
+}
+
+function alimentacion(value: unknown): EventoAlimentacion | undefined {
+  if (!objeto(value) || typeof value.tipo !== 'string' || !TIPOS_ALIMENTACION.includes(value.tipo)) return
+  if (!objeto(value.datos)) return
+  const { event_id, device_id, ts } = value
+  const tipo = value.tipo as TipoAlimentacion
+
+  if (typeof event_id !== 'string' || !UUID.test(event_id)) return
+  if (typeof device_id !== 'string' || !DEVICE_ID_ALIMENTACION.test(device_id)) return
+  if (typeof ts !== 'string' || !fechaUtc(ts)) return
+  const datos = datosAlimentacion(tipo, value.datos)
+  if (!datos) return
+
+  return { event_id: event_id.toLowerCase(), device_id, tipo, ts, datos }
+}
+
 function error(status: number, codigo: string, mensaje: string, reintentable = false, headers?: HeadersInit) {
   return Response.json({ codigo, mensaje, reintentable }, { status, headers })
 }
@@ -172,6 +226,7 @@ export function crearIngesta(
   guardarMovimiento?: GuardarMovimiento,
   guardarColchon?: GuardarColchon,
   guardarHabitacion?: GuardarHabitacion,
+  guardarAlimentacion?: GuardarAlimentacion,
 ) {
   return async (request: Request): Promise<Response> => {
     const recibidoEn = new Date().toISOString()
@@ -193,6 +248,8 @@ export function crearIngesta(
     let esColchon = false
     let eventoHabitacion: EventoHabitacion | undefined
     let esHabitacion = false
+    let eventoAlimentacion: EventoAlimentacion | undefined
+    let esAlimentacion = false
     try {
       while (true) {
         const { done, value } = await reader.read()
@@ -214,6 +271,9 @@ export function crearIngesta(
       } else if (objeto(json) && typeof json.tipo === 'string' && TIPOS_HABITACION.includes(json.tipo)) {
         esHabitacion = true
         eventoHabitacion = habitacion(json)
+      } else if (objeto(json) && typeof json.tipo === 'string' && TIPOS_ALIMENTACION.includes(json.tipo)) {
+        esAlimentacion = true
+        eventoAlimentacion = alimentacion(json)
       } else {
         evento = lectura(json)
       }
@@ -231,7 +291,10 @@ export function crearIngesta(
     if (esHabitacion && !(eventoHabitacion && guardarHabitacion)) {
       return error(400, 'evento_invalido', 'Se requiere un evento de habitación válido.')
     }
-    if (!esMovimiento && !esColchon && !esHabitacion && !evento) {
+    if (esAlimentacion && !(eventoAlimentacion && guardarAlimentacion)) {
+      return error(400, 'evento_invalido', 'Se requiere un evento de alimentación válido.')
+    }
+    if (!esMovimiento && !esColchon && !esHabitacion && !esAlimentacion && !evento) {
       return error(400, 'evento_invalido', 'Se requiere un evento ambiente válido.')
     }
     if (evento && PREFIJOS_OTROS_MODULOS.some((prefijo) => evento!.device_id.startsWith(prefijo))) {
@@ -246,10 +309,12 @@ export function crearIngesta(
         ? await guardarColchon!(eventoColchon, tokenHash, recibidoEn)
         : eventoHabitacion
           ? await guardarHabitacion!(eventoHabitacion, tokenHash, recibidoEn)
-          : eventoMovimiento
-            ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
-            : await guardar(evento!, tokenHash, recibidoEn)
-      const idEvento = (eventoColchon ?? eventoHabitacion ?? eventoMovimiento ?? evento)!.event_id
+          : eventoAlimentacion
+            ? await guardarAlimentacion!(eventoAlimentacion, tokenHash, recibidoEn)
+            : eventoMovimiento
+              ? await guardarMovimiento!(eventoMovimiento, tokenHash, recibidoEn)
+              : await guardar(evento!, tokenHash, recibidoEn)
+      const idEvento = (eventoColchon ?? eventoHabitacion ?? eventoAlimentacion ?? eventoMovimiento ?? evento)!.event_id
       switch (resultado) {
         case 'creado':
           return Response.json({ event_id: idEvento, estado: 'recibido' }, { status: 201 })
