@@ -63,7 +63,7 @@ def _post(host, autorizacion, contexto, cuerpo, timeout):
 
 class EnvioAmbiente:
     def __init__(self, host, dispositivo, token, contexto, ntp, remota=None, movimiento=None,
-                 colchon=None, habitacion=None):
+                 colchon=None, habitacion=None, alimentacion=None):
         # host=None: no hay envio a Ingesta; solo trabaja la lampara remota.
         # dispositivo/token=None: ambiente deshabilitado (puede seguir movimiento).
         self._host = host
@@ -79,10 +79,13 @@ class EnvioAmbiente:
         self._colchon = colchon
         # (device_id, token) de la habitacion, o None. Misma cola acotada y reintento.
         self._habitacion = habitacion
+        # (device_id, token) de la alimentacion, o None. Pesos y temperatura del biberon.
+        self._alimentacion = alimentacion
         # Una cola por modulo con eventos: nombre -> (nombre para consola, credencial, cola).
         self._cargas = {}
         for clave, rotulo, credencial in (("colchon", "Colchon", colchon),
-                                          ("habitacion", "Habitacion", habitacion)):
+                                          ("habitacion", "Habitacion", habitacion),
+                                          ("alimentacion", "Alimentacion", alimentacion)):
             if credencial is not None:
                 self._cargas[clave] = (rotulo, credencial, cola_eventos.ColaEventos(_uuid4))
         self._lock = _thread.allocate_lock()
@@ -127,6 +130,11 @@ class EnvioAmbiente:
     def registrar_evento_habitacion(self, tipo, datos, ocurrido_ms):
         """Evento de la habitacion (puerta o movimiento_habitacion)."""
         self.registrar_evento_modulo("habitacion", tipo, datos, ocurrido_ms)
+
+    def registrar_evento_alimentacion(self, tipo, datos, ocurrido_ms):
+        """Evento de la alimentacion (peso_alimentacion, peso_alimentacion_fallido
+        o temperatura_biberon)."""
+        self.registrar_evento_modulo("alimentacion", tipo, datos, ocurrido_ms)
 
     def registrar(self, temperatura, humedad, medido_ms):
         if self._dispositivo is None or not math.isfinite(temperatura) or not 0 <= humedad <= 100:
@@ -318,6 +326,22 @@ def _credencial_habitacion():
     return (dispositivo, token)
 
 
+def _credencial_alimentacion():
+    """(device_id, token) de la alimentacion, o None si no aplica."""
+    if not (config.ALIMENTACION_HABILITADO and modulo.usa("alimentacion")):
+        return None
+    dispositivo = getattr(secrets, "ALIMENTACION_DEVICE_ID", "")
+    token = getattr(secrets, "ALIMENTACION_TOKEN", "")
+    if (len(dispositivo) != 20 or not dispositivo.startswith("cuna-alimentacion-")
+            or not dispositivo[18:].isdigit()):
+        print("Alimentacion: device_id invalido; no se informa a Supabase")
+        return None
+    if len(token) != 64 or any(c not in "0123456789abcdefABCDEF" for c in token):
+        print("Alimentacion: credencial invalida; no se informa a Supabase")
+        return None
+    return (dispositivo, token)
+
+
 def _leer_host():
     """Servidor de Ingesta (compartido por ambiente y movimiento), o None."""
     url = getattr(secrets, "AMBIENTE_URL", "")
@@ -351,7 +375,7 @@ def iniciar(remota=None):
     """Inicia el unico worker de red.
 
     Atiende, como cargas separadas, el envio de ambiente, el de movimiento
-    (PIR) y los eventos del colchon y de la habitacion, y si se pasa, la lampara remota. Si no hay ni ambiente ni
+    (PIR) y los eventos del colchon, de la habitacion y de la alimentacion, y si se pasa, la lampara remota. Si no hay ni ambiente ni
     movimiento configurados pero si lampara remota, el worker corre solo para
     ella (host=None).
     """
@@ -360,7 +384,9 @@ def iniciar(remota=None):
     movimiento = _credencial_movimiento() if host is not None else None
     colchon = _credencial_colchon() if host is not None else None
     habitacion = _credencial_habitacion() if host is not None else None
-    if ambiente is None and movimiento is None and colchon is None and habitacion is None:
+    alimentacion = _credencial_alimentacion() if host is not None else None
+    if (ambiente is None and movimiento is None and colchon is None and habitacion is None
+            and alimentacion is None):
         host = None                 # sin cargas de Ingesta no se usa el host
     if host is None and remota is None:
         return None
@@ -377,7 +403,7 @@ def iniciar(remota=None):
         if remota is not None:
             remota.contexto = contexto
         envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota, movimiento,
-                              colchon, habitacion)
+                              colchon, habitacion, alimentacion)
         # La lampara remota agrega TLS, JSON y WebSocket: pila mayor (pendiente de medir en hardware)
         pila_anterior = _thread.stack_size((16 if remota is not None else 12) * 1024)
         try:

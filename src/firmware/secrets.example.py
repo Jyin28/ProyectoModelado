@@ -44,3 +44,8 @@ COLCHON_TOKEN = ""
 # El token se crea con el alta del dispositivo; nunca se sube a git.
 HABITACION_DEVICE_ID = "cuna-habitacion-01"
 HABITACION_TOKEN = ""
+
+# Informe de pesos y temperatura del biberon (solo con ALIMENTACION_HABILITADO = True y MODULO = "alimentacion").
+# El token se crea con el alta del dispositivo; nunca se sube a git.
+ALIMENTACION_DEVICE_ID = "cuna-alimentacion-01"
+ALIMENTACION_TOKEN = ""

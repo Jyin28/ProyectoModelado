@@ -1,7 +1,7 @@
 """main.py - Programa principal de la Pico 2 W.
 
 Hay una sola Pico y se conecta a UN modulo por vez. config.MODULO dice a cual
-("cuna", "colchon", "figuras", "habitacion" o "juego") y solo se atiende lo de ese modulo (modulo.py).
+("cuna", "colchon", "figuras", "habitacion", "alimentacion" o "juego") y solo se atiende lo de ese modulo (modulo.py).
 
 Que hace:
   1. Valida config.MODULO y se conecta al WiFi.
@@ -20,6 +20,10 @@ Que hace:
   Modulo "habitacion":
   6b. Si config.py lo habilita, vigila la puerta y el PIR del cuarto y informa
      cada accion durante el monitoreo activo (sin alarma local).
+  Modulo "alimentacion":
+  6d. Si config.py lo habilita, pesa el biberon cuando la web lo ordena
+     (feeding_weigh) e informa los gramos como evento, y mide la temperatura.
+     No calienta, no enfria ni suministra alimento.
   Modulo "juego":
   6c. Si config.py lo habilita, corre el juego de cinco botones. Funciona solo
      en la Pico: no se conecta al WiFi, no abre hilo de red ni recibe ordenes.
@@ -35,7 +39,7 @@ import time
 # Las carpetas del proyecto se agregan a la ruta de busqueda para poder
 # escribir "import config", "import wifi", etc. sin paquetes.
 # (figuras-led lleva guion, por eso no se puede importar como paquete.)
-for _carpeta in ("/colchon", "/cuna", "/habitacion", "/juego", "/figuras-led", "/common/communication",
+for _carpeta in ("/colchon", "/cuna", "/habitacion", "/alimentacion", "/juego", "/figuras-led", "/common/communication",
                  "/common/sensors", "/common/utilities"):
     if _carpeta not in sys.path:
         sys.path.append(_carpeta)
@@ -44,6 +48,7 @@ import ambiente
 import audio
 import comandos
 import config
+import control_alimentacion
 import control_colchon
 import control_habitacion
 import control_juego
@@ -132,6 +137,20 @@ def preparar_habitacion():
         return None
 
 
+def preparar_alimentacion():
+    """Crea la alimentacion SOLO si config.py la habilita. Un fallo no detiene el resto."""
+    if not (config.ALIMENTACION_HABILITADO and modulo.usa("alimentacion")):
+        return None
+    try:
+        control = control_alimentacion.iniciar()
+        comandos.conectar_alimentacion(control)
+        print("Alimentacion: habilitada (SIN PROBAR EN HARDWARE; pines propuestos)")
+        return control
+    except Exception as error:
+        print("Alimentacion: no se pudo iniciar (%s)" % type(error).__name__)
+        return None
+
+
 def preparar_juego():
     """Crea el juego SOLO si config.py lo habilita. Un fallo no detiene el programa."""
     if not (config.JUEGO_HABILITADO and modulo.usa("juego")):
@@ -172,7 +191,7 @@ def preparar_voz(reproductor):
 
 
 def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
-                    sesion_voz=None, movimiento_remoto=False, habitacion=None):
+                    sesion_voz=None, movimiento_remoto=False, habitacion=None, alimentacion=None):
     """Bucle infinito: cada tarea corre cuando le toca su turno.
 
     movimiento_remoto: con ordenes remotas configuradas, el aviso de movimiento
@@ -183,6 +202,8 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
         pausa_ms = min(pausa_ms, config.COLCHON_PAUSA_CICLO_MS)   # boton y muestreo mas agiles
     if habitacion is not None:
         pausa_ms = min(pausa_ms, config.HABITACION_PAUSA_CICLO_MS)   # antirrebote de los sensores
+    if alimentacion is not None:
+        pausa_ms = min(pausa_ms, config.ALIMENTACION_PAUSA_CICLO_MS)   # lectura agil de la balanza
     # Se restan los intervalos para que la primera lectura ocurra de inmediato
     ultima_lectura = time.ticks_add(time.ticks_ms(),
                                     -config.INTERVALO_AMBIENTE_S * 1000)
@@ -262,6 +283,23 @@ def ciclo_principal(envio=None, remota=None, colchon=None, reproductor=None,
                     pass
                 habitacion = None
 
+        # --- Tarea 5c: alimentacion (pesajes y temperatura). Un fallo la deshabilita y el resto sigue.
+        if alimentacion is not None:
+            try:
+                alimentacion.actualizar(time.ticks_ms())
+                for evento in alimentacion.sacar_eventos():
+                    print("Alimentacion: %s" % evento["tipo"])
+                    if envio is not None:
+                        envio.registrar_evento_alimentacion(
+                            evento["tipo"], evento["datos"], evento["ms"])
+            except Exception as error:
+                print("Alimentacion: error (%s); se deshabilita" % type(error).__name__)
+                try:
+                    alimentacion.apagar()
+                except Exception:
+                    pass
+                alimentacion = None
+
         # --- Tarea 6: audio (cierre al drenar y vigilancia). Un fallo no afecta al resto.
         if reproductor is not None:
             try:
@@ -294,6 +332,7 @@ def ejecutar():
     remota = None
     colchon = None
     habitacion = None
+    alimentacion = None
     juego = None
     reproductor = None
     sesion_voz = None
@@ -301,7 +340,7 @@ def ejecutar():
         modulo.validar()
     except ValueError as error:
         # Con un modulo desconocido no se inicializa ningun periferico.
-        print("Modulo invalido (%s). Usa 'cuna', 'colchon', 'figuras', 'habitacion' o 'juego' en config.py." % error)
+        print("Modulo invalido (%s). Usa 'cuna', 'colchon', 'figuras', 'habitacion', 'alimentacion' o 'juego' en config.py." % error)
         return
     try:
         preparar_modulo()
@@ -314,6 +353,7 @@ def ejecutar():
             return
         colchon, reproductor = preparar_perifericos()
         habitacion = preparar_habitacion()
+        alimentacion = preparar_alimentacion()
         sesion_voz = preparar_voz(reproductor)
         lampara = (lampara_remota.configurar(comandos.ejecutar)
                    if modulo.usa("lampara") else None)
@@ -321,12 +361,13 @@ def ejecutar():
         if lampara is not None or ordenes is not None:
             remota = ordenes_remotas.Grupo([lampara, ordenes])
         if (modulo.usa("ambiente") or modulo.usa("colchon") or modulo.usa("habitacion")
-                or remota is not None):
+                or modulo.usa("alimentacion") or remota is not None):
             envio = ambiente.iniciar(remota)
             if envio is None:
                 remota = None        # sin worker de red no hay ordenes remotas
         ciclo_principal(envio, remota, colchon, reproductor, sesion_voz,
-                        movimiento_remoto=ordenes is not None, habitacion=habitacion)
+                        movimiento_remoto=ordenes is not None, habitacion=habitacion,
+                        alimentacion=alimentacion)
     except KeyboardInterrupt:
         print("Detenido por el usuario")
     finally:
@@ -336,6 +377,8 @@ def ejecutar():
             colchon.apagar()
         if habitacion is not None:
             habitacion.apagar()
+        if alimentacion is not None:
+            alimentacion.apagar()
         if juego is not None:
             juego.apagar()
         if reproductor is not None:

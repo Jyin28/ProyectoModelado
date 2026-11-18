@@ -11,11 +11,12 @@ Por ahora las ordenes las genera demo.py. Mas adelante llegaran desde la
 web. (Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
 
 Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, motion_set, room_monitor_set,
-get_status
+feeding_weigh, get_status
 
 Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set,
 motion_set y audio_* en "cuna", led_* en "figuras", mattress_* en "colchon",
-room_monitor_set {sensor: puerta|movimiento, enabled} en "habitacion". Uno de otro modulo
+room_monitor_set {sensor: puerta|movimiento, enabled} en "habitacion",
+feeding_weigh {toma_id, momento: inicial|control|final} en "alimentacion". Uno de otro modulo
 se rechaza con el error "comando_de_otro_modulo:<modulo>" sin tocar ningun pin.
 get_status sirve siempre e incluye el campo "modulo".
 
@@ -37,6 +38,7 @@ _colchon = None
 _audio = None
 _voz = None
 _habitacion = None
+_alimentacion = None
 _monitoreo_movimiento = False   # arranca apagado; solo lo cambia motion_set
 
 
@@ -44,6 +46,12 @@ def conectar_habitacion(control):
     """Registra el control de la habitacion (o None para desconectarlo)."""
     global _habitacion
     _habitacion = control
+
+
+def conectar_alimentacion(control):
+    """Registra el control de la alimentacion (o None para desconectarlo)."""
+    global _alimentacion
+    _alimentacion = control
 
 
 def conectar_colchon(control):
@@ -93,6 +101,12 @@ def _habitacion_activa():
     return _habitacion
 
 
+def _alimentacion_activa():
+    if _alimentacion is None:
+        raise ValueError("alimentacion_no_habilitada")
+    return _alimentacion
+
+
 def _audio_activo():
     if _audio is None:
         raise ValueError("audio_no_habilitado")
@@ -118,6 +132,8 @@ def estado():
                "audio": _audio.estado()["estado"] if _audio is not None else None}
     if modulo.usa("habitacion") and _habitacion is not None:
         resumen["habitacion"] = _habitacion.estado()   # solo aparece en ese modulo
+    if modulo.usa("alimentacion") and _alimentacion is not None:
+        resumen["alimentacion"] = _alimentacion.estado(time.ticks_ms())   # solo en ese modulo
     return resumen
 
 
@@ -214,6 +230,16 @@ def _ejecutar(nombre, params):
         if not isinstance(activo, bool):
             raise ValueError("parametro_invalido:enabled")
         return _habitacion_activa().fijar_monitoreo(sensor, activo)
+
+    if nombre == "feeding_weigh":
+        toma_id = params.get("toma_id")
+        momento = params.get("momento")
+        if not isinstance(toma_id, str):
+            raise ValueError("parametro_invalido:toma_id")
+        if not isinstance(momento, str):
+            raise ValueError("parametro_invalido:momento")
+        # El control valida el formato; el peso llega despues como evento.
+        return _alimentacion_activa().pesar(toma_id, momento, time.ticks_ms())
 
     if nombre == "audio_play":
         sonido = params.get("sound")

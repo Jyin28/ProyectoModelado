@@ -20,6 +20,7 @@ class ModuloTests(unittest.TestCase):
             "figuras": {"figuras"},
             "habitacion": {"habitacion"},
             "juego": {"juego"},
+            "alimentacion": {"alimentacion"},
         }
         todos = set().union(*esperado.values())
         for nombre, propios in esperado.items():
@@ -34,8 +35,8 @@ class ModuloTests(unittest.TestCase):
             vistos.extend(lista)
         self.assertEqual(len(vistos), len(set(vistos)))
 
-    def test_validar_acepta_los_cinco_modulos(self):
-        for nombre in ("cuna", "colchon", "figuras", "habitacion", "juego"):
+    def test_validar_acepta_los_seis_modulos(self):
+        for nombre in ("cuna", "colchon", "figuras", "habitacion", "juego", "alimentacion"):
             self.assertEqual(modulo.validar(nombre), nombre)
 
     def test_validar_sin_argumento_usa_config(self):

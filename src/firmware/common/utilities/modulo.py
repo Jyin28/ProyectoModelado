@@ -19,6 +19,7 @@ PERIFERICOS = {
     "figuras": ("figuras",),
     "habitacion": ("habitacion",),
     "juego": ("juego",),
+    "alimentacion": ("alimentacion",),
 }
 
 # Periferico que necesita cada comando. Los que no aparecen (get_status) valen
@@ -33,6 +34,7 @@ _COMANDOS = {
     "audio_play": "audio", "audio_stop": "audio", "audio_status": "audio",
     "motion_set": "movimiento",
     "room_monitor_set": "habitacion",
+    "feeding_weigh": "alimentacion",
 }
 
 

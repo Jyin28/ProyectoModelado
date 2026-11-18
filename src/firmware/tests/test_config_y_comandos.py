@@ -28,6 +28,10 @@ class ConfigTests(unittest.TestCase):
             "habitacion": {
                 "PUERTA": config.PIN_PUERTA, "PIR_HABITACION": config.PIN_PIR_HABITACION,
             },
+            "alimentacion": {
+                "HX711_DT": config.PIN_ALIMENTACION_DT, "HX711_SCK": config.PIN_ALIMENTACION_SCK,
+                "DS18B20": config.PIN_DS18B20,
+            },
             "juego": {
                 **{"BOTON%d" % i: p for i, p in enumerate(config.PINES_JUEGO_BOTONES)},
                 **{"LED%d" % i: p for i, p in enumerate(config.PINES_JUEGO_LEDS)},

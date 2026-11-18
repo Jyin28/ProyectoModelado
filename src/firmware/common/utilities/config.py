@@ -14,6 +14,7 @@ DEVICE_ID = "pico-sprint3-01"
 #   "figuras" los seis LED
 #   "habitacion" sensor de puerta (reed) y PIR del cuarto
 #   "juego"   cinco botones con luz y un buzzer (funciona sin red)
+#   "alimentacion" balanza (HX711) y sonda de temperatura (DS18B20) del biberon
 # Solo se inicializa lo del modulo elegido (ver modulo.py).
 # Los pines solo deben ser unicos DENTRO de cada modulo: la Pico atiende uno por vez.
 MODULO = "cuna"
@@ -119,6 +120,26 @@ JUEGO_INICIA_ENCENDIDO = True             # al darle corriente, el juego empieza
 JUEGO_COMBO_ONOFF = (0, 4)
 JUEGO_COMBO_MS = 2000
 JUEGO_PAUSA_CICLO_MS = 10                 # pausa del ciclo con el juego habilitado
+
+# ---- Alimentacion (HARDWARE APAGADO POR DEFECTO, SIN PROBAR EN HARDWARE) ----
+# La web conduce la toma; la Pico pesa cuando se lo ordenan (feeding_weigh) y
+# envia los gramos como evento. No calienta, no enfria ni suministra alimento
+# (CA-23.4). Pines PROPUESTOS (docs/Sprint4/diseno-fisico.md 3.6). El boton fisico
+# de inicio no se implementa: el inicio se registra desde la web.
+ALIMENTACION_HABILITADO = False
+PIN_ALIMENTACION_DT = 17         # datos del HX711 (propuesta)
+PIN_ALIMENTACION_SCK = 16        # reloj del HX711 (propuesta)
+PIN_DS18B20 = 4                  # sonda 1-Wire con resistencia de 4,7 kOhm a 3,3 V (propuesta)
+ARCHIVO_CALIBRACION_ALIMENTACION = "calibracion_alimentacion.json"   # factor propio, no el del colchon
+ALIMENTACION_MUESTRAS_PESO = 10          # lecturas promediadas en cada pesaje
+ALIMENTACION_PESO_MIN_G = 2.0            # el peso inicial y el final deben superar esto (hay recipiente)
+ALIMENTACION_PESO_MAX_G = 1000.0         # rango de la celda de 1 kg
+ALIMENTACION_CAPTURA_TIMEOUT_MS = 10000  # tope para completar un pesaje
+ALIMENTACION_CALIBRACION_DELTA_MIN = 100 # cuentas minimas de diferencia al calibrar
+ALIMENTACION_TARA_AL_INICIAR = True      # cero con la balanza vacia al encender
+ALIMENTACION_INTERVALO_TEMP_S = 30       # una lectura de temperatura cada tanto
+ALIMENTACION_CONVERSION_TEMP_MS = 800    # espera de la conversion del DS18B20 (12 bits: 750 ms)
+ALIMENTACION_PAUSA_CICLO_MS = 20         # pausa del ciclo con la alimentacion habilitada
 
 # GPIO que usa el chip WiFi de la Pico W: no asignar a nada.
 PINES_RESERVADOS_WIFI = (23, 24, 25, 29)
