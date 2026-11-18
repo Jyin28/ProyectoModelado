@@ -11,11 +11,14 @@ Funciones:
 Secuencias: "chase" (un LED recorre la fila), "alternate" (alternados),
 "blink_all" (todos parpadean). El intervalo minimo es de 2 s para evitar
 destellos bruscos.
+"patrones" es el ciclo del codigo funcional (secuencial, parpadeo, alternado,
+rebote y progresivo) con sus propios tiempos: ignora el intervalo pedido.
 """
 import time
 from machine import Pin
 
 import config
+import efectos
 
 _leds = [Pin(pin, Pin.OUT, value=0) for pin in config.PINES_LEDS]
 
@@ -25,6 +28,7 @@ _estado = {
     "paso": 0,             # cuantos cambios lleva
     "intervalo_ms": 0,
     "ultimo_cambio": 0,
+    "pasos": None,         # pasos de "patrones": [(indices, duracion_ms), ...]
 }
 
 
@@ -52,6 +56,7 @@ def iniciar_secuencia(nombre, intervalo_s):
 
     _estado["nombre"] = nombre
     _estado["paso"] = 0
+    _estado["pasos"] = efectos.pasos_patrones(len(_leds)) if nombre == "patrones" else None
     _estado["intervalo_ms"] = int(intervalo_s * 1000)
     # Se resta el intervalo para que el primer paso ocurra enseguida
     _estado["ultimo_cambio"] = time.ticks_add(time.ticks_ms(),
@@ -75,6 +80,13 @@ def actualizar():
     if transcurrido < _estado["intervalo_ms"]:
         return
     _estado["ultimo_cambio"] = time.ticks_ms()
+    if _estado["pasos"] is not None:
+        indices, duracion_ms = _estado["pasos"][_estado["paso"] % len(_estado["pasos"])]
+        for posicion, led in enumerate(_leds):
+            led.value(1 if posicion in indices else 0)
+        _estado["intervalo_ms"] = duracion_ms      # hasta el paso siguiente
+        _estado["paso"] += 1
+        return
     _aplicar_paso(_estado["nombre"], _estado["paso"])
     _estado["paso"] += 1
 

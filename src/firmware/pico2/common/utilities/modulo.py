@@ -1,7 +1,8 @@
 """modulo.py - Decide que periféricos atiende la Pico segun el modulo conectado.
 
-Hay una sola Pico 2 W y se conecta a UN modulo por vez (cuna o figuras LED);
-despues se desconecta y se pasa a otro. config.MODULO indica cual esta conectado, y solo se inicializa lo que pertenece a ese modulo:
+Hay una sola Pico 2 W. Se conecta a un modulo por vez (cuna o figuras LED) o,
+como en el codigo funcional, a todo a la vez ("completo": los pines de la cuna y
+de las figuras no se pisan). config.MODULO indica cual esta conectado, y solo se inicializa lo que pertenece a ese modulo:
 asi un sensor sin cablear no genera lecturas falsas ni toca pines ajenos.
 
 Funciones:
@@ -15,6 +16,7 @@ import config
 PERIFERICOS = {
     "cuna": ("ambiente", "movimiento", "lampara", "audio"),
     "figuras": ("figuras",),
+    "completo": ("ambiente", "movimiento", "lampara", "audio", "figuras"),
 }
 
 # Periferico que necesita cada comando. Los que no aparecen (get_status) valen

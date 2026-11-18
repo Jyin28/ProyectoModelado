@@ -4,7 +4,7 @@ import sys
 import types
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for _carpeta in ("cuna", os.path.join("common", "utilities")):
+for _carpeta in ("cuna", os.path.join("common", "sensors"), os.path.join("common", "utilities")):
     _ruta = os.path.join(RAIZ, _carpeta)
     if _ruta not in sys.path:
         sys.path.insert(0, _ruta)

@@ -1,18 +1,22 @@
 """main.py - Programa principal de la Pico 2 W.
 
 Hay una sola Pico y se conecta a UN modulo por vez. config.MODULO dice a cual
-("cuna" o "figuras") y solo se atiende lo de ese modulo (modulo.py).
+("cuna", "figuras" o "completo", que es todo a la vez como el codigo funcional)
+y solo se atiende lo de ese modulo (modulo.py).
 
 Que hace:
   1. Valida config.MODULO y se conecta al WiFi.
   Modulo "cuna":
   2. Cada 10 s lee temperatura y humedad, las muestra y las envia a Supabase
      (Ingesta) si secrets.py tiene INGESTA_URL y DEVICE_TOKEN.
-  3. Avisa por consola cuando el PIR detecta movimiento.
+  3. Avisa por consola cuando el PIR detecta movimiento (tras estabilizarse 60 s).
   4. Si secrets.py configura la lampara remota, ejecuta sus ordenes (la demo
-     se desactiva para no pisar el PWM). Si config.py lo habilita, atiende el audio.
+     se desactiva para no pisar el PWM). Si config.py lo habilita, atiende el audio
+     y reproduce el WAV de inicio una vez. Sin lampara remota, la lampara sube y baja
+     su brillo (config.EFECTOS_AUTONOMOS).
   Modulo "figuras":
-  5. Mueve las secuencias de los 6 LED y ejecuta ordenes (ver demo.py en modo demo).
+  5. Mueve las secuencias de los 6 LED (con EFECTOS_AUTONOMOS corre el ciclo
+     "patrones" del codigo funcional) y ejecuta ordenes (ver demo.py en modo demo).
   Todos:
   6. Cada 5 s comprueba que el WiFi siga y reconecta si se cayo.
   7. El LED interno parpadea para indicar el estado.
@@ -46,17 +50,21 @@ import wifi
 # importan si el modulo conectado los usa (ver preparar_modulo).
 sensores = None
 figuras = None
+lampara = None
 
 
 def preparar_modulo():
     """Importa los modulos que tocan pines, solo los del modulo conectado."""
-    global sensores, figuras
+    global sensores, figuras, lampara
     if modulo.usa("ambiente") or modulo.usa("movimiento"):
         import sensores as _sensores
         sensores = _sensores
     if modulo.usa("figuras"):
         import figuras as _figuras
         figuras = _figuras
+    if modulo.usa("lampara"):
+        import lampara as _lampara
+        lampara = _lampara
 
 
 def iniciar():
@@ -85,7 +93,13 @@ def preparar_perifericos():
         try:
             reproductor = audio.iniciar()
             comandos.conectar_audio(reproductor)
-            print("Audio: habilitado (SIN PROBAR EN HARDWARE; pines propuestos)")
+            print("Audio: habilitado (pines del codigo funcional)")
+            if config.AUDIO_AL_INICIAR:
+                try:
+                    print("Audio: reproduciendo '%s' una vez" % config.AUDIO_SONIDO_INICIO)
+                    reproductor.iniciar(config.AUDIO_SONIDO_INICIO)
+                except ValueError as error:
+                    print("Audio: no se pudo reproducir (%s)" % error)
         except Exception as error:
             reproductor = None
             print("Audio: no se pudo iniciar (%s)" % type(error).__name__)
@@ -103,6 +117,12 @@ def ciclo_principal(envio=None, remota=None, reproductor=None):
     hay_ambiente = modulo.usa("ambiente")
     hay_movimiento = modulo.usa("movimiento")
     hay_figuras = modulo.usa("figuras")
+    # Efectos del codigo funcional: patrones de LED y lampara que respira.
+    # La lampara solo respira sin lampara remota, para no pisar sus ordenes.
+    respirar = (config.EFECTOS_AUTONOMOS and lampara is not None and remota is None
+                and not (config.MODO_DEMO and demo.ordenes()))
+    if config.EFECTOS_AUTONOMOS and hay_figuras:
+        figuras.iniciar_secuencia("patrones", config.LED_INTERVALO_MINIMO_S)
 
     while True:
         # --- Tarea 1: temperatura y humedad (solo modulo cuna) ---
@@ -126,6 +146,10 @@ def ciclo_principal(envio=None, remota=None, reproductor=None):
         # --- Tarea 3: avanzar la secuencia de los LED (solo modulo figuras) ---
         if hay_figuras:
             figuras.actualizar()
+
+        # --- Tarea 3b: lampara que respira (efecto autonomo, sin bloquear) ---
+        if respirar:
+            lampara.respirar()
 
         # --- Tarea 4: lampara remota (el actuador solo se toca en este hilo) ---
         if remota is not None:
@@ -165,7 +189,7 @@ def ejecutar():
         modulo.validar()
     except ValueError as error:
         # Con un modulo desconocido no se inicializa ningun periferico.
-        print("Modulo invalido (%s). Usa 'cuna' o 'figuras' en config.py." % error)
+        print("Modulo invalido (%s). Usa 'cuna', 'figuras' o 'completo' en config.py." % error)
         return
     try:
         preparar_modulo()
@@ -187,6 +211,10 @@ def ejecutar():
             reproductor.detener()
         if remota is not None:
             remota.actualizar()      # deja la lampara apagada
+        if figuras is not None:
+            figuras.todos(False)
+        if lampara is not None:
+            lampara.apagar()
         indicador.apagar()
 
 

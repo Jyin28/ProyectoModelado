@@ -1,12 +1,15 @@
 """audio.py - Reproductor local para MAX98357A (I2S) en la Pico 2 W.
 
-SIN PROBAR EN HARDWARE. No se mide ni se declara potencia ni validacion
-electrica del parlante de 8 ohm / 0,5 W.
+SIN PROBAR EN HARDWARE con esta estructura. No se mide ni se declara potencia
+ni validacion electrica del parlante de 8 ohm / 0,5 W.
 
-Catalogo fijo: un solo sonido, "tono_suave" (PCM 16 bits, mono, 16 kHz). Es un
-tono suave sintetizado en memoria (sin archivos WAV ni scripts): el periodo
-cabe en una tabla de 32 muestras y los bloques contienen periodos completos,
-por eso la fase es continua entre bloques. No es un audio pregrabado real.
+Catalogo fijo (PCM 16 bits, mono, 16 kHz):
+  - "tono_suave": tono sintetizado en memoria; el periodo cabe en una tabla de
+    32 muestras y los bloques contienen periodos completos, por eso la fase es
+    continua entre bloques.
+  - "prueba": el WAV de config.AUDIO_ARCHIVO (como el codigo funcional). Se lee
+    del archivo bloque a bloque dentro del callback y se atenua por software al
+    volumen configurado; el encabezado se valida (PCM, mono, 16 kHz, 16 bits).
 
 Como funciona (machine.I2S no bloqueante):
   - La salida I2S solo existe mientras suena: se crea en iniciar() y se libera
@@ -30,14 +33,16 @@ recortada a AUDIO_VOLUMEN_MAX_PCT.
 import math
 import struct
 import time
+from array import array
 
 INACTIVO = "inactivo"
 REPRODUCIENDO = "reproduciendo"
 DRENANDO = "drenando"
 ERROR = "error"
 
-# Catalogo fijo: id -> frecuencia del tono (Hz).
-CATALOGO = {"tono_suave": None}     # la frecuencia sale de config.AUDIO_FRECUENCIA_HZ
+# Catalogo fijo. "tono_suave" usa config.AUDIO_FRECUENCIA_HZ; "prueba" lee un WAV.
+CATALOGO = {"tono_suave": None, "prueba": None}
+SONIDO_ARCHIVO = "prueba"
 
 BLOQUE_MS = 50              # duracion de cada bloque
 BUFFER_BLOQUES = 4          # tamano del buffer interno del I2S, en bloques
@@ -74,10 +79,60 @@ def limitar_duracion(segundos, maximo_s):
     return min(segundos, maximo_s)
 
 
+def _leer_exacto(archivo, cantidad):
+    datos = archivo.read(cantidad)
+    if len(datos) != cantidad:
+        raise ValueError("audio_wav_invalido")
+    return datos
+
+
+def leer_encabezado_wav(archivo, tasa):
+    """Deja el archivo al inicio de los datos y devuelve su tamano en bytes.
+
+    Exige PCM sin compresion, mono, 16 bits y la tasa pedida. ValueError con
+    el codigo "audio_wav_invalido" si algo no cuadra.
+    """
+    cabecera = _leer_exacto(archivo, 12)
+    if cabecera[0:4] != b"RIFF" or cabecera[8:12] != b"WAVE":
+        raise ValueError("audio_wav_invalido")
+    formato = None
+    while True:
+        identificador = archivo.read(4)
+        if len(identificador) < 4:
+            raise ValueError("audio_wav_invalido")      # sin bloque de datos
+        tamano = struct.unpack("<I", _leer_exacto(archivo, 4))[0]
+        if identificador == b"fmt ":
+            if tamano < 16:
+                raise ValueError("audio_wav_invalido")
+            formato = struct.unpack("<HHIIHH", _leer_exacto(archivo, 16))
+            resto = tamano - 16 + (tamano % 2)
+            if resto:
+                archivo.seek(resto, 1)
+        elif identificador == b"data":
+            break
+        else:
+            archivo.seek(tamano + (tamano % 2), 1)
+    if formato is None:
+        raise ValueError("audio_wav_invalido")
+    codigo, canales, frecuencia, _, _, bits = formato
+    if codigo != 1 or canales != 1 or frecuencia != tasa or bits != 16:
+        raise ValueError("audio_wav_invalido")
+    return tamano - (tamano % 2)
+
+
 class ReproductorAudio:
-    def __init__(self, fabrica, cfg, reloj=None):
-        """fabrica(ibuf_bytes) -> objeto I2S (o con irq/write/deinit); cfg: config.py."""
+    def __init__(self, fabrica, cfg, reloj=None, abrir=None):
+        """fabrica(ibuf_bytes) -> objeto I2S (o con irq/write/deinit); cfg: config.py.
+
+        abrir(ruta) -> archivo binario; por defecto open(ruta, "rb") (inyectable en pruebas).
+        """
         self._fabrica = fabrica
+        self._abrir = abrir if abrir is not None else (lambda ruta: open(ruta, "rb"))
+        self._ruta_wav = getattr(cfg, "AUDIO_ARCHIVO", None)
+        self._archivo = None
+        self._restante = 0
+        self._wav_bufs = None
+        self._total_actual = 0
         self._reloj = reloj if reloj is not None else _reloj_pico
         self.tasa = cfg.AUDIO_TASA_HZ
         self.volumen_pct = limitar_volumen(cfg.AUDIO_VOLUMEN_PCT, cfg.AUDIO_VOLUMEN_MAX_PCT)
@@ -132,9 +187,15 @@ class ReproductorAudio:
     def _enviar(self):
         """Un unico write() en vuelo: el siguiente solo tras el callback."""
         i = self._enviados
-        if i == 0:
+        if self._archivo is not None:
+            buf = self._siguiente_wav(i)
+            if buf is None:                 # el archivo termino antes de lo anunciado
+                self._enviados = self._total_actual
+                self._fin_envio()
+                return
+        elif i == 0:
             buf = self._mv[0]
-        elif i == self._total - 1:
+        elif i == self._total_actual - 1:
             buf = self._mv[2]
         else:
             buf = self._mv[1]
@@ -143,6 +204,29 @@ class ReproductorAudio:
         self._t_envio = self._reloj()
         self._i2s.write(buf)            # no bloqueante; no se reescribe el descriptor
 
+    def _fin_envio(self):
+        """Ultimo bloque confirmado: falta que el DMA/buffer lo reproduzca."""
+        self._estado = DRENANDO
+        self._fin_drenaje = (self._reloj() + self._drenaje_ms) & (_PERIODO_TICKS - 1)
+
+    def _siguiente_wav(self, indice):
+        """Lee y atenua el siguiente bloque del WAV. None si no quedan datos."""
+        if self._restante <= 0:
+            return None
+        arreglo, vista = self._wav_bufs[indice % 2]
+        leidos = self._archivo.readinto(arreglo)
+        if not leidos:
+            return None
+        leidos = min(leidos - (leidos % 2), self._restante)
+        if leidos <= 0:
+            return None
+        self._restante -= leidos
+        muestras = leidos // 2
+        factor = self.volumen_pct
+        for k in range(muestras):
+            arreglo[k] = arreglo[k] * factor // 100
+        return vista if muestras == len(arreglo) else vista[:muestras]
+
     def _al_vaciar(self, origen):
         """Callback del I2S (el bloque ya se copio al buffer interno). Nunca lanza."""
         if (self._estado != REPRODUCIENDO or self._i2s is None
@@ -150,10 +234,8 @@ class ReproductorAudio:
             return                      # instancia cerrada o aviso tardio
         try:
             self._en_vuelo = None
-            if self._enviados >= self._total:
-                # Ultimo bloque confirmado: falta que el DMA/buffer lo reproduzca.
-                self._estado = DRENANDO
-                self._fin_drenaje = (self._reloj() + self._drenaje_ms) & (_PERIODO_TICKS - 1)
+            if self._enviados >= self._total_actual:
+                self._fin_envio()
             else:
                 self._enviar()
         except Exception as error:
@@ -161,7 +243,18 @@ class ReproductorAudio:
 
     # ---------------- control ----------------
 
+    def _cerrar_archivo(self):
+        archivo = self._archivo
+        self._archivo = None
+        self._restante = 0
+        if archivo is not None:
+            try:
+                archivo.close()
+            except Exception:
+                pass
+
     def _cerrar_i2s(self):
+        self._cerrar_archivo()
         i2s = self._i2s
         self._i2s = None
         self._en_vuelo = None
@@ -186,8 +279,14 @@ class ReproductorAudio:
             raise ValueError("audio_en_curso")
         if sonido not in CATALOGO:
             raise ValueError("audio_desconocido")
+        duracion = self.duracion_s
+        if sonido == SONIDO_ARCHIVO:
+            duracion = self._abrir_wav()
+        else:
+            self._total_actual = self._total
         try:
-            self._preparar()
+            if sonido != SONIDO_ARCHIVO:
+                self._preparar()
             self._i2s = self._fabrica(self.ibuf_bytes)
             self._enviados = 0
             self._en_vuelo = None
@@ -199,8 +298,37 @@ class ReproductorAudio:
         except Exception as error:      # OSError, ValueError, MemoryError, TypeError...
             self._fallar(type(error).__name__)
             raise ValueError("audio_i2s_error")
-        return {"sound": sonido, "duration_s": self.duracion_s,
+        return {"sound": sonido, "duration_s": duracion,
                 "volume_pct": self.volumen_pct}
+
+    def _abrir_wav(self):
+        """Abre y valida el WAV. Devuelve su duracion en segundos (ValueError con codigo)."""
+        if not self._ruta_wav:
+            raise ValueError("audio_archivo_no_configurado")
+        try:
+            archivo = self._abrir(self._ruta_wav)
+        except OSError:
+            raise ValueError("audio_archivo_no_encontrado")
+        try:
+            tamano = leer_encabezado_wav(archivo, self.tasa)
+            if tamano <= 0:
+                raise ValueError("audio_wav_invalido")
+        except Exception:
+            try:
+                archivo.close()
+            except Exception:
+                pass
+            raise
+        if self._wav_bufs is None:
+            nuevos = []
+            for _ in range(2):
+                arreglo = array("h", bytes(self.bloque_bytes))
+                nuevos.append((arreglo, memoryview(arreglo)))
+            self._wav_bufs = tuple(nuevos)
+        self._archivo = archivo
+        self._restante = tamano
+        self._total_actual = (tamano + self.bloque_bytes - 1) // self.bloque_bytes
+        return tamano / (2 * self.tasa)
 
     def detener(self):
         """Corta ya y libera el I2S. Es seguro llamarlo en cualquier estado."""

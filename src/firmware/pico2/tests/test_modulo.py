@@ -17,6 +17,7 @@ class ModuloTests(unittest.TestCase):
         esperado = {
             "cuna": {"ambiente", "movimiento", "lampara", "audio"},
             "figuras": {"figuras"},
+            "completo": {"ambiente", "movimiento", "lampara", "audio", "figuras"},
         }
         todos = set().union(*esperado.values())
         for nombre, propios in esperado.items():
@@ -26,13 +27,19 @@ class ModuloTests(unittest.TestCase):
                                  (nombre, periferico))
 
     def test_ningun_periferico_pertenece_a_dos_modulos(self):
+        # "completo" junta a propósito los de la cuna y las figuras.
         vistos = []
-        for lista in modulo.PERIFERICOS.values():
-            vistos.extend(lista)
+        for nombre, lista in modulo.PERIFERICOS.items():
+            if nombre != "completo":
+                vistos.extend(lista)
         self.assertEqual(len(vistos), len(set(vistos)))
 
-    def test_validar_acepta_los_dos_modulos(self):
-        for nombre in ("cuna", "figuras"):
+    def test_completo_es_la_union_de_cuna_y_figuras(self):
+        self.assertEqual(set(modulo.PERIFERICOS["completo"]),
+                         set(modulo.PERIFERICOS["cuna"]) | set(modulo.PERIFERICOS["figuras"]))
+
+    def test_validar_acepta_los_tres_modulos(self):
+        for nombre in ("cuna", "figuras", "completo"):
             self.assertEqual(modulo.validar(nombre), nombre)
 
     def test_validar_sin_argumento_usa_config(self):
@@ -89,6 +96,10 @@ class DemoPorModuloTests(unittest.TestCase):
                 if necesario is not None:
                     config.MODULO = nombre
                     self.assertTrue(modulo.usa(necesario), (nombre, orden["command"]))
+
+    def test_el_modulo_completo_no_tiene_demo(self):
+        config.MODULO = "completo"
+        self.assertEqual(self.demo.ordenes(), [])
 
     def test_modulo_invalido_no_tiene_demo(self):
         config.MODULO = "todo"

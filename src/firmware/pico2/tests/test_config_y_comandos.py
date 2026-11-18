@@ -31,8 +31,14 @@ class ConfigTests(unittest.TestCase):
     def test_modulo_por_defecto_es_valido(self):
         _ruta.modulo.validar(config.MODULO)
 
-    def test_hardware_apagado_por_defecto(self):
-        self.assertFalse(config.AUDIO_HABILITADO)
+    def test_pines_del_codigo_funcional(self):
+        self.assertEqual((config.PIN_AM2301, config.PIN_PIR, config.PIN_LAMPARA), (2, 3, 13))
+        self.assertEqual(config.PINES_LEDS, (6, 7, 8, 9, 10, 11))
+        self.assertEqual((config.PIN_I2S_BCLK, config.PIN_I2S_WS, config.PIN_I2S_DIN), (18, 19, 20))
+
+    def test_modulo_por_defecto_es_completo(self):
+        self.assertEqual(config.MODULO, "completo")
+        self.assertEqual(config.INTERVALO_AMBIENTE_S, 15)
 
     def test_no_queda_configuracion_del_colchon(self):
         restos = [n for n in dir(config)

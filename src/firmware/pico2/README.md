@@ -9,8 +9,9 @@ Elige cuál está conectado con `MODULO` en `config.py` (ver abajo).
 
 | `MODULO` | Qué hay conectado | Qué atiende el firmware | Credenciales (`secrets.py`) | Comandos que acepta |
 |---|---|---|---|---|
-| `"cuna"` (por defecto) | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento (solo consola), lámpara remota y audio local | WiFi, `INGESTA_URL`, `DEVICE_TOKEN` y `LAMPARA_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
+| `"cuna"` | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento (solo consola), lámpara remota y audio local | WiFi, `INGESTA_URL`, `DEVICE_TOKEN` y `LAMPARA_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
 | `"figuras"` | los seis LED | secuencias de LED | solo WiFi | `led_*`, `get_status` |
+| `"completo"` (por defecto) | todo lo anterior a la vez, como el código funcional | todo lo de `cuna` y `figuras` | las de `cuna` | `lamp_set`, `led_*`, `audio_*`, `get_status` |
 
 Para cambiar de módulo: edita `MODULO` en `common/utilities/config.py`, copia el
 archivo a la Pico y reinicia. Solo se inicializa lo del módulo elegido, así un
@@ -19,8 +20,33 @@ orden de otro módulo se rechaza con el error `comando_de_otro_modulo:<modulo>`,
 y un valor de `MODULO` desconocido detiene el arranque antes de tocar nada.
 `get_status` responde siempre e incluye el campo `modulo`.
 
-`AUDIO_HABILITADO` sigue siendo el "cableado confirmado" y está en `False`:
-además de elegir el módulo, hay que habilitar el periférico.
+`AUDIO_HABILITADO` es el "cableado confirmado" del audio. Está en `True` porque
+los pines vienen del código funcional (`src/firmware/codigo funcional/cuna.py`),
+pero sigue **sin probarse en hardware con esta estructura**.
+
+### Mapa de pines (tomado del código funcional)
+
+| Función | GPIO |
+|---|---|
+| AM2301 (temperatura y humedad) | GP2 |
+| PIR HC-SR501 (pull-down) | GP3 |
+| Seis LED de las figuras | GP6, GP7, GP8, GP9, GP10, GP11 |
+| Lámpara regulable (PWM 1 kHz, MOSFET) | GP13 |
+| MAX98357A: BCLK / WS / DIN (I2S0) | GP18 / GP19 / GP20 |
+
+### Efectos autónomos (`EFECTOS_AUTONOMOS = True`)
+
+Como el código funcional, sin esperar órdenes de la web:
+
+- Los LED corren el ciclo `patrones`: secuencial, parpadeo de todos, alternado,
+  rebote y encendido progresivo (`efectos.pasos_patrones`). También se puede pedir
+  con `led_sequence` y `name = "patrones"`; en ese caso `step_s` se ignora.
+- La lámpara sube y baja su brillo (onda triangular de 2,6 s, `lampara.respirar`).
+  No lo hace si hay lámpara remota ni si la demo del módulo tiene órdenes de lámpara.
+- El PIR espera 60 s a estabilizarse y 2 s seguidos en reposo antes de informar
+  movimiento (`pir.py`). Lo imprime en consola; no se envía a Supabase.
+- El ambiente se lee cada 15 s.
+- Al arrancar se reproduce una vez el WAV `prueba` (`AUDIO_AL_INICIAR`).
 
 > El colchón (HX711, celda de carga, buzzer y botón) ya no forma parte de este
 > firmware; lo atiende la Pico de `src/firmware/pico`.
@@ -38,7 +64,9 @@ firmware/
 ├─ figuras-led/
 │  └─ figuras.py                seis LED: uno, todos o secuencias
 └─ common/
-   ├─ sensors/sensores.py       AM2301 (temperatura/humedad) y PIR
+   ├─ sensors/
+   │  ├─ sensores.py            AM2301 (temperatura/humedad) y PIR
+   │  └─ pir.py                 estabilización del PIR (lógica pura, se prueba en CPython)
    ├─ communication/
    │  ├─ wifi.py                conectar, comprobar y reconectar el WiFi
    │  ├─ ambiente.py            sincronizar el reloj y publicar lecturas por HTTPS
@@ -49,6 +77,7 @@ firmware/
       ├─ config.py              pines y tiempos (lo que más editas)
       ├─ comandos.py            ejecuta una orden y devuelve su confirmación
       ├─ demo.py                simula órdenes de la web (por módulo); MODO_DEMO = False lo apaga
+      ├─ efectos.py             patrones de LED y onda de la lámpara (lógica pura)
       ├─ modulo.py              qué periféricos y comandos corresponden a MODULO
       ├─ secrets.example.py     plantilla de WiFi y Supabase (se copia a secrets.py)
       └─ indicador.py           parpadeo del LED interno de la Pico
@@ -59,10 +88,10 @@ simplemente como `import config` o `import wifi`.
 
 ## Línea de ejecución de main.py
 
-0. Valida `MODULO`; si no es `cuna` ni `figuras`, avisa y termina sin tocar ningún pin.
+0. Valida `MODULO`; si no es `cuna`, `figuras` ni `completo`, avisa y termina sin tocar ningún pin.
 1. `iniciar()`: parpadea 3 veces, conecta al WiFi (1 parpadeo largo = ok, 5 rápidos = falló).
 2. `ciclo_principal()` repite cada 100 ms, según el módulo:
-   - `cuna`: cada 10 s lee temperatura y humedad, las imprime y entrega la lectura al envío;
+   - `cuna`: cada 15 s lee temperatura y humedad, las imprime y entrega la lectura al envío;
      avisa si el PIR detecta movimiento; atiende la lámpara remota y, si está habilitado, el audio
    - `figuras`: `figuras.actualizar()` mueve la secuencia de LED si hay una activa
    - modo demo: `demo.actualizar()` ejecuta la siguiente orden de ejemplo del módulo
@@ -185,54 +214,60 @@ respuestas HTTP y el flujo del cliente con RPC simulados. No se suben a la Pico.
 
 ## Audio local
 
-El audio no se habilita solo: `AUDIO_HABILITADO` está en `False` en `config.py`.
-Con el audio apagado el firmware se comporta como antes. Los pines son una
-**propuesta pendiente de confirmación y cableado**; ninguno usa GP23/24/25/29 y
-`config.py` es el único lugar donde se definen:
+`AUDIO_HABILITADO = True` en `config.py` (ponlo en `False` para apagarlo). Los
+pines (GP18 / GP19 / GP20) son los del código funcional; ninguno usa
+GP23/24/25/29 y `config.py` es el único lugar donde se definen. WS debe ser BCLK + 1
+(lo exige la RP2).
 
-| Función | GPIO propuesto |
+Catálogo de dos sonidos, ambos PCM 16 bits, mono, 16 kHz:
+
+| Sonido | Qué es |
 |---|---|
-| I²S BCLK / WS / DIN (MAX98357A) | GP6 / GP7 / GP8 (WS = BCLK + 1, exigido por la RP2) |
+| `tono_suave` | tono de 500 Hz sintetizado en memoria |
+| `prueba` | el WAV de `AUDIO_ARCHIVO` (`prueba.wav`), leído del archivo bloque a bloque |
+
+**Copia `prueba.wav` a la Pico** (a la raíz, como en el código funcional; hay una
+copia en `src/firmware/codigo funcional/`). Se valida el encabezado: PCM sin
+compresión, mono, 16 kHz y 16 bits; si falla, `audio_play` responde
+`audio_wav_invalido`, `audio_archivo_no_encontrado` o `audio_archivo_no_configurado`
+y el resto del firmware sigue. El volumen es `AUDIO_VOLUMEN_PCT = 30` (el
+`VOLUMEN = 0.3` del código funcional), con tope `AUDIO_VOLUMEN_MAX_PCT = 30`.
 
 No se ha comprobado la revisión eléctrica, ni la potencia sobre el parlante de
-8 Ω / 0,5 W, ni el funcionamiento de I²S en la Pico 2 W. Antes de habilitar
-nada, confirma el cableado con el equipo de circuitos.
+8 Ω / 0,5 W, ni el comportamiento del I²S no bloqueante leyendo el WAV desde la
+memoria flash de la Pico.
 
 Comandos locales (se ejecutan con `comandos.ejecutar({"command": ..., "params": {...}})`;
 la carpeta `tests/` es solo de escritorio y no se sube a la Pico):
 
 | Comando | Parámetros | Efecto |
 |---|---|---|
-| `audio_play` / `audio_stop` / `audio_status` | `sound` | audio local |
+| `audio_play` / `audio_stop` / `audio_status` | `sound` (`tono_suave` o `prueba`) | audio local |
 
 `get_status` incluye `modulo`, `lampara`, `secuencia` y `audio` (`None` si está
 deshabilitado). Los nombres de comandos son provisionales.
 
 ### Audio local MAX98357A
 
-Catálogo fijo con un solo sonido, `tono_suave`: un tono de 500 Hz generado en
-memoria (PCM 16 bits, mono, 16 kHz), sin archivos WAV ni dependencias. **No es
-un audio pregrabado real**: sirve para probar la ruta I²S; el catálogo real
-queda pendiente. La salida I²S solo existe mientras suena y está apagada por
-defecto.
+La salida I²S solo existe mientras suena. El tono se sintetiza en memoria; el
+WAV se lee del archivo, se atenúa por software y se escribe bloque a bloque.
 
 - `machine.I2S` TX no bloqueante (MicroPython 1.28 RP2): `.irq(callback)` y un
   único `write(buf)` en vuelo hasta que el callback confirma la copia al buffer
   interno; bloques reutilizables (50 ms) con rampa de subida y bajada. Tras
   confirmar el último bloque se espera el drenaje físico (buffer + DMA +
   margen) antes de liberar; hay watchdog si el callback no llega.
-- Catálogo pregrabado: pendiente (hoy solo `tono_suave` sintetizado).
-- Atenuación digital: `AUDIO_VOLUMEN_PCT = 10` % de la amplitud máxima,
-  recortada a `AUDIO_VOLUMEN_MAX_PCT = 25`. Duración 5 s, tope 30 s.
-  Estos topes son prudentes pero **no están medidos** contra el parlante.
+- Atenuación digital: `AUDIO_VOLUMEN_PCT = 30` % de la amplitud máxima,
+  recortada a `AUDIO_VOLUMEN_MAX_PCT = 30`. El tono dura 5 s (tope 30 s); el WAV
+  dura lo que mida el archivo. El volumen **no está medido** contra el parlante.
 - Un fallo de I²S deja el estado `error` y no detiene sensores ni luces.
 - Falta comprobar en hardware cómo se comporta `write()` no bloqueante y el
   momento exacto del callback y el margen de drenaje.
 
 ### Prueba del audio en el módulo de la cuna (pendiente de ejecutar)
 
-1. Con `MODULO = "cuna"`, confirma cableado y revisión eléctrica. Habilita
-   `AUDIO_HABILITADO` y comprueba que sube sin errores.
+1. Con `MODULO = "completo"` (o `"cuna"`), confirma cableado y revisión eléctrica.
+   Comprueba que sube sin errores y que `prueba.wav` está en la Pico.
 2. Con el hotspot encendido, verifica: lectura de ambiente y «HTTP 201», PIR,
    lámpara y `audio_play`.
 3. Durante `audio_play`, comprueba que el muestreo de ambiente y las órdenes de
@@ -257,4 +292,11 @@ la prueba en hardware.
 `demo.py` (luego, la web) crea una orden -> `comandos.ejecutar(orden)` ->
 llama a `lampara` o `figuras` (solo si el comando es del `MODULO` conectado) ->
 devuelve `{"ok": True/False, ...}`.
-Pines nuevos (provisionales): lámpara GP13; LED GP18, 19, 20, 21, 22 y 26.
+Pines: ver el mapa de pines arriba (lámpara GP13; LED GP6 a GP11; I²S GP18 a GP20).
+
+## Limitaciones conocidas
+
+- Si el WiFi no conecta y no hay envío a Supabase, `main.py` intenta reconectar cada
+  5 s y cada intento bloquea el ciclo hasta 15 s: los LED y la lámpara se
+  congelan durante ese tiempo. Con el envío activo la reconexión la hace el
+  hilo de red y no bloquea.
