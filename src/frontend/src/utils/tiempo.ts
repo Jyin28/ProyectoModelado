@@ -51,3 +51,24 @@ export function estaDesactualizado(
   const antiguedadMs = Math.max(0, ahora.getTime() - ms)
   return antiguedadMs > umbralSegundos * 1000
 }
+
+const formateadorFechaCivil = new Intl.DateTimeFormat('es-CR', {
+  timeZone: 'UTC',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+/**
+ * Fecha civil AAAA-MM-DD (por ejemplo, una fecha de nacimiento). No es un
+ * instante: no se convierte de zona horaria para no correr el día.
+ */
+export function formatearFechaCivil(fecha: string): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha)
+  if (!partes) return TEXTO_FECHA_INVALIDA
+  const ms = Date.UTC(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]))
+  const fechaUtc = new Date(ms)
+  // Rechaza fechas inexistentes como 2026-02-31.
+  if (fechaUtc.toISOString().slice(0, 10) !== fecha) return TEXTO_FECHA_INVALIDA
+  return formateadorFechaCivil.format(fechaUtc)
+}

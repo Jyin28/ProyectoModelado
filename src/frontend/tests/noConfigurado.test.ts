@@ -19,7 +19,18 @@ describe('serviciosNoConfigurados', () => {
       s.lampara.obtenerUltimaOrdenLampara('d'),
       s.auth.obtenerSesion(),
       s.auth.iniciarSesion('a@b.c', 'x'),
+      s.auth.registrarse('a@b.c', 'x'),
       s.auth.cerrarSesion(),
+      s.cuentas.listarBebes(),
+      s.cuentas.crearBebe('Luna', null),
+      s.cuentas.listarDispositivos(),
+      s.cuentas.reclamarDispositivo('d', 'c'),
+      s.cuentas.asignarDispositivo('d', null),
+      s.cuentas.listarDuenos('d'),
+      s.cuentas.invitarDueno('d', 'a@b.c'),
+      s.cuentas.retirarDueno('d', 'u'),
+      s.cuentas.listarInvitaciones(),
+      s.cuentas.aceptarInvitacion('i'),
     ])
     for (const r of resultados) {
       expect(r).toEqual({ ok: false, error: 'Backend no configurado' })

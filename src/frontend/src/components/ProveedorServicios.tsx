@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { ContextoServicios } from '../hooks/useServicios.ts'
 import { crearServicioAuth } from '../services/auth.ts'
+import { crearServicioCuentas } from '../services/cuentas.ts'
 import { crearServicioLampara } from '../services/lampara.ts'
 import { crearServicioLecturas } from '../services/lecturas.ts'
 import { serviciosNoConfigurados } from '../services/noConfigurado.ts'
@@ -28,6 +29,7 @@ function ProveedorServicios({
         ? {
             ...serviciosNoConfigurados,
             auth: crearServicioAuth(supabase),
+            cuentas: crearServicioCuentas(supabase),
             lecturas: crearServicioLecturas(supabase),
             lampara: crearServicioLampara(supabase),
           }

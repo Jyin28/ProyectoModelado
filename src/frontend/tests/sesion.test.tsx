@@ -40,6 +40,10 @@ function crearAuth(opciones: Opciones = {}) {
         ((): Promise<Resultado<Sesion>> =>
           Promise.resolve({ ok: true, datos: SESION })),
     ),
+    registrarse: vi.fn(
+      (): Promise<Resultado<{ requiereConfirmacion: boolean }>> =>
+        Promise.resolve({ ok: true, datos: { requiereConfirmacion: true } }),
+    ),
     cerrarSesion: vi.fn(
       opciones.alCerrar ??
         ((): Promise<Resultado<null>> =>

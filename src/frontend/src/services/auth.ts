@@ -19,6 +19,21 @@ function fallo<T>(error: string): Resultado<T> {
   return { ok: false, error }
 }
 
+export const MENSAJE_CAMPOS_VACIOS = 'Escribe el correo y la contraseña.'
+export const MENSAJE_CORREO_EN_USO = 'Ese correo ya está registrado.'
+export const MENSAJE_CONTRASENA_DEBIL =
+  'La contraseña no cumple los requisitos mínimos de seguridad.'
+export const MENSAJE_REGISTRO = 'No se pudo crear la cuenta. Intenta de nuevo.'
+
+function mensajeRegistro(error: unknown): string {
+  const e = error as { code?: string } | null
+  if (e?.code === 'user_already_exists' || e?.code === 'email_exists') {
+    return MENSAJE_CORREO_EN_USO
+  }
+  if (e?.code === 'weak_password') return MENSAJE_CONTRASENA_DEBIL
+  return MENSAJE_REGISTRO
+}
+
 function esCredencialInvalida(error: unknown): boolean {
   const e = error as { code?: string; status?: number } | null
   return e?.code === 'invalid_credentials' || e?.status === 400
@@ -51,6 +66,30 @@ export function crearServicioAuth(cliente: ClienteAuth): ServicioAuth {
         return sesion ? { ok: true, datos: sesion } : fallo(MENSAJE_INICIO)
       } catch {
         return fallo(MENSAJE_INICIO)
+      }
+    },
+
+    async registrarse(correo, contrasena) {
+      const correoLimpio = correo.trim()
+      // Campos vacíos no llegan al servidor y no crean cuenta (CA-01.4).
+      if (correoLimpio === '' || contrasena === '') {
+        return fallo(MENSAJE_CAMPOS_VACIOS)
+      }
+      try {
+        const { data, error } = await cliente.auth.signUp({
+          email: correoLimpio,
+          password: contrasena,
+        })
+        if (error) return fallo(mensajeRegistro(error))
+        // Con confirmación por correo, Supabase responde sin error y con
+        // `identities` vacío cuando el correo ya existe (no revela la cuenta).
+        if (data.user && data.user.identities?.length === 0) {
+          return fallo(MENSAJE_CORREO_EN_USO)
+        }
+        if (!data.user) return fallo(MENSAJE_REGISTRO)
+        return { ok: true, datos: { requiereConfirmacion: !data.session } }
+      } catch {
+        return fallo(MENSAJE_REGISTRO)
       }
     },
 

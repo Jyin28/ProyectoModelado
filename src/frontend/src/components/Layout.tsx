@@ -7,6 +7,7 @@ import './Layout.css'
 
 const ENLACES = [
   { ruta: '/cuna', texto: 'Cuna' },
+  { ruta: '/bebes', texto: 'Bebés y dispositivos' },
   { ruta: '/colchon', texto: 'Colchón' },
   { ruta: '/figuras', texto: 'Figuras LED' },
   { ruta: '/historial', texto: 'Historial' },

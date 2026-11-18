@@ -11,6 +11,12 @@ import type {
   Modulo,
   OrdenComando,
 } from '../models/contrato.ts'
+import type {
+  Bebe,
+  Dueno,
+  InvitacionDueno,
+  ModuloAsociado,
+} from '../models/cuentas.ts'
 import type { OrdenLampara } from '../models/lampara.ts'
 
 export type Resultado<T> =
@@ -73,11 +79,49 @@ export interface ServicioLampara {
   ): Promise<Resultado<OrdenLampara | null>>
 }
 
+export type ResultadoRegistro = {
+  /** true si la cuenta existe pero falta confirmar el correo antes de iniciar sesión. */
+  requiereConfirmacion: boolean
+}
+
 export interface ServicioAuth {
   obtenerSesion(): Promise<Resultado<Sesion | null>>
   iniciarSesion(correo: string, contrasena: string): Promise<Resultado<Sesion>>
+  /** Crea la cuenta. Un correo repetido o campos vacíos no crean una segunda cuenta. */
+  registrarse(
+    correo: string,
+    contrasena: string,
+  ): Promise<Resultado<ResultadoRegistro>>
   cerrarSesion(): Promise<Resultado<null>>
   suscribirCambiosSesion(alCambiar: (sesion: Sesion | null) => void): Cancelar
+}
+
+export interface ServicioCuentas {
+  listarBebes(): Promise<Resultado<Bebe[]>>
+  /** Nombre obligatorio; fecha de nacimiento (AAAA-MM-DD) opcional. */
+  crearBebe(
+    nombre: string,
+    fechaNacimiento: string | null,
+  ): Promise<Resultado<Bebe>>
+  listarDispositivos(): Promise<Resultado<ModuloAsociado[]>>
+  /** Asocia un módulo con su código de reclamo de un solo uso. */
+  reclamarDispositivo(
+    dispositivoId: string,
+    codigo: string,
+  ): Promise<Resultado<null>>
+  /** Reasigna desde ahora; `null` cierra la asignación. No borra historial. */
+  asignarDispositivo(
+    dispositivoId: string,
+    bebeId: string | null,
+  ): Promise<Resultado<null>>
+  listarDuenos(dispositivoId: string): Promise<Resultado<Dueno[]>>
+  invitarDueno(dispositivoId: string, correo: string): Promise<Resultado<null>>
+  retirarDueno(
+    dispositivoId: string,
+    usuarioId: string,
+  ): Promise<Resultado<null>>
+  listarInvitaciones(): Promise<Resultado<InvitacionDueno[]>>
+  aceptarInvitacion(invitacionId: string): Promise<Resultado<null>>
 }
 
 export type Servicios = {
@@ -85,4 +129,5 @@ export type Servicios = {
   comandos: ServicioComandos
   lampara: ServicioLampara
   auth: ServicioAuth
+  cuentas: ServicioCuentas
 }

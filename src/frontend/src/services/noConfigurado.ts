@@ -33,7 +33,20 @@ export const serviciosNoConfigurados: Servicios = {
   auth: {
     obtenerSesion: () => fallo(),
     iniciarSesion: () => fallo(),
+    registrarse: () => fallo(),
     cerrarSesion: () => fallo(),
     suscribirCambiosSesion: () => () => {},
+  },
+  cuentas: {
+    listarBebes: () => fallo(),
+    crearBebe: () => fallo(),
+    listarDispositivos: () => fallo(),
+    reclamarDispositivo: () => fallo(),
+    asignarDispositivo: () => fallo(),
+    listarDuenos: () => fallo(),
+    invitarDueno: () => fallo(),
+    retirarDueno: () => fallo(),
+    listarInvitaciones: () => fallo(),
+    aceptarInvitacion: () => fallo(),
   },
 }
