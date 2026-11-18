@@ -22,7 +22,8 @@ set search_path = ''
 as $$
 declare
     v_usuario uuid := (select auth.uid());
-    v_tope constant integer := 5000;
+    -- Una noche de 12 h con ambiente cada 10 s son unos 8700 registros.
+    v_tope constant integer := 20000;
     v_ahora timestamptz := clock_timestamp();
     v_registros jsonb;
     v_total integer;

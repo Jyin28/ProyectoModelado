@@ -180,9 +180,9 @@ test('Historial por bebé: separación, reasignación, intervalos, tomas y fotos
        select gen_random_uuid(), $1, $2, 'masivo', 'masivo',
               '2026-10-05T00:00:00Z'::timestamptz + (n || ' seconds')::interval,
               '2026-10-05T00:00:00Z'::timestamptz + (n || ' seconds')::interval
-       from generate_series(1, 5200) as n`, [HAB, luna])
+       from generate_series(1, 20100) as n`, [HAB, luna])
     const r = await pedir(ana, luna, '2026-10-05T00:00:00Z', '2026-10-06T00:00:00Z')
-    assert.equal(r.registros.length, 5000)
+    assert.equal(r.registros.length, 20000)
     assert.equal(r.truncado, true)
   })
 
