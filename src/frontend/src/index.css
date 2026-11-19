@@ -1,15 +1,22 @@
 :root {
-  --text: #2a2a33;
-  --text-muted: #5b5b66;
-  --bg: #fff;
-  --border: #dcdce2;
-  --card-bg: #f7f7fa;
-  --accent: #6b3bff;
+  /* Marfil, superficies claras, texto oscuro y verde petróleo como acento. */
+  --text: #26302f;
+  --text-muted: #55605e;
+  --bg: #fbf7ee;
+  --border: #ded6c4;
+  --card-bg: #fffdf8;
+  --accent: #0e6b6b;
+  --accent-strong: #0a5252;
+  --accent-contraste: #ffffff;
+  --accent-suave: #dff0ee;
   --notice-bg: #fff3cd;
   --notice-border: #f0d78c;
   --dot: #a0a0ab;
-  --ok: #2e8540;
-  --error: #c62828;
+  --ok: #2e7d4a;
+  /* Solo para estados que requieren atención, siempre con texto. */
+  --error: #b3261e;
+  --sombra: 0 6px 20px rgb(38 48 47 / 14%);
+  --radio: 12px;
 
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -20,17 +27,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #e7e7ec;
-    --text-muted: #b2b2bd;
-    --bg: #15151a;
-    --border: #33343c;
-    --card-bg: #1f2027;
-    --accent: #a98bff;
+    --text: #e8ecea;
+    --text-muted: #b5c0bd;
+    --bg: #131817;
+    --border: #35403e;
+    --card-bg: #1c2322;
+    --accent: #5dc4bf;
+    --accent-strong: #86d7d2;
+    --accent-contraste: #0b1d1c;
+    --accent-suave: #1f3a38;
     --notice-bg: #3a3419;
     --notice-border: #5c531f;
     --dot: #55565f;
     --ok: #5fbf77;
-    --error: #ef6b6b;
+    --error: #ef7b73;
+    --sombra: 0 6px 20px rgb(0 0 0 / 40%);
   }
 }
 
@@ -40,6 +51,7 @@
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 h1,
@@ -47,4 +59,98 @@ h2 {
   color: var(--text);
   font-weight: 600;
   margin: 0;
+}
+
+/* Botones: una acción principal por panel (.boton-primario) y el resto secundarios.
+   Estados: reposo, foco, pulsado, enviando (aria-busy) y deshabilitado. */
+button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--accent-suave);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role='slider']:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button[aria-busy='true'] {
+  cursor: progress;
+}
+
+.boton-primario {
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.boton-primario:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.boton-primario:active:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+input,
+select {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+[role='alert'] {
+  color: var(--error);
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,96 @@
+.escena {
+  position: relative;
+  width: 100%;
+  /* La escena es el contenedor de consulta: el ancho decide qué centros se usan. */
+  container-type: inline-size;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.escena-imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+
+.escena-punto {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--accent-strong);
+  background: rgb(255 253 248 / 94%);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgb(255 253 248 / 55%), var(--sombra);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+/* Pantallas estrechas: la cuna se desplaza por el barrote izquierdo. */
+@container (max-width: 499px) {
+  .escena-punto {
+    left: var(--xc, var(--x));
+    top: var(--yc, var(--y));
+  }
+}
+
+.escena-punto:hover,
+.escena-punto[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-contraste);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.escena-punto:active {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+
+.escena-punto:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.escena-etiqueta {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--accent-contraste);
+  background: var(--text);
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.escena-punto:hover .escena-etiqueta,
+.escena-punto:focus-visible .escena-etiqueta {
+  opacity: 1;
+}
+
+/* Con espacio suficiente, el nombre de cada objeto está siempre a la vista. */
+@container (min-width: 700px) {
+  .escena-etiqueta {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escena-punto,
+  .escena-etiqueta {
+    transition: none;
+  }
+}

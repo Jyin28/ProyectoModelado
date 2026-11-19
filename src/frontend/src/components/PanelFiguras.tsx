@@ -3,12 +3,15 @@ import { useOrdenModulo } from '../hooks/useOrdenModulo.ts'
 import {
   COMANDOS_FIGURAS,
   LED_INDICE_MAX,
+  LED_INTERVALO_MAX_S,
+  LED_INTERVALO_MIN_S,
   NOMBRE_SECUENCIA,
   SECUENCIAS_LED,
   type SecuenciaLed,
 } from '../models/ordenes.ts'
 import { MENSAJE_INTERVALO, parsearIntervalo } from '../utils/ordenes.ts'
 import EstadoOrdenModulo from './EstadoOrdenModulo.tsx'
+import PerillaIntervalo from './PerillaIntervalo.tsx'
 import PanelHorarios from './PanelHorarios.tsx'
 
 type Props = { dispositivoId: string }
@@ -31,6 +34,11 @@ function PanelFiguras({ dispositivoId }: Props) {
   if (!activo) return null
 
   const secuencia = estado?.estado.secuencia
+  const intervaloElegido = parsearIntervalo(intervalo)
+  const solicitada =
+    orden?.command === 'led_sequence' && typeof orden.params.step_s === 'number'
+      ? `Última secuencia solicitada: ${NOMBRE_SECUENCIA[orden.params.name as SecuenciaLed] ?? String(orden.params.name)}, cada ${orden.params.step_s} s.`
+      : null
   const confirmada =
     estado === null || estado.actualizado_en === null
       ? 'Sin confirmación de la Pico.'
@@ -109,18 +117,37 @@ function PanelFiguras({ dispositivoId }: Props) {
             aria-invalid={invalido}
           />
         </label>
-        <button type="submit" disabled={enviando}>
+        <PerillaIntervalo
+          etiqueta="Perilla del intervalo"
+          valor={intervaloElegido}
+          minimo={LED_INTERVALO_MIN_S}
+          maximo={LED_INTERVALO_MAX_S}
+          paso={1}
+          unidad="s"
+          alCambiar={(n) => {
+            // Girar la perilla solo cambia el borrador: la orden sale con «Iniciar secuencia».
+            setIntervalo(String(n))
+            setInvalido(false)
+          }}
+        />
+        <p className="panel-modulo-elegido">
+          {intervaloElegido === null
+            ? 'Intervalo elegido: sin elegir'
+            : `Intervalo elegido: ${intervaloElegido} s`}
+        </p>
+        <button type="submit" className="boton-primario" disabled={enviando} aria-busy={enviando}>
           {enviando ? 'Enviando…' : 'Iniciar secuencia'}
         </button>
         {invalido && <p role="alert">{MENSAJE_INTERVALO}</p>}
       </form>
       <p role="status">{confirmada}</p>
+      {solicitada && <p>{solicitada} La Pico confirma la secuencia, pero no informa el intervalo que aplicó.</p>}
       <EstadoOrdenModulo orden={orden} cargando={cargando} fallo={fallo} errorEnvio={errorEnvio} />
       <PanelHorarios
         dispositivoId={dispositivoId}
         tipo="figuras_encender"
         titulo="Encender figuras"
-        descripcion="A cada hora se pide encender todas las figuras."
+        descripcion="A cada hora se pide encender las figuras con la última secuencia que la Pico confirmó (con su intervalo en segundos); si no hay ninguna, se encienden todas fijas."
       />
       <PanelHorarios
         dispositivoId={dispositivoId}

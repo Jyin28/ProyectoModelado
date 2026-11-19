@@ -1,74 +1,73 @@
-import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { useServicios } from '../hooks/useServicios.ts'
-import { useSesion } from '../hooks/useSesion.ts'
 import BannerConexion from './BannerConexion.tsx'
+import Icono from './Icono.tsx'
+import type { NombreIcono } from '../utils/iconos.ts'
+import { destinoDeRuta, type DestinoId } from '../utils/navegacion.ts'
 import './Layout.css'
 
-const ENLACES = [
-  { ruta: '/cuna', texto: 'Cuna' },
-  { ruta: '/bebes', texto: 'Bebés y dispositivos' },
-  { ruta: '/colchon', texto: 'Colchón' },
-  { ruta: '/colchon-pico', texto: 'Colchón (Pico)' },
-  { ruta: '/figuras', texto: 'Figuras LED' },
-  { ruta: '/habitacion', texto: 'Habitación' },
-  { ruta: '/alimentacion', texto: 'Alimentación' },
-  { ruta: '/historial', texto: 'Historial' },
+type Destino = { id: DestinoId; ruta: string; texto: string; icono: NombreIcono }
+
+const DESTINOS: Destino[] = [
+  { id: 'productos', ruta: '/productos', texto: 'Productos', icono: 'productos' },
+  { id: 'historial', ruta: '/historial', texto: 'Historial', icono: 'historial' },
+  { id: 'usuario', ruta: '/usuario', texto: 'Usuario', icono: 'usuario' },
 ]
+
+const RAICES = ['/productos', '/historial', '/usuario']
+
+/** Pantalla a la que lleva «Atrás» cuando no hay historial previo en esta pestaña. */
+function rutaPadre(ruta: string): string {
+  if (ruta === '/habitacion/camara') return '/habitacion'
+  if (ruta === '/bebes') return '/usuario'
+  return '/productos'
+}
 
 function Layout() {
   const { backendConfigurado } = useServicios()
-  const { estado, cerrarSesion } = useSesion()
-  const [cerrando, setCerrando] = useState(false)
-  const [errorCierre, setErrorCierre] = useState<string | null>(null)
+  const ubicacion = useLocation()
+  const navegar = useNavigate()
+  const activo = destinoDeRuta(ubicacion.pathname)
+  const esRaiz = RAICES.includes(ubicacion.pathname)
 
-  async function alCerrarSesion() {
-    if (cerrando) return
-    setCerrando(true)
-    setErrorCierre(null)
-    const r = await cerrarSesion()
-    // Si salió bien, la ruta protegida redirige y este componente se desmonta.
-    if (!r.ok) {
-      setErrorCierre(r.error)
-      setCerrando(false)
-    }
+  function atras() {
+    // «default» marca la primera entrada de esta pestaña: no hay a dónde volver con el historial.
+    if (ubicacion.key !== 'default') navegar(-1)
+    else navegar(rutaPadre(ubicacion.pathname), { replace: true })
   }
 
   return (
     <div className="layout">
       <header className="layout-header">
-        <Link to="/cuna" className="layout-marca">
+        <Link to="/productos" className="layout-marca">
           Cuna Inteligente IoT
         </Link>
         <nav className="layout-nav" aria-label="Principal">
           <ul>
-            {ENLACES.map(({ ruta, texto }) => (
-              <li key={ruta}>
-                <NavLink
-                  to={ruta}
-                  className={({ isActive }) =>
-                    isActive ? 'nav-enlace nav-enlace-activo' : 'nav-enlace'
-                  }
+            {DESTINOS.map((d) => (
+              <li key={d.id}>
+                <Link
+                  to={d.ruta}
+                  className={d.id === activo ? 'nav-enlace nav-enlace-activo' : 'nav-enlace'}
+                  aria-current={d.id === activo ? 'page' : undefined}
                 >
-                  {texto}
-                </NavLink>
+                  <Icono nombre={d.icono} tamano={24} />
+                  <span>{d.texto}</span>
+                </Link>
               </li>
             ))}
           </ul>
         </nav>
-        {estado.tipo === 'autenticado' && (
-          <div className="layout-sesion">
-            <span className="layout-sesion-correo">{estado.sesion.correo}</span>
-            <button type="button" onClick={alCerrarSesion} disabled={cerrando}>
-              Cerrar sesión
-            </button>
-          </div>
-        )}
       </header>
-      {errorCierre && <p role="alert">{errorCierre}</p>}
 
       {/* Con backend configurado, cada pantalla informa su propia conexión. */}
       {!backendConfigurado && <BannerConexion estado="sin-configurar" />}
+
+      {!esRaiz && (
+        <button type="button" className="layout-atras" onClick={atras}>
+          <span aria-hidden="true">←</span> Atrás
+        </button>
+      )}
 
       <main className="layout-contenido">
         <Outlet />

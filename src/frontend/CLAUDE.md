@@ -46,7 +46,7 @@ Reglas permanentes de la web. Complementan el `CLAUDE.md` de la raíz.
 ## Controles de hardware
 - Nada de estado optimista: un control muestra el estado nuevo solo con una confirmación real (`ok: true`).
 - Todo control muestra con texto los estados de su contrato (p. ej. `lampara.md`: solicitud registrada, enviada, confirmada por la Pico, error, sin respuesta).
-- Las lecturas de ambiente se consultan cada 10 s (sin Realtime) y se marcan como desactualizadas a los 30 s.
+- Las lecturas de ambiente y movimiento se consultan cada 2 s (sin Realtime) y se marcan como desactualizadas a los 30 s.
 
 ## Forma de trabajar
 - No hacer commit ni push: mostrar el diff y proponer el mensaje (Conventional Commits, alcance `web`).

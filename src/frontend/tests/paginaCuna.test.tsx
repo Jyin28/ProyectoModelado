@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App.tsx'
 import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
+import { INTERVALO_CONSULTA_MS } from '../src/hooks/useUltimaAmbiental.ts'
 import type { LecturaAmbiental } from '../src/models/contrato.ts'
 import { DISPOSITIVO_AMBIENTE_POR_DEFECTO } from '../src/services/configuracion.ts'
 import { serviciosNoConfigurados } from '../src/services/noConfigurado.ts'
@@ -164,15 +165,16 @@ describe('Cuna: última lectura', () => {
 })
 
 describe('Cuna: polling', () => {
-  it('consulta al montar y cada 10 s', async () => {
+  it('consulta al montar y cada 2 s', async () => {
+    expect(INTERVALO_CONSULTA_MS).toBe(2_000)
     const { obtenerUltimaAmbiental } = montar([ok(lectura())])
     await avanzar()
     expect(obtenerUltimaAmbiental).toHaveBeenCalledTimes(1)
-    await avanzar(9_000)
+    await avanzar(INTERVALO_CONSULTA_MS - 1_000)
     expect(obtenerUltimaAmbiental).toHaveBeenCalledTimes(1)
     await avanzar(1_000)
     expect(obtenerUltimaAmbiental).toHaveBeenCalledTimes(2)
-    await avanzar(10_000)
+    await avanzar(INTERVALO_CONSULTA_MS)
     expect(obtenerUltimaAmbiental).toHaveBeenCalledTimes(3)
   })
 

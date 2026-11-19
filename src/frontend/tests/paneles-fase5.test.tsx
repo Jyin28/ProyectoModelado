@@ -17,9 +17,20 @@ import type {
 import { MENSAJE_INTERVALO } from '../src/utils/ordenes.ts'
 import { MENSAJE_SIN_MICROFONO } from '../src/hooks/useVoz.ts'
 import type { Capturador } from '../src/utils/voz.ts'
+import { abrirFuncion } from './ayudas.ts'
 
 const ok = <T,>(datos: T): Promise<Resultado<T>> => Promise.resolve({ ok: true, datos })
 const falla = <T,>(error: string): Promise<Resultado<T>> => Promise.resolve({ ok: false, error })
+
+const figuras = async () => {
+  await abrirFuncion('Secuencias e intervalo')
+  return screen.findByRole('region', { name: 'Control de las figuras' })
+}
+
+async function regionDe(funcion: string, region: string) {
+  await abrirFuncion(funcion)
+  return screen.findByRole('region', { name: region })
+}
 
 const SIN_ESTADO: EstadoModulo = { estado: {}, actualizado_en: null }
 
@@ -86,7 +97,7 @@ describe('Figuras LED', () => {
     vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
     const solicitar = vi.fn(() => ok(orden()))
     abrir('/figuras', { ordenes: { solicitar } })
-    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    const panel = await figuras()
     expect(await within(panel).findByText('Sin confirmación de la Pico.')).toBeInTheDocument()
     fireEvent.click(within(panel).getByRole('button', { name: 'Encender todos' }))
     await waitFor(() =>
@@ -104,7 +115,7 @@ describe('Figuras LED', () => {
           ok({ estado: { secuencia: 'chase' }, actualizado_en: '2999-11-18T10:00:00Z' }),
       },
     })
-    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    const panel = await figuras()
     expect(
       await within(panel).findByText(/Secuencia activa confirmada por la Pico: Persecución/),
     ).toBeInTheDocument()
@@ -114,7 +125,7 @@ describe('Figuras LED', () => {
     vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
     const solicitar = vi.fn(() => ok(orden()))
     abrir('/figuras', { ordenes: { solicitar } })
-    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    const panel = await figuras()
     const campo = within(panel).getByLabelText(/Intervalo entre pasos/)
     for (const malo of ['', '1', '1.9', '3601', 'abc']) {
       fireEvent.change(campo, { target: { value: malo } })
@@ -135,10 +146,59 @@ describe('Figuras LED', () => {
     )
   })
 
+  it('la perilla del intervalo solo cambia el borrador; la orden sale con «Iniciar secuencia»', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden({ command: 'led_sequence', params: { name: 'chase', step_s: 5 } })))
+    abrir('/figuras', { ordenes: { solicitar } })
+    const panel = await figuras()
+    const perilla = within(panel).getByRole('slider', { name: 'Perilla del intervalo' })
+    expect(within(panel).getByText('Intervalo elegido: sin elegir')).toBeInTheDocument()
+
+    fireEvent.keyDown(perilla, { key: 'Home' }) // 2 s
+    fireEvent.keyDown(perilla, { key: 'ArrowUp' })
+    fireEvent.keyDown(perilla, { key: 'ArrowUp' })
+    fireEvent.keyDown(perilla, { key: 'ArrowUp' }) // 5 s
+    expect(perilla).toHaveAttribute('aria-valuenow', '5')
+    expect(perilla).toHaveAttribute('aria-valuetext', '5 s')
+    expect(within(panel).getByLabelText(/Intervalo entre pasos/)).toHaveValue('5')
+    fireEvent.click(within(panel).getByRole('button', { name: 'Aumentar 1 s' }))
+    fireEvent.click(within(panel).getByRole('button', { name: 'Disminuir 1 s' }))
+    expect(within(panel).getByText('Intervalo elegido: 5 s')).toBeInTheDocument()
+    expect(solicitar).not.toHaveBeenCalled()
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Iniciar secuencia' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-figuras-01', {
+        command: 'led_sequence',
+        params: { name: 'chase', step_s: 5 },
+      }),
+    )
+    expect(solicitar).toHaveBeenCalledTimes(1)
+    // Lo solicitado se muestra, pero la Pico no informa el intervalo: nada aparece como confirmado.
+    expect(await within(panel).findByText(/Última secuencia solicitada: Persecución.*cada 5 s/)).toBeInTheDocument()
+    expect(within(panel).getByText('Sin confirmación de la Pico.')).toBeInTheDocument()
+  })
+
+  it('arrastrar la perilla no envía órdenes', async () => {
+    vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
+    const solicitar = vi.fn(() => ok(orden()))
+    abrir('/figuras', { ordenes: { solicitar } })
+    const panel = await figuras()
+    const perilla = within(panel).getByRole('slider', { name: 'Perilla del intervalo' })
+    perilla.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 100, height: 100, right: 100, bottom: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+    fireEvent.pointerDown(perilla, { pointerId: 1, clientX: 50, clientY: 0 })
+    fireEvent.pointerMove(perilla, { pointerId: 1, clientX: 100, clientY: 50 })
+    fireEvent.pointerUp(perilla, { pointerId: 1, clientX: 100, clientY: 50 })
+    expect(Number(perilla.getAttribute('aria-valuenow'))).toBeGreaterThan(2)
+    expect(within(panel).getByLabelText(/Intervalo entre pasos/)).not.toHaveValue('')
+    expect(solicitar).not.toHaveBeenCalled()
+  })
+
   it('un fallo al solicitar se muestra y no inventa una orden', async () => {
     vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
     abrir('/figuras', { ordenes: { solicitar: () => falla('No tienes permiso para esta operación.') } })
-    const panel = await screen.findByRole('region', { name: 'Control de las figuras' })
+    const panel = await figuras()
     fireEvent.click(await within(panel).findByRole('button', { name: 'Apagar todos' }))
     expect(await within(panel).findByRole('alert')).toHaveTextContent('No tienes permiso')
     expect(within(panel).getByText('No hay órdenes registradas.')).toBeInTheDocument()
@@ -157,6 +217,7 @@ describe('Figuras LED', () => {
     abrir('/figuras', {
       horarios: { listar: (_d, tipo) => ok(tipo === 'figuras_encender' ? ['20:00'] : []), reemplazar },
     })
+    await abrirFuncion('Secuencias e intervalo')
     const grupo = await screen.findByRole('group', { name: 'Encender figuras' })
     expect(await within(grupo).findByText('20:00')).toBeInTheDocument()
     fireEvent.change(within(grupo).getByLabelText(/Nueva hora/), { target: { value: '06:30' } })
@@ -174,7 +235,7 @@ describe('Monitoreo de movimiento y audio', () => {
     vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
     const solicitar = vi.fn(() => ok(orden({ device_id: 'cuna-movimiento-01', command: 'motion_set' })))
     abrir('/cuna', { ordenes: { solicitar } })
-    const panel = await screen.findByRole('region', { name: 'Monitoreo de movimiento' })
+    const panel = await regionDe('Sensor de movimiento', 'Monitoreo de movimiento')
     expect(await within(panel).findByText('Sin confirmación de la Pico.')).toBeInTheDocument()
     fireEvent.click(within(panel).getByRole('button', { name: 'Activar monitoreo' }))
     await waitFor(() =>
@@ -194,7 +255,7 @@ describe('Monitoreo de movimiento y audio', () => {
           ok({ estado: { monitoreo: true }, actualizado_en: '2999-11-18T14:15:00Z' }),
       },
     })
-    const panel = await screen.findByRole('region', { name: 'Monitoreo de movimiento' })
+    const panel = await regionDe('Sensor de movimiento', 'Monitoreo de movimiento')
     expect(await within(panel).findByText(/Monitoreo activado, confirmado por la Pico el .*08:15:00/)).toBeInTheDocument()
   })
 
@@ -202,14 +263,23 @@ describe('Monitoreo de movimiento y audio', () => {
     vi.stubEnv('VITE_ORDENES_HABILITADAS', 'true')
     const solicitar = vi.fn(() => ok(orden({ device_id: 'cuna-audio-01', command: 'audio_play' })))
     abrir('/cuna', { ordenes: { solicitar } })
-    const panel = await screen.findByRole('region', { name: 'Audio de la cuna' })
+    const panel = await regionDe('Parlante', 'Audio de la cuna')
     const opciones = within(within(panel).getByLabelText('Sonido')).getAllByRole('option')
-    expect(opciones.map((o) => o.textContent)).toEqual(['Tono suave'])
+    expect(opciones.map((o) => o.textContent)).toEqual(['Tono suave', 'Sonido de prueba (WAV)'])
     fireEvent.click(within(panel).getByRole('button', { name: 'Reproducir' }))
     await waitFor(() =>
       expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', {
         command: 'audio_play',
         params: { sound: 'tono_suave' },
+      }),
+    )
+    // Elegir otro sonido del catálogo pide ese sonido (CA-11.4).
+    fireEvent.change(within(panel).getByLabelText('Sonido'), { target: { value: 'prueba' } })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Reproducir' }))
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', {
+        command: 'audio_play',
+        params: { sound: 'prueba' },
       }),
     )
     fireEvent.click(within(panel).getByRole('button', { name: 'Detener audio' }))
@@ -232,7 +302,7 @@ describe('Límites de ambiente', () => {
 
   it('sin límites guardados lo dice y no inventa valores (CA-10.1)', async () => {
     abrir('/cuna')
-    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     expect(await within(panel).findByText('Todavía no hay límites guardados.')).toBeInTheDocument()
     expect(campo(panel, /Temperatura mínima/)).toHaveValue('')
   })
@@ -240,7 +310,7 @@ describe('Límites de ambiente', () => {
   it('guarda límites válidos y muestra los guardados (CA-10.1, CA-10.3)', async () => {
     const guardar = vi.fn((_d: string, l: LimitesAmbiente) => ok(l))
     abrir('/cuna', { limites: { guardar } })
-    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     await within(panel).findByText('Todavía no hay límites guardados.')
     fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '20' } })
     fireEvent.change(campo(panel, /Temperatura máxima/), { target: { value: '26,5' } })
@@ -266,7 +336,7 @@ describe('Límites de ambiente', () => {
         obtener: () => ok({ temp_min: 20, temp_max: 26, hum_min: 40, hum_max: 60 }),
       },
     })
-    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     await waitFor(() => expect(campo(panel, /Temperatura mínima/)).toHaveValue('20'))
     fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '30' } })
     fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
@@ -280,7 +350,7 @@ describe('Límites de ambiente', () => {
     abrir('/cuna', {
       limites: { guardar: () => falla('Los límites no son válidos: el mínimo debe ser menor que el máximo y estar en rango.') },
     })
-    const panel = await screen.findByRole('region', { name: 'Límites de ambiente' })
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     await within(panel).findByText('Todavía no hay límites guardados.')
     for (const [n, v] of [[/Temperatura mínima/, '10'], [/Temperatura máxima/, '20'], [/Humedad mínima/, '30'], [/Humedad máxima/, '70']] as const) {
       fireEvent.change(campo(panel, n), { target: { value: v } })
@@ -328,7 +398,7 @@ describe('Voz', () => {
     vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
     const abrirCanal = vi.fn(() => falla<SesionVoz>('No se pudo abrir el canal de voz.'))
     abrir('/cuna', { voz: { abrir: abrirCanal } })
-    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    const panel = await regionDe('Parlante', 'Hablar a la cuna')
     fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
     expect(await within(panel).findByRole('alert')).toHaveTextContent('No se pudo abrir el canal de voz.')
     expect(abrirCanal).toHaveBeenCalledWith('cuna-01')
@@ -338,7 +408,7 @@ describe('Voz', () => {
   it('el texto aclara que la voz no se guarda ni se probó con hardware real', async () => {
     vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
     abrir('/cuna')
-    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    const panel = await regionDe('Parlante', 'Hablar a la cuna')
     expect(within(panel).getByText(/no se graba ni se guarda/)).toBeInTheDocument()
     expect(within(panel).getByText(/Todavía no se probó/)).toBeInTheDocument()
   })
@@ -347,7 +417,7 @@ describe('Voz', () => {
     const sesion = sesionFalsa()
     const rechazo: Capturador = () => Promise.reject(new Error('denegado'))
     await conCaptura(rechazo, { voz: { abrir: () => ok<SesionVoz>(sesion) } })
-    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    const panel = await regionDe('Parlante', 'Hablar a la cuna')
     fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
     expect(await within(panel).findByRole('alert')).toHaveTextContent(MENSAJE_SIN_MICROFONO)
     expect(sesion.cerrar).toHaveBeenCalled()
@@ -358,7 +428,7 @@ describe('Voz', () => {
     const falso = capturadorFalso()
     const registrarActividad = vi.fn(() => ok(null))
     await conCaptura(falso.capturador, { voz: { abrir: () => ok<SesionVoz>(sesion), registrarActividad } })
-    const panel = await screen.findByRole('region', { name: 'Hablar a la cuna' })
+    const panel = await regionDe('Parlante', 'Hablar a la cuna')
     fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
     expect(await within(panel).findByRole('button', { name: 'Dejar de hablar' })).toBeInTheDocument()
     expect(registrarActividad).toHaveBeenCalledWith('cuna-audio-01', 'inicio')

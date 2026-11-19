@@ -61,3 +61,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.panel-lampara-deslizador {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  accent-color: var(--accent);
+  background: none;
+  border: 0;
+}
+
+.panel-lampara .panel-lampara-elegido {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--text);
+}

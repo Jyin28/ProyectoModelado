@@ -1,0 +1,70 @@
+.perilla {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin: 8px 0;
+}
+
+.perilla-dial {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 3px solid var(--accent);
+  box-shadow: inset 0 0 0 6px var(--accent-suave);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.perilla-dial:active {
+  cursor: grabbing;
+}
+
+.perilla-aguja {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  transition: transform 0.08s linear;
+}
+
+.perilla-aguja::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: calc(50% - 3px);
+  width: 6px;
+  height: 34px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.perilla-valor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perilla-valor button {
+  width: 44px;
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+.perilla-valor output {
+  min-width: 6ch;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perilla-aguja {
+    transition: none;
+  }
+}

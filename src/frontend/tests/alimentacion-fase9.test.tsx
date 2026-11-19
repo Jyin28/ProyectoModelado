@@ -6,6 +6,7 @@ import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
 import type { Toma } from '../src/models/alimentacion.ts'
 import type { EstadoModulo, OrdenModulo } from '../src/models/ordenes.ts'
 import { serviciosNoConfigurados } from '../src/services/noConfigurado.ts'
+import { abrirFuncion } from './ayudas.ts'
 import type {
   Resultado,
   ServicioAlimentacion,
@@ -64,7 +65,7 @@ type Parciales = {
   horarios?: Partial<ServicioHorarios>
 }
 
-function abrir(p: Parciales = {}, backend = true) {
+function abrir(p: Parciales = {}, backend = true, ruta = '/alimentacion') {
   const servicios: Servicios = {
     ...serviciosNoConfigurados,
     alimentacion: {
@@ -96,14 +97,17 @@ function abrir(p: Parciales = {}, backend = true) {
   }
   return render(
     <ProveedorServicios configurado={backend} servicios={servicios}>
-      <MemoryRouter initialEntries={['/alimentacion']}>
+      <MemoryRouter initialEntries={[ruta]}>
         <App />
       </MemoryRouter>
     </ProveedorServicios>,
   )
 }
 
-const panelToma = () => screen.findByRole('region', { name: 'Toma' })
+const panelToma = async () => {
+  await abrirFuncion('Toma')
+  return screen.findByRole('region', { name: 'Toma' })
+}
 const abierta = (p: HTMLElement) => within(p).findByRole('group', { name: 'Toma abierta' })
 const clic = async (p: HTMLElement, nombre: string | RegExp) =>
   fireEvent.click(await within(p).findByRole('button', { name: nombre }))
@@ -119,8 +123,8 @@ describe('Alimentación: pantalla', () => {
     }
   })
 
-  it('el menú principal enlaza la alimentación', async () => {
-    abrir()
+  it('Productos enlaza la alimentación', async () => {
+    abrir({}, true, '/productos')
     expect(await screen.findByRole('link', { name: 'Alimentación' })).toHaveAttribute('href', '/alimentacion')
   })
 
@@ -400,7 +404,10 @@ describe('Alimentación: correcciones', () => {
 })
 
 describe('Alimentación: temperatura, límites y recordatorios', () => {
-  const temperatura = () => screen.findByRole('region', { name: 'Temperatura del biberón' })
+  const temperatura = async () => {
+    await abrirFuncion('Temperatura del biberón')
+    return screen.findByRole('region', { name: 'Temperatura del biberón' })
+  }
 
   it('sin lectura dice «Sin datos»', async () => {
     abrir()
@@ -431,7 +438,10 @@ describe('Alimentación: temperatura, límites y recordatorios', () => {
     expect(await within(p).findByRole('alert')).toHaveTextContent('No se pudo consultar la temperatura del biberón.')
   })
 
-  const limites = () => screen.findByRole('region', { name: 'Límites de temperatura del biberón' })
+  const limites = async () => {
+    await abrirFuncion('Temperatura del biberón')
+    return screen.findByRole('region', { name: 'Límites de temperatura del biberón' })
+  }
 
   it('sin límites guardados lo dice y no inventa valores', async () => {
     abrir()
@@ -473,6 +483,7 @@ describe('Alimentación: temperatura, límites y recordatorios', () => {
   it('los recordatorios usan el horario recordatorio_alimentacion y dicen que no mandan órdenes', async () => {
     const listar = vi.fn(() => ok(['08:00', '11:00']))
     abrir({ horarios: { listar } })
+    await abrirFuncion('Recordatorios')
     const grupo = await screen.findByRole('group', { name: 'Recordatorios de alimentación' })
     expect(await within(grupo).findByText('08:00')).toBeInTheDocument()
     expect(within(grupo).getByText('11:00')).toBeInTheDocument()

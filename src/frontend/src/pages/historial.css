@@ -108,3 +108,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+.formulario-historial-modo {
+  display: flex;
+  gap: 8px;
+}
+
+.formulario-historial-modo button[aria-pressed='true'] {
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.formulario-historial-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pagina .formulario-historial-resumen {
+  margin: 0;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent-suave);
+  border-radius: 10px;
+}
+
+.pagina .formulario-historial-resumen[data-valido='false'] {
+  color: var(--error);
+  background: var(--bg);
+  border: 1px solid var(--error);
+}

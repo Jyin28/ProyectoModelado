@@ -1,0 +1,51 @@
+.producto {
+  display: grid;
+  gap: 16px;
+}
+
+.producto-principal {
+  min-width: 0;
+}
+
+.producto-funciones {
+  margin-top: 16px;
+}
+
+.producto-funciones h2 {
+  font-size: 1.1rem;
+}
+
+.producto-funciones ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.producto-funciones button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  color: var(--accent-strong);
+}
+
+.producto-funciones button span:last-child {
+  color: var(--text);
+}
+
+.producto-funciones button[aria-expanded='true'] {
+  background: var(--accent-suave);
+  border-color: var(--accent);
+}
+
+@media (min-width: 900px) {
+  .producto-con-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+    align-items: start;
+  }
+}

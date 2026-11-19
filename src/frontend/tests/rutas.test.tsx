@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from '../src/App.tsx'
@@ -21,6 +21,8 @@ function tituloPrincipal() {
 describe('rutas', () => {
   it.each([
     ['/login', 'Inicio de sesión'],
+    ['/productos', 'Productos'],
+    ['/usuario', 'Usuario'],
     ['/cuna', 'Cuna'],
     ['/bebes', 'Bebés y dispositivos'],
     ['/registro', 'Crear cuenta'],
@@ -33,11 +35,11 @@ describe('rutas', () => {
     expect(tituloPrincipal()).toHaveTextContent(titulo)
   })
 
-  it('/ redirige a /cuna', () => {
+  it('/ redirige a /productos', () => {
     renderizarEn('/')
-    expect(tituloPrincipal()).toHaveTextContent('Cuna')
+    expect(tituloPrincipal()).toHaveTextContent('Productos')
     const nav = screen.getByRole('navigation', { name: 'Principal' })
-    expect(within(nav).getByRole('link', { name: 'Cuna' })).toHaveAttribute(
+    expect(within(nav).getByRole('link', { name: 'Productos' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -61,30 +63,42 @@ describe('rutas', () => {
 })
 
 describe('Layout', () => {
-  it('muestra la marca y los ocho enlaces de navegación', () => {
-    renderizarEn('/cuna')
+  it('muestra la marca y los tres destinos rotulados', () => {
+    renderizarEn('/productos')
     expect(screen.getByText('Cuna Inteligente IoT')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Principal' })
     const enlaces = within(nav).getAllByRole('link')
-    expect(enlaces.map((enlace) => enlace.textContent)).toEqual([
-      'Cuna',
-      'Bebés y dispositivos',
-      'Colchón',
-      'Colchón (Pico)',
-      'Figuras LED',
-      'Habitación',
-      'Alimentación',
-      'Historial',
-    ])
+    expect(enlaces.map((enlace) => enlace.textContent)).toEqual(['Productos', 'Historial', 'Usuario'])
+    expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual(['/productos', '/historial', '/usuario'])
   })
 
-  it('resalta solo el enlace de la página activa', () => {
-    renderizarEn('/figuras')
+  it.each([
+    ['/productos', 'Productos'],
+    ['/cuna', 'Productos'],
+    ['/colchon', 'Productos'],
+    ['/colchon-pico', 'Productos'],
+    ['/figuras', 'Productos'],
+    ['/habitacion', 'Productos'],
+    ['/habitacion/camara', 'Productos'],
+    ['/alimentacion', 'Productos'],
+    ['/historial', 'Historial'],
+    ['/usuario', 'Usuario'],
+    ['/bebes', 'Usuario'],
+  ])('en %s resalta solo «%s»', (ruta, destino) => {
+    renderizarEn(ruta)
     const nav = screen.getByRole('navigation', { name: 'Principal' })
     const activos = within(nav)
       .getAllByRole('link')
       .filter((enlace) => enlace.getAttribute('aria-current') === 'page')
-    expect(activos.map((enlace) => enlace.textContent)).toEqual(['Figuras LED'])
+    expect(activos.map((enlace) => enlace.textContent)).toEqual([destino])
+  })
+
+  it('un módulo ofrece «Atrás»; las pantallas raíz no', () => {
+    renderizarEn('/cuna')
+    expect(screen.getByRole('button', { name: /Atrás/ })).toBeInTheDocument()
+    cleanup()
+    renderizarEn('/productos')
+    expect(screen.queryByRole('button', { name: /Atrás/ })).not.toBeInTheDocument()
   })
 })
 
@@ -135,15 +149,12 @@ describe('páginas sin datos', () => {
     expect(screen.getAllByRole('status').filter((el) => el.hasAttribute('data-estado'))).toHaveLength(1)
   })
 
-  it('Figuras muestra seis indicadores neutros "Sin datos"', () => {
+  it('Figuras no inventa estados: avisa que no hay datos ni indicadores de LED', () => {
     renderizarEn('/figuras')
-    const lista = screen.getByRole('list', {
-      name: 'Indicadores de figuras LED',
-    })
-    const figuras = within(lista).getAllByRole('listitem')
-    expect(figuras).toHaveLength(6)
-    for (const figura of figuras) {
-      expect(figura).toHaveTextContent('Sin datos')
-    }
+    expect(screen.getByText('Todavía no hay datos recibidos del dispositivo.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Indicadores de figuras LED' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/aún no está implementado/)).not.toBeInTheDocument()
+    // Sin las órdenes remotas habilitadas, dice qué falta en vez de aparentar un control.
+    expect(screen.getByText(/necesita las órdenes remotas habilitadas/)).toBeInTheDocument()
   })
 })

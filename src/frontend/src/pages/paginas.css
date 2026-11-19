@@ -31,3 +31,100 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.panel-horarios {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.panel-horarios h3 {
+  font-size: 1.1rem;
+}
+
+.panel-horarios ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-horarios li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-horarios-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Paneles de órdenes: bloques separados, controles con espacio suficiente. */
+.panel-modulo {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.panel-modulo h2 {
+  font-size: 1.2rem;
+}
+
+.panel-modulo label {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.panel-modulo [role='group'],
+.panel-modulo form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.panel-modulo form > label,
+.panel-modulo form > .perilla,
+.panel-modulo form > p {
+  flex-basis: 100%;
+}
+
+.pagina .panel-modulo .panel-modulo-elegido {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.estado-orden dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+}
+
+.estado-orden dt {
+  color: var(--text-muted);
+}
+
+.estado-orden dd {
+  margin: 0;
+}
+
+@media (max-width: 400px) {
+  .estado-orden dl {
+    grid-template-columns: 1fr;
+  }
+}

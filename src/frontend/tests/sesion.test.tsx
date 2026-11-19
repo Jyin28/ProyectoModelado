@@ -120,22 +120,22 @@ describe('protección de rutas', () => {
     expect(auth.iniciarSesion).toHaveBeenCalledWith(SESION.correo, CLAVE)
   })
 
-  it('un inicio directo en /login lleva a /cuna', async () => {
+  it('un inicio directo en /login lleva a /productos', async () => {
     const { servicios } = crearAuth()
     renderizar('/login', servicios)
     await iniciarSesionEnFormulario()
-    await waitFor(() => expect(rutaActual()).toBe('/cuna'))
+    await waitFor(() => expect(rutaActual()).toBe('/productos'))
   })
 
-  it('con sesión restaurada, /login lleva a Cuna', async () => {
+  it('con sesión restaurada, /login lleva a Productos', async () => {
     const { servicios } = crearAuth({
       inicial: Promise.resolve({ ok: true, datos: SESION }),
     })
     renderizar('/login', servicios)
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Cuna' }),
+      await screen.findByRole('heading', { level: 1, name: 'Productos' }),
     ).toBeInTheDocument()
-    expect(rutaActual()).toBe('/cuna')
+    expect(rutaActual()).toBe('/productos')
   })
 
   it('con sesión restaurada conserva la ruta interna pedida', async () => {
@@ -144,7 +144,7 @@ describe('protección de rutas', () => {
     })
     renderizar('/colchon', servicios)
     expect(await titulo()).toHaveTextContent('Colchón')
-    expect(screen.getByText(SESION.correo)).toBeInTheDocument()
+    expect(rutaActual()).toBe('/colchon')
   })
 
   it('si falla la verificación pide login con un mensaje genérico', async () => {
@@ -189,7 +189,7 @@ describe('inicio de sesión', () => {
         </MemoryRouter>
       </ProveedorServicios>,
     )
-    await waitFor(() => expect(rutaActual()).toBe('/cuna'))
+    await waitFor(() => expect(rutaActual()).toBe('/productos'))
   })
 })
 
@@ -198,8 +198,9 @@ describe('cierre de sesión', () => {
     const { servicios, auth } = crearAuth({
       inicial: Promise.resolve({ ok: true, datos: SESION }),
     })
-    renderizar('/cuna', servicios)
+    renderizar('/usuario', servicios)
     await titulo()
+    expect(screen.getByText(SESION.correo)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     await waitFor(() => expect(rutaActual()).toBe('/login'))
     expect(auth.cerrarSesion).toHaveBeenCalledTimes(1)
@@ -213,13 +214,13 @@ describe('cierre de sesión', () => {
       alCerrar: () =>
         Promise.resolve({ ok: false, error: 'No se pudo cerrar la sesión. Intenta de nuevo.' }),
     })
-    renderizar('/cuna', servicios)
+    renderizar('/usuario', servicios)
     await titulo()
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'No se pudo cerrar la sesión.',
     )
-    expect(rutaActual()).toBe('/cuna')
+    expect(rutaActual()).toBe('/usuario')
   })
 
   it('un cierre de sesión notificado por Auth también protege las rutas', async () => {

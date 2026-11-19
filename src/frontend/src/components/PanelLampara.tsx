@@ -8,6 +8,10 @@ import './PanelLampara.css'
 
 export const MENSAJE_NIVEL_INVALIDO = 'Ingrese un número entero de 0 a 100.'
 
+// El contrato de la lámpara solo tiene nivel (lampara.md): apagada es 0 y encendida es el máximo.
+const NIVEL_APAGADA = 0
+const NIVEL_ENCENDIDA = 100
+
 const ETIQUETA: Record<EstadoVisibleLampara, string> = {
   pendiente: 'Solicitud registrada',
   enviada: 'Orden enviada',
@@ -51,11 +55,39 @@ function PanelLampara({ dispositivoId }: Props) {
   }
 
   const estado = orden ? estadoVisible(orden, ahora) : null
+  const nivelElegido = parsearNivel(texto)
 
   return (
     <section className="panel-lampara" aria-labelledby="titulo-lampara">
       <h2 id="titulo-lampara">Lámpara</h2>
-      <form onSubmit={alEnviar} noValidate>
+      <div className="panel-lampara-fila" role="group" aria-label="Encendido">
+        <button type="button" disabled={enviando} onClick={() => void solicitar(NIVEL_ENCENDIDA)}>
+          Encender
+        </button>
+        <button type="button" disabled={enviando} onClick={() => void solicitar(NIVEL_APAGADA)}>
+          Apagar
+        </button>
+      </div>
+      <form onSubmit={alEnviar} noValidate aria-label="Brillo de la lámpara">
+        <label htmlFor="brillo-lampara">Brillo</label>
+        <input
+          id="brillo-lampara"
+          className="panel-lampara-deslizador"
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={nivelElegido ?? 0}
+          onChange={(e) => {
+            // Arrastrar solo cambia el borrador local: ninguna orden sale hasta «Aplicar brillo».
+            setTexto(e.target.value)
+            setInvalido(false)
+          }}
+          aria-valuetext={nivelElegido === null ? 'Sin elegir' : `${nivelElegido} %`}
+        />
+        <p className="panel-lampara-elegido">
+          {nivelElegido === null ? 'Valor elegido: sin elegir' : `Valor elegido: ${nivelElegido} %`}
+        </p>
         <label htmlFor="nivel-lampara">Nivel pedido (0 a 100)</label>
         <div className="panel-lampara-fila">
           <input
@@ -70,8 +102,8 @@ function PanelLampara({ dispositivoId }: Props) {
             aria-invalid={invalido}
             aria-describedby={invalido ? 'error-nivel-lampara' : undefined}
           />
-          <button type="submit" disabled={enviando}>
-            {enviando ? 'Enviando…' : 'Solicitar nivel'}
+          <button type="submit" className="boton-primario" disabled={enviando} aria-busy={enviando}>
+            {enviando ? 'Enviando…' : 'Aplicar brillo'}
           </button>
         </div>
         {invalido && (

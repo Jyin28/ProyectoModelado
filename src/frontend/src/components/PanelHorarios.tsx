@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useServicios } from '../hooks/useServicios.ts'
 import { useSesion } from '../hooks/useSesion.ts'
 import { horaValida } from '../utils/ordenes.ts'
+import SelectorHora from './SelectorHora.tsx'
 
 type Props = {
   dispositivoId: string
@@ -100,16 +101,21 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
           ))}
         </ul>
       )}
-      <label>
-        Nueva hora para {titulo}
-        <input type="time" value={nueva} onChange={(e) => setNueva(e.target.value)} />
-      </label>
-      <button type="button" onClick={agregar}>
-        Agregar hora a {titulo}
-      </button>
-      <button type="button" onClick={guardar} disabled={guardando || sinCambios}>
-        {guardando ? 'Guardando…' : `Guardar horarios de ${titulo}`}
-      </button>
+      <SelectorHora etiqueta={`Nueva hora para ${titulo}`} valor={nueva} alCambiar={setNueva} />
+      <div className="panel-horarios-acciones">
+        <button type="button" onClick={agregar}>
+          Agregar hora a {titulo}
+        </button>
+        <button
+          type="button"
+          className="boton-primario"
+          onClick={guardar}
+          disabled={guardando || sinCambios}
+          aria-busy={guardando}
+        >
+          {guardando ? 'Guardando…' : `Guardar horarios de ${titulo}`}
+        </button>
+      </div>
       {error && <p role="alert">{error}</p>}
     </div>
   )

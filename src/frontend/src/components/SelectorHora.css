@@ -1,0 +1,59 @@
+.selector-hora {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.selector-hora label {
+  font-size: 0.95rem;
+}
+
+.selector-hora-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.selector-hora-fila input {
+  min-width: 9rem;
+}
+
+.pagina .selector-hora .selector-hora-elegida {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.selector-hora-rejilla {
+  display: grid;
+  gap: 6px;
+}
+
+.selector-hora-horas {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.selector-hora-minutos {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.selector-hora-rejilla button {
+  min-width: 44px;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.selector-hora-rejilla button[aria-pressed='true'] {
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.pagina .selector-hora .selector-hora-ayuda {
+  margin: 0;
+  font-size: 0.85rem;
+}

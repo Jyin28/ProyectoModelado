@@ -1,0 +1,90 @@
+/* En celular la escena ocupa todo el ancho de la pantalla para que los botones no se toquen. */
+.pagina-productos {
+  /* Rompe el relleno de 16 px del diseño: la escena mide el ancho completo de la pantalla. */
+  margin: 0 -16px;
+  padding: 16px 0 0;
+  overflow: hidden;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+}
+
+.pagina-productos > h1,
+.pagina-productos > p,
+.pagina-productos > .productos-lista {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.pagina-productos > .escena {
+  margin-top: 12px;
+}
+
+.productos-lista {
+  padding-bottom: 16px;
+}
+
+.productos-lista h2 {
+  margin-top: 16px;
+  font-size: 1.1rem;
+}
+
+.productos-lista ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.productos-lista a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  color: var(--accent-strong);
+  text-decoration: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.productos-lista a:hover {
+  border-color: var(--accent);
+}
+
+.productos-lista-texto {
+  display: grid;
+  min-width: 0;
+}
+
+.productos-lista-texto strong {
+  color: var(--text);
+}
+
+.productos-lista-texto span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+@media (min-width: 720px) {
+  .pagina-productos {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .pagina-productos > h1,
+  .pagina-productos > p,
+  .pagina-productos > .productos-lista {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .pagina-productos > .escena {
+    border-radius: var(--radio);
+  }
+}
