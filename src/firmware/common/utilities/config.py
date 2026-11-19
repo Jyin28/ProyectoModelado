@@ -23,13 +23,17 @@ MODULO = "cuna"
 PIN_AM2301 = 2      # sensor de temperatura y humedad
 PIN_PIR = 3         # sensor de movimiento
 PIN_LAMPARA = 13    # compuerta del MOSFET (LED blanco)
-PINES_LEDS = (18, 19, 20, 21, 22, 26)   # los seis LED de las figuras
+PINES_LEDS = (6, 7, 8, 9, 10, 11)       # los seis LED de las figuras (cableado del codigo funcional)
 
 # ---- Movimiento (PIR) ----
 # Deshabilitado por defecto. Para la maqueta: ponlo en True en este archivo y
 # completa MOVIMIENTO_DEVICE_ID y MOVIMIENTO_TOKEN en secrets.py. No hay
 # activacion remota ni horario en este incremento.
 MONITOREO_MOVIMIENTO_HABILITADO = False
+# El HC-SR501 tarda en estabilizarse tras encender: 60 s sin informar y despues
+# 2 s seguidos en reposo (common/sensors/pir.py, como en el codigo funcional).
+PIR_ESTABILIZACION_S = 60
+PIR_REPOSO_S = 2
 
 # ---- Lampara y figuras ----
 LAMPARA_FRECUENCIA_HZ = 1000
@@ -72,18 +76,20 @@ COLCHON_PAUSA_CICLO_MS = 20          # pausa del ciclo si el colchon esta habili
 ARCHIVO_CALIBRACION = "calibracion.json"
 
 # ---- Audio local MAX98357A (APAGADO POR DEFECTO, SIN PROBAR EN HARDWARE) ----
-# Pines PROPUESTOS: en la RP2 WS debe ser el GPIO siguiente a BCLK.
+# Pines del cableado del codigo funcional (I2S0: BCLK GP18, WS GP19, DIN GP20); en
+# la RP2 WS debe ser el GPIO siguiente a BCLK. Sin revision electrica del equipo.
 AUDIO_HABILITADO = False
-PIN_I2S_BCLK = 6
-PIN_I2S_WS = 7               # obligatoriamente BCLK + 1
-PIN_I2S_DIN = 8
+PIN_I2S_BCLK = 18
+PIN_I2S_WS = 19              # obligatoriamente BCLK + 1
+PIN_I2S_DIN = 20
 AUDIO_ID_I2S = 0
 AUDIO_TASA_HZ = 16000        # PCM 16 bits, mono
 AUDIO_FRECUENCIA_HZ = 500    # tono suave sintetizado en memoria
-AUDIO_VOLUMEN_PCT = 10       # % de la amplitud digital maxima
-AUDIO_VOLUMEN_MAX_PCT = 25   # tope conservador; valores mayores se recortan
-AUDIO_DURACION_S = 5         # duracion de cada reproduccion
+AUDIO_VOLUMEN_PCT = 30       # % de la amplitud digital maxima (VOLUMEN = 0.3 del codigo funcional)
+AUDIO_VOLUMEN_MAX_PCT = 30   # tope; valores mayores se recortan
+AUDIO_DURACION_S = 5         # duracion del "tono_suave"
 AUDIO_DURACION_MAX_S = 30    # tope de duracion
+AUDIO_ARCHIVO = "prueba.wav" # WAV PCM 16 bits, mono, 16 kHz para el sonido "prueba" (se copia a la Pico)
 
 # ---- Voz del cuidador (APAGADA POR DEFECTO, SIN PROBAR EN HARDWARE) ----
 # Reutiliza la salida I2S del audio: con VOZ_HABILITADA tambien debe estar

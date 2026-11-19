@@ -1,3 +1,4 @@
+import io
 import struct
 import unittest
 
@@ -60,7 +61,9 @@ class FakeI2S:
 
 class Base(unittest.TestCase):
     def crear(self, i2s=None, fabrica=None, **cambios):
-        datos = dict(AUDIO_DURACION_S=0.5)      # 10 bloques de 50 ms (mas que el buffer de 4)
+        datos = dict(AUDIO_DURACION_S=0.5,      # 10 bloques de 50 ms (mas que el buffer de 4)
+                     AUDIO_VOLUMEN_PCT=10, AUDIO_VOLUMEN_MAX_PCT=25)
+        abrir = cambios.pop("abrir", None)
         datos.update(cambios)
         self.cfg = _ruta.cfg_prueba(**datos)
         self.t = [0]
@@ -70,7 +73,7 @@ class Base(unittest.TestCase):
         def fab(ibuf):
             self.ibuf_pedido.append(ibuf)
             return self.i2s
-        self.r = ReproductorAudio(fabrica or fab, self.cfg, lambda: self.t[0])
+        self.r = ReproductorAudio(fabrica or fab, self.cfg, lambda: self.t[0], abrir)
 
     def reproducir_todo(self, limite=60):
         """Consume bloques hasta entregar el ultimo y deja que se escriba el drenaje."""
@@ -92,11 +95,16 @@ class Base(unittest.TestCase):
 
 
 class Limites(Base):
-    def test_catalogo_fijo_de_un_sonido(self):
-        self.assertEqual(tuple(audio.CATALOGO), ("tono_suave",))
+    def test_catalogo_fijo_de_dos_sonidos(self):
+        self.assertEqual(tuple(audio.CATALOGO), ("tono_suave", "prueba"))
 
-    def test_apagado_por_defecto_en_config(self):
-        self.assertFalse(_ruta.config.AUDIO_HABILITADO)
+    def test_config_toma_el_cableado_del_codigo_funcional(self):
+        config = _ruta.config
+        self.assertFalse(config.AUDIO_HABILITADO, 'apagado por defecto: falta revision electrica')
+        self.assertEqual((config.PIN_I2S_BCLK, config.PIN_I2S_WS, config.PIN_I2S_DIN), (18, 19, 20))
+        self.assertEqual(config.AUDIO_VOLUMEN_PCT, 30)
+        self.assertLessEqual(config.AUDIO_VOLUMEN_PCT, config.AUDIO_VOLUMEN_MAX_PCT)
+        self.assertEqual(config.AUDIO_ARCHIVO, "prueba.wav")
 
     def test_formato_pcm16_mono_16khz_y_bloques_enteros(self):
         self.crear()
@@ -324,11 +332,109 @@ class Errores(Base):
         self.assertEqual(self.r.detener()["estado"], "inactivo")
 
 
+def hacer_wav(muestras, tasa=16000, canales=1, bits=16, codigo=1, extra=b""):
+    """WAV en memoria con un bloque 'LIST' opcional entre fmt y data."""
+    datos = struct.pack("<%dh" % len(muestras), *muestras)
+    fmt = struct.pack("<HHIIHH", codigo, canales, tasa, tasa * canales * bits // 8,
+                      canales * bits // 8, bits)
+    cuerpo = b"WAVE" + b"fmt " + struct.pack("<I", 16) + fmt
+    if extra:
+        cuerpo += b"LIST" + struct.pack("<I", len(extra)) + extra
+    cuerpo += b"data" + struct.pack("<I", len(datos)) + datos
+    return b"RIFF" + struct.pack("<I", len(cuerpo)) + cuerpo
+
+
+class ArchivoWav(Base):
+    def crear_wav(self, contenido, **cambios):
+        self.abierto = io.BytesIO(contenido)
+        self.rutas = []
+
+        def abrir(ruta):
+            self.rutas.append(ruta)
+            return self.abierto
+        self.crear(abrir=abrir, AUDIO_ARCHIVO="prueba.wav", **cambios)
+
+    def test_reproduce_el_archivo_completo_atenuado_al_volumen(self):
+        muestras = [1000, -1000, 20000, -20000] * 600          # 2400 muestras = 1,5 bloques
+        self.crear_wav(hacer_wav(muestras))
+        r = self.r.iniciar("prueba")
+        self.assertEqual(self.rutas, ["prueba.wav"])
+        self.assertEqual(r["sound"], "prueba")
+        self.assertAlmostEqual(r["duration_s"], 2400 / 16000)
+        self.assertEqual(r["volume_pct"], 10)
+        self.reproducir_todo()
+        recibido = self.muestras(bytes(self.i2s.flujo))
+        self.assertEqual(list(recibido), [m * 10 // 100 for m in muestras])
+        self.assertEqual(self.i2s.superpuestas, 0)
+
+    def test_al_terminar_drena_y_cierra_el_archivo(self):
+        self.crear_wav(hacer_wav([100] * 900))
+        self.r.iniciar("prueba")
+        self.reproducir_todo()
+        self.assertEqual(self.r.estado()["estado"], "drenando")
+        self.t[0] += 10_000
+        self.r.actualizar(self.t[0])
+        self.assertEqual(self.r.estado()["estado"], "inactivo")
+        self.assertTrue(self.abierto.closed)
+        self.assertEqual(self.i2s.deinit_llamado, 1)
+
+    def test_detener_cierra_el_archivo(self):
+        self.crear_wav(hacer_wav([100] * 8000))
+        self.r.iniciar("prueba")
+        self.r.detener()
+        self.assertTrue(self.abierto.closed)
+        self.assertEqual(self.r.estado()["estado"], "inactivo")
+
+    def test_salta_bloques_extra_antes_de_los_datos(self):
+        self.crear_wav(hacer_wav([500] * 800, extra=b"INFO" + bytes(8)))
+        self.r.iniciar("prueba")
+        self.reproducir_todo()
+        self.assertEqual(list(self.muestras(bytes(self.i2s.flujo))), [50] * 800)
+
+    def test_formatos_no_soportados_se_rechazan_sin_tocar_el_i2s(self):
+        casos = [hacer_wav([1] * 100, tasa=44100), hacer_wav([1] * 100, canales=2),
+                 hacer_wav([1] * 100, codigo=3), b"nada de wav" * 3, b"RIFF", b""]
+        for contenido in casos:
+            self.crear_wav(contenido)
+            with self.assertRaises(ValueError) as e:
+                self.r.iniciar("prueba")
+            self.assertEqual(str(e.exception), "audio_wav_invalido", contenido[:12])
+            self.assertEqual(self.ibuf_pedido, [])
+            self.assertTrue(self.abierto.closed)
+            self.assertEqual(self.r.estado()["estado"], "inactivo")
+
+    def test_archivo_inexistente_da_error_con_codigo(self):
+        def abrir(ruta):
+            raise OSError(2)
+        self.crear(abrir=abrir, AUDIO_ARCHIVO="falta.wav")
+        with self.assertRaises(ValueError) as e:
+            self.r.iniciar("prueba")
+        self.assertEqual(str(e.exception), "audio_archivo_no_encontrado")
+        self.assertEqual(self.r.estado()["estado"], "inactivo")
+
+    def test_sin_ruta_configurada(self):
+        self.crear(AUDIO_ARCHIVO="")
+        with self.assertRaises(ValueError) as e:
+            self.r.iniciar("prueba")
+        self.assertEqual(str(e.exception), "audio_archivo_no_configurado")
+
+    def test_el_tono_sigue_funcionando_despues_del_archivo(self):
+        self.crear_wav(hacer_wav([100] * 800))
+        self.r.iniciar("prueba")
+        self.reproducir_todo()
+        self.t[0] += 10_000
+        self.r.actualizar(self.t[0])
+        self.i2s.flujo.clear()
+        self.r.iniciar("tono_suave")
+        self.reproducir_todo()
+        self.assertEqual(len(self.bloques()), 10)
+
+
 class Pines(unittest.TestCase):
     def test_pines_propuestos_validos(self):
         audio.validar_pines(_ruta.config)
         self.assertEqual((_ruta.config.PIN_I2S_BCLK, _ruta.config.PIN_I2S_WS,
-                          _ruta.config.PIN_I2S_DIN), (6, 7, 8))
+                          _ruta.config.PIN_I2S_DIN), (18, 19, 20))
 
     def test_rechaza_ws_no_consecutivo_y_pines_wifi(self):
         with self.assertRaises(ValueError):

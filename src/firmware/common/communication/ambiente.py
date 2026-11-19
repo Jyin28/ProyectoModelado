@@ -12,6 +12,7 @@ import time
 import cola_eventos
 import config
 import modulo
+import rutas
 import secrets
 import wifi
 
@@ -398,8 +399,17 @@ def iniciar(remota=None):
         ntptime.timeout = 2
         contexto = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         contexto.verify_mode = ssl.CERT_REQUIRED
-        with open(_CA, "rb") as certificado:
-            contexto.load_verify_locations(certificado.read())
+        ruta_ca = rutas.buscar(_CA)
+        try:
+            with open(ruta_ca, "rb") as certificado:
+                datos_ca = certificado.read()
+        except OSError:
+            print("Ambiente: no se pudo leer el certificado %s" % ruta_ca)
+            raise
+        # El primer parametro de load_verify_locations es cafile (una RUTA); los
+        # bytes del certificado DER van en cadata. Con los bytes en cafile,
+        # MicroPython los trata como un nombre de archivo y falla con ENOENT.
+        contexto.load_verify_locations(cadata=datos_ca)
         if remota is not None:
             remota.contexto = contexto
         envio = EnvioAmbiente(host, dispositivo, token, contexto, ntptime, remota, movimiento,
@@ -411,6 +421,6 @@ def iniciar(remota=None):
         finally:
             _thread.stack_size(pila_anterior)
     except (ImportError, AttributeError, OSError, ValueError, MemoryError, RuntimeError) as error:
-        print("Ambiente: no se pudo iniciar el envio (%s)" % type(error).__name__)
+        print("Ambiente: no se pudo iniciar el envio (%s: %s)" % (type(error).__name__, error))
         return None
     return envio
