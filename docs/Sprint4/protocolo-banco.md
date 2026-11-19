@@ -7,7 +7,7 @@ Este protocolo define cómo comprobar en banco cada módulo descrito en [`diseno
 
 ## 1. Reglas del banco
 
-1. **Un módulo por vez.** Desconectar la Pico del USB antes de cambiar de protoboard. Editar `MODULO` en `src/firmware/common/utilities/config.py`, copiar el archivo a la Pico y reiniciar (`docs/Sprint3/prueba-maqueta.md:3-7`).
+1. **Un módulo por vez.** Desconectar la Pico del USB antes de cambiar de protoboard. Editar `MODULO` en `src/firmware/pico/common/utilities/config.py`, copiar el archivo a la Pico y reiniciar (`docs/Sprint3/prueba-maqueta.md:3-7`).
 2. **Registrar la versión.** Anotar la rama y el commit cargados en la placa.
 3. **Cableado revisado primero.** Antes de energizar, otra persona del equipo revisa el montaje contra el mapa de [`diseno-fisico.md`](diseno-fisico.md) §4. Esta revisión **no** sustituye la revisión eléctrica pendiente de `alcance.md:59-66`.
 4. **Credenciales fuera del repositorio.** El `secrets.py` real permanece local y no se copia a ninguna evidencia.
@@ -34,7 +34,7 @@ El plan pide empezar por las pruebas que podrían condicionar la arquitectura: p
   - Pico 2 W, HX711 y celda de barra de 5 kg (colchón); celda de 1 kg propuesta (alimentación), si existe.
   - Pesas de masa conocida (por ejemplo 100 g, 200 g, 500 g, 1000 g) y una balanza de referencia para verificarlas. **Si no hay balanza de referencia, la prueba queda bloqueada.**
   - Fijación rígida de la celda (pendiente según `alcance.md:64`).
-- **Montaje:** colchón con el mapa del banco (DT GP13, SCK GP12) y el menú `src/firmware/colchon/prueba_colchon.py`. Alimentación con celda de 1 kg y pines GP17 / GP16 solo cuando haya firmware (fase 9); mientras tanto, la misma prueba con el menú existente sirve para caracterizar la celda.
+- **Montaje:** colchón con el mapa del banco (DT GP13, SCK GP12) y el menú `src/firmware/pico/colchon/prueba_colchon.py`. Alimentación con celda de 1 kg y pines GP17 / GP16 solo cuando haya firmware (fase 9); mientras tanto, la misma prueba con el menú existente sirve para caracterizar la celda.
 - **B1, linealidad y calibración.**
   1. Celda fija y sin carga. Opción 2 del menú (tara).
   2. Colocar una pesa verificada. Opción 7 (calibrar) con su masa en gramos (`README.md:265-279`).

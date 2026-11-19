@@ -8,13 +8,13 @@ Rama de trabajo: **`integracion/sprint3`**, creada desde `development` (0029f22)
 |---|---|---|
 | `development` | `0029f22` | Base: fases 3 a 9 (cuentas, bebés, dueños, Telegram, límites, órdenes por módulo, voz, colchón fase 6, habitación, juego, alimentación). |
 | `origin/feat/fase12-cierre` (= fases 10 a 12; `origin/feat/fase9-alimentacion` 7a0ab2e lo contiene) | `55e6a23` | Historial por bebé, resumen de noche, gráficos, Excel, estado informado. Merge `7191400`. No se reescribió nada: ya estaba. |
-| `VersionFunc` — colchón de Kevin | `30af665` | Página, servicio, hook y modelo web del colchón, migraciones `eventos_colchon`/`ordenes_colchon`, cambios de `src/firmware/pico/`. Se adaptó (ver 2). Commit `d08fd21`. |
+| `VersionFunc` — colchón de Kevin | `30af665` | Página, servicio, hook y modelo web del colchón, migraciones `eventos_colchon`/`ordenes_colchon`, cambios de `src/firmware/pico/colchon/`. Se adaptó (ver 2). Commit `d08fd21`. |
 | `VersionFunc` — firmware | `659b98b` | Arreglo del TLS (`cadata`), `rutas.py`, PIR estabilizado, sonido WAV `prueba`, cableado real. Commit `6b5dc33`. |
 | `src/firmware/codigo funcional/` (sin seguimiento de Git) | copia local | Solo se usó como referencia de cableado y comportamiento. **No se modificó ni se versionó.** |
 
 ### Lo que NO se llevó, y por qué
 - El módulo `"completo"` y los efectos autónomos de `pico2` (patrones de LED y lámpara que respira): contradicen una Pico por módulo y el control remoto de la lámpara y las figuras.
-- La carpeta `src/firmware/pico2/` de `VersionFunc`: es una copia antigua del firmware; sus arreglos se llevaron al firmware unificado.
+- La carpeta `src/firmware/pico2/` de `VersionFunc`: es una copia antigua del firmware; sus arreglos se llevaron al firmware unificado. Esa carpeta ya no existe: todo el código de la Pico vive en `src/firmware/pico/` (el colchón de la Pico, en `src/firmware/pico/colchon/`, con `common/communication/nube.py` y `common/utilities/eventos.py`).
 - `main.py`, `mfrc522.py` y `dados.py` del código funcional (lector RFID y dados): otro proyecto, sin historia en este sprint, y usan los mismos GP2/GP3 que el AM2301 y el PIR.
 - El dispositivo `pico2-cuna-01` que se probó con el firmware antiguo: la tabla `limites_ambiente` solo admite ids `cuna-ambiente-NN`, así que ese id **nunca tendría límites, episodios ni avisos de Telegram**. El módulo de ambiente real es `cuna-ambiente-01`.
 
@@ -42,14 +42,14 @@ Estado: **Implementada** = código y pruebas con dobles (PGlite, Vitest, Python 
 | PM-84 | HU-08 | Implementada | `firmware/common/sensors/pir.py`, `ambiente.py`, `ingestar_movimiento`, `PanelMovimiento.tsx` | `lote.test.mjs`, `ordenes-modulo.test.mjs`, `test_pir.py` | PIR real enviando a `cuna-movimiento-01` (módulo registrado y función desplegada; falta la prueba con la Pico). |
 | PM-88 | HU-09 | Implementada | `ambiente.py`, `PaginaCuna.tsx`, `services/lecturas.ts` | `lote.test.mjs`, `test_ambiente_tls.py`, `paginaCuna.test.tsx`. **Prueba física previa** (2026-11-19, firmware antiguo `pico2`, dispositivo de prueba `pico2-cuna-01`): 3 lecturas con HTTP 200 y 3 filas en `lecturas_ambiente` | Repetir con `cuna-ambiente-01` y el firmware unificado. |
 | PM-92 | HU-10 | Implementada | `guardar_limites`, `PanelLimites`, `…000400_ordenes_modulo.sql` | `ordenes-modulo.test.mjs`, `lote.test.mjs` (salir, seguir fuera, volver y salir de nuevo) | Telegram real. |
-| PM-96 | HU-11 | Implementada | `lampara_remota.py`, `audio.py`, `PanelLampara.tsx`, `PanelAudio` | `lampara*.test.mjs`, `test_lampara_remota.py`, `test_audio.py` (incl. WAV) | Lámpara y I²S reales. Catálogo: `tono_suave` y `prueba` (antes solo el tono). |
+| PM-96 | HU-11 | Implementada | `lampara_remota.py`, `audio.py`, `PanelLampara.tsx`, `PanelAudio` | `lampara*.test.mjs`, `test_lampara_remota.py`, `test_audio.py` (incl. WAV) | Lámpara y I²S reales. Catálogo en `config.AUDIO_CATALOGO` (`tono_suave` y `prueba`; las canciones reales faltan). La lámpara tiene botones Encender y Apagar además del nivel. |
 | PM-100 | HU-12 | Implementada | `utils/voz.ts`, `useVoz.ts`, `services/ordenes.ts`, `firmware/cuna/voz.py` | `ordenes-modulo.test.mjs` (canal privado, voz sin guardar), `test_voz.py` | **Micrófono del celular, red y parlante reales.** `prueba.wav` no la demuestra. |
-| PM-104 | HU-13 | Implementada | `figuras.py`, `comandos.py`, `PanelFiguras.tsx` | `ordenes-modulo.test.mjs`, `paneles-fase5.test.tsx`, **`test_figuras_intervalo.py`** (nueva: 1,9 s rechazado, 2 s aceptado, independiente de la lámpara) | LED reales. |
+| PM-104 | HU-13 | Implementada | `figuras.py`, `comandos.py`, `PanelFiguras.tsx` | `ordenes-modulo.test.mjs`, `paneles-fase5.test.tsx`, **`test_figuras_intervalo.py`** (nueva: 1,9 s rechazado, 2 s aceptado, independiente de la lámpara, `on` booleano), `test_figuras_apagado.py` (varias figuras encendidas a la vez) y `ordenes-modulo.test.mjs` (el horario arranca la última secuencia confirmada) | LED reales. **Falta aplicar al Supabase remoto la migración `20261119001500_horario_figuras_secuencia.sql`** (no se aplicó). |
 | PM-148 | HU-24 | Implementada | `…000800_historial.sql` (`historial_bebe`) | `historial.test.mjs`, `lote.test.mjs` (reenvío no duplica; misma hora, dos eventos) | Con Supabase real. |
 | PM-152 | HU-25 | Implementada | `PaginaHistorial.tsx`, `ResumenNoche.tsx`, `utils/historial.ts` | `historial.test.mjs` (noche 19:00–07:00), `historial-utils.test.ts` | Con Supabase real. |
 | PM-156 | HU-26 | Implementada | `GraficoMediciones.tsx`, `GraficoEventosPorHora.tsx` | `historial-utils.test.ts` (sin datos ≠ cero; hueco de 30 min) | Verlos dibujados en un navegador real. |
 | PM-160 | HU-27 | Implementada | `BotonExportar.tsx`, `utils/excel.ts` | `historial-excel.test.ts` y un **`.xlsx` real abierto con `openpyxl`**: 12 columnas de DEC-06, una fila por registro, sin fotos ni enlaces, período vacío = solo encabezados | Abrirlo en Excel real (no hay Office instalado). |
-| PM-112 | HU-14 | **Conservada** | `PaginaColchonPico.tsx`, `colchonPico.ts`, `src/firmware/pico/`, `…001100_eventos_y_ordenes_colchon.sql` | `colchonPico.test.ts`, `paginaColchonPico.test.tsx`, `lote.test.mjs` | `src/firmware/pico/` no tiene pruebas versionadas. |
+| PM-112 | HU-14 | **Conservada** | `PaginaColchonPico.tsx`, `colchonPico.ts`, `src/firmware/pico/colchon/`, `…001100_eventos_y_ordenes_colchon.sql` | `colchonPico.test.ts`, `paginaColchonPico.test.tsx`, `lote.test.mjs` | `src/firmware/pico/colchon/` no tiene pruebas versionadas. |
 | PM-116 | HU-15 | **Conservada** | idem | `lote.test.mjs` (los cuatro eventos del colchón, reenvío idempotente) | Balanza real. |
 | PM-120 | HU-16 | **Conservada** | idem | `lote.test.mjs` (ciclo de órdenes: pedir, tomar una sola vez, confirmar; una persona ajena no puede) | Pico real. |
 
@@ -73,14 +73,14 @@ Aplicado el 2026-11-19 con autorización expresa:
 |---|---|
 | Migraciones `historial`, `recuperacion`, `eventos_y_ordenes_colchon_endurecido`, `ingestar_lote` | Aplicadas. Existen `historial_bebe` y `reportar_estado_modulo`; `eventos_colchon` y `ordenes_colchon` quedan solo de lectura para `authenticated`; los 75 eventos del colchón siguen intactos. |
 | Edge Function `ingesta` | Desplegada como **versión 6** (JWT desactivado). Probada con token falso en los diez caminos (lote de ambiente, movimiento y colchón; evento único; 400, 401, 405 y 413). |
-| Módulos `cuna-ambiente-01` y `cuna-movimiento-01` | Con credencial nueva (tokens solo en `src/firmware/secrets.py`, ignorado por Git), bebé y dueño asignados. No tenían datos. |
+| Módulos `cuna-ambiente-01` y `cuna-movimiento-01` | Con credencial nueva (tokens solo en `src/firmware/pico/secrets.py`, ignorado por Git), bebé y dueño asignados. No tenían datos. |
 
 Aplicado después, también con autorización expresa:
 
 | Qué | Resultado |
 |---|---|
 | Módulos `cuna-audio-01` y `cuna-figuras-01` | Registrados (producto `cuna-01`, bebé y dueña asignados). `cuna-movimiento-01` pasó a tener producto `cuna-01`. |
-| Cuenta de dispositivo de la Pico | `pico.cuna@example.com`, vinculada a `cuna-lampara-01` (producto `cuna-01`). Reemplaza a `elmenma1890@gmail.com`, que era la cuenta anterior de ese módulo. Inicia sesión y el sistema la reconoce (`tomar_orden_modulo` responde 200). Su contraseña solo está en `src/firmware/secrets.py`. |
+| Cuenta de dispositivo de la Pico | `pico.cuna@example.com`, vinculada a `cuna-lampara-01` (producto `cuna-01`). Reemplaza a `elmenma1890@gmail.com`, que era la cuenta anterior de ese módulo. Inicia sesión y el sistema la reconoce (`tomar_orden_modulo` responde 200). Su contraseña solo está en `src/firmware/pico/secrets.py`. |
 | Telegram | Funciones `notificador` y `telegram-webhook` desplegadas (JWT desactivado), `pg_cron` y `pg_net` activos, trabajos `notificador` y `procesar-horarios` cada minuto, disparador de aviso inmediato, secretos de Vault `project_url` y `notificador_secret`, webhook del bot `@cunabot_bot` registrado. |
 | Aviso de `aura@gmail.com` como dueña | Dueña de ambiente, movimiento, lámpara, audio, figuras y colchón. Una cuenta no puede ser a la vez cuidadora y dispositivo (disparador `separar_cuenta_dispositivo`). |
 
@@ -108,17 +108,17 @@ Si `npm ci` falla con `EPERM` sobre `rolldown-binding…node`, un servidor de Vi
 
 ## 7. Demostrar lo que requiere hardware
 
-Para cada prueba: **Pico 2 W con MicroPython 1.28**, hotspot del teléfono (2,4 GHz) y Thonny. Sube el **contenido de `src/firmware/`** a la raíz de la Pico (`main.py`, `secrets.py` y las carpetas) y copia aparte `prueba.wav` (de `codigo funcional/`) a la raíz. `secrets.py` sale de `secrets.example.py`; no se versiona. Solo se conecta **un módulo por vez** (`MODULO` en `common/utilities/config.py`) y los pines siguen **sin revisión eléctrica** del equipo.
+Para cada prueba: **Pico 2 W con MicroPython 1.28**, hotspot del teléfono (2,4 GHz) y Thonny. Sube el **contenido de `src/firmware/pico/`** a la raíz de la Pico (`main.py`, `secrets.py` y las carpetas) y copia aparte `prueba.wav` (de `codigo funcional/`) a la raíz. `secrets.py` sale de `secrets.example.py`; no se versiona. Solo se conecta **un módulo por vez** (`MODULO` en `common/utilities/config.py`) y los pines siguen **sin revisión eléctrica** del equipo.
 
 | Prueba | Pasos | Resultado esperado |
 |---|---|---|
-| Ambiente (HU-09) | `MODULO = "cuna"`; `AMBIENTE_*` en `secrets.py`; ejecutar `main.py` | «hora UTC sincronizada» y `Ambiente: HTTP 201` cada 10 s (evento único; el 200 es del formato de lote); la fila aparece en `/cuna` y en `lecturas_ambiente`. |
+| Ambiente (HU-09) | `MODULO = "cuna"`; `AMBIENTE_*` en `secrets.py`; ejecutar `main.py` | «hora UTC sincronizada» y `Ambiente: HTTP 201` cada 2 s (`INTERVALO_AMBIENTE_S`; DEC-07 aprobó 10 s, ver `matriz-hu-ca.md` CA-09.3) (evento único; el 200 es del formato de lote); la fila aparece en `/cuna` y en `lecturas_ambiente`. |
 | Límites y Telegram (HU-10, HU-07) | Guardar límites en `/cuna`; calentar el sensor con la mano | Un aviso por destinataria al salir del rango, ninguno más mientras siga fuera, otro si vuelve y sale. Requiere `pg_cron`/notificador desplegados y un bot real. |
 | Movimiento (HU-08) | `MONITOREO_MOVIMIENTO_HABILITADO = True`; esperar «PIR listo» (≈62 s); pasar la mano | `Movimiento: HTTP 201`; evento y aviso. Con el monitoreo apagado desde la web, 409 y nada se guarda. |
 | Lámpara (HU-11) | `LAMPARA_*`; `/cuna` con `VITE_LAMPARA_HABILITADA=true` | La luz cambia solo con la confirmación de la Pico. |
 | Audio (HU-11) | `AUDIO_HABILITADO = True`; `audio_play` con `prueba` o `tono_suave` | Suena en el parlante; la web registra el evento. |
 | Voz (HU-12) | `VOZ_HABILITADA = True` y `AUDIO_HABILITADO = True`; `/cuna`, botón «Hablar» (`VITE_VOZ_HABILITADA=true`) | La voz sale por el parlante mientras se habla; no queda ningún audio guardado. |
 | Figuras (HU-13) | `MODULO = "figuras"`; `/figuras` con `VITE_ORDENES_HABILITADAS=true` | Encender/apagar, secuencia con intervalo ≥ 2 s; 1,9 s se rechaza. |
-| Colchón (HU-14 a 16) | `src/firmware/pico/` (Pico del colchón) y `/colchon-pico` | Monitoreo, alarma por pérdida de peso y rearme, como antes de integrar. |
+| Colchón (HU-14 a 16) | `src/firmware/pico/colchon/` (Pico del colchón) y `/colchon-pico` | Monitoreo, alarma por pérdida de peso y rearme, como antes de integrar. |
 
 Guion completo: `docs/Sprint4/guion-demostracion.md`; pruebas de banco: `docs/Sprint4/protocolo-banco.md`.

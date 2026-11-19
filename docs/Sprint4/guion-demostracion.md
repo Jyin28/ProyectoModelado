@@ -5,8 +5,8 @@
 ## 1. Reglas de la demostración
 
 1. **Una sola Pico, un módulo por vez.** Se conecta una protoboard, se prueba, se desconecta y se pasa a la siguiente. La Pico no controla varios módulos a la vez (`docs/Sprint3/alcance.md`).
-2. **Cambio de módulo.** Para cada módulo: desconectar la Pico del USB, cambiar la protoboard, poner el valor de `MODULO` en `src/firmware/common/utilities/config.py` (`"cuna"`, `"figuras"`, `"colchon"`, `"habitacion"`, `"juego"` o `"alimentacion"`), copiar el firmware a la Pico, conectarla y esperar el mensaje de arranque. Un módulo inválido o sin cablear no genera lecturas falsas: solo se inicializa lo del módulo elegido.
-3. **Una cuenta de dispositivo por producto.** `secrets.py` de la Pico lleva las claves `ORDENES_*` del producto del módulo que se conecta (ver `src/firmware/secrets.example.py`). **No se escriben credenciales en este documento ni en el repositorio.**
+2. **Cambio de módulo.** Para cada módulo: desconectar la Pico del USB, cambiar la protoboard, poner el valor de `MODULO` en `src/firmware/pico/common/utilities/config.py` (`"cuna"`, `"figuras"`, `"colchon"`, `"habitacion"`, `"juego"` o `"alimentacion"`), copiar el firmware a la Pico, conectarla y esperar el mensaje de arranque. Un módulo inválido o sin cablear no genera lecturas falsas: solo se inicializa lo del módulo elegido.
+3. **Una cuenta de dispositivo por producto.** `secrets.py` de la Pico lleva las claves `ORDENES_*` del producto del módulo que se conecta (ver `src/firmware/pico/secrets.example.py`). **No se escriben credenciales en este documento ni en el repositorio.**
 4. **Red.** Hotspot del teléfono. Fijar el nombre y la clave solo en `secrets.py`.
 5. **Sin datos inventados.** Si un módulo no responde, se anota el resultado como fallido o bloqueado; no se simula una respuesta en la web.
 6. **Cableado revisado antes de energizar.** La revisión eléctrica sigue pendiente ([`diseno-fisico.md`](diseno-fisico.md) §3 y [`protocolo-banco.md`](protocolo-banco.md) regla 3). No conectar un módulo cuyo cableado no se haya revisado con multímetro.

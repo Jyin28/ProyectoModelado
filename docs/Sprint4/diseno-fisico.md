@@ -7,7 +7,7 @@ Este documento reúne los componentes, conexiones, alimentación, rangos, precis
 
 | Marca | Significado |
 |---|---|
-| **Existe** | Hay código en `src/firmware/` que usa el componente o el pin. No implica prueba física con evidencia. |
+| **Existe** | Hay código en `src/firmware/pico/` que usa el componente o el pin. No implica prueba física con evidencia. |
 | **Bancada** | El equipo reportó una prueba en banco (`docs/Sprint3/prueba-maqueta.md`). No hay registro reproducible versionado. |
 | **Propuesta** | Candidato de esta fase. **Sin confirmar con el equipo ni con el profesor.** No está comprado ni probado. |
 
@@ -15,7 +15,7 @@ Los valores de rango y precisión marcados «objetivo» son metas de diseño par
 
 ## 1. Reglas comunes
 
-- **Una Pico 2 W por vez.** Se conecta a un módulo; `MODULO` en `src/firmware/common/utilities/config.py:16` elige cuál. El firmware solo inicializa lo de ese módulo.
+- **Una Pico 2 W por vez.** Se conecta a un módulo; `MODULO` en `src/firmware/pico/common/utilities/config.py:16` elige cuál. El firmware solo inicializa lo de ese módulo.
 - **Maqueta:** alimentación por USB de computadora, tierra común, sin condensadores externos adicionales, red por hotspot del teléfono (`docs/Sprint3/alcance.md:43-57`).
 - **GPIO reservados al chip Wi-Fi:** GP23, GP24, GP25 y GP29 (`config.py:4,83`).
 - **Sin UPS** ni continuidad sin internet (CA-28.1). La interrupción detiene el funcionamiento.
@@ -150,7 +150,7 @@ Estos pines son propuestas. Quedan sujetos a revisión eléctrica y a la decisi�
 
 ## 5. Hallazgo: la prueba de pines repetidos no admite los módulos nuevos
 
-`src/firmware/tests/test_config_y_comandos.py:29-31` exige que `config.py` no tenga pines repetidos entre todos los módulos. La Pico 2 W ofrece 26 GPIO utilizables (GP0 a GP22 y GP26 a GP28). La configuración vigente ya usa 16. Quedan 10 libres: GP0, GP1, GP4, GP5, GP9, GP10, GP11, GP12, GP27 y GP28. Los tres módulos nuevos necesitan 17 pines. **No caben sin repetir.**
+`src/firmware/pico/tests/test_config_y_comandos.py:29-31` exige que `config.py` no tenga pines repetidos entre todos los módulos. La Pico 2 W ofrece 26 GPIO utilizables (GP0 a GP22 y GP26 a GP28). La configuración vigente ya usa 16. Quedan 10 libres: GP0, GP1, GP4, GP5, GP9, GP10, GP11, GP12, GP27 y GP28. Los tres módulos nuevos necesitan 17 pines. **No caben sin repetir.**
 
 Como la Pico se conecta a un módulo por vez, repetir un GPIO entre módulos no genera conflicto real. La prueba debería comprobar la unicidad dentro de cada módulo. Cambiar esa prueba es trabajo de código y queda fuera de esta fase. Debe decidirlo quien implemente las fases 7 a 9.
 
@@ -184,7 +184,7 @@ La regla de coordinar toda sustitución de sensores aparece en `docs/Requerimien
 
 | # | Documento | Dice | Realidad | Acción |
 |---|---|---|---|---|
-| 1 | `src/firmware/README.md:37` | Carpetas `alimentacion/`, `habitacion/`, `juego/` vacías | No existen en `src/firmware/` | Corregir el README al implementar |
+| 1 | `src/firmware/pico/README.md:37` | Carpetas `alimentacion/`, `habitacion/`, `juego/` vacías | No existen en `src/firmware/pico/` | Corregir el README al implementar |
 | 2 | `matriz-hu-ca.md` (CA-15.2) | Buzzer en GP18 | GP18 es el pin del banco; el integrado usa GP14 (`config.py:44`) | Corregido en la matriz de esta fase |
 | 3 | `matriz-hu-ca.md` (CA-08.1) | PIR en `sensores.py:30` | El pin está en `config.py:20` y se crea en `sensores.py:17` | Corregido en la matriz |
 | 4 | `prueba_colchon.py` y `config.py` | Mapa de banco GP12, 13, 18 y 19 frente a mapa integrado GP14 a 17 | Dos mapas distintos para el mismo módulo; el banco choca con lámpara y figuras | Unificar al confirmar el mapa definitivo |
@@ -197,5 +197,5 @@ La regla de coordinar toda sustitución de sensores aparece en `docs/Requerimien
 - Especificación: `docs/Sprint1/EntregableSprint1.pdf` (HU-33, CA-33.1 a CA-33.6), reproducida en [`PLAN-PROYECTO.md`](PLAN-PROYECTO.md).
 - Decisiones: `docs/Jira/DecisionesAprobadas.md` (DEC-07, DEC-08, DEC-12).
 - Alcance del Sprint 3: `docs/Sprint3/alcance.md`, `docs/Sprint3/prueba-maqueta.md`.
-- Código: `src/firmware/common/utilities/config.py`, `src/firmware/common/sensors/sensores.py`, `src/firmware/colchon/`.
+- Código: `src/firmware/pico/common/utilities/config.py`, `src/firmware/pico/common/sensors/sensores.py`, `src/firmware/pico/colchon/`.
 - Requisitos: `docs/Requerimientos/RequerimientosFinal.md`, `docs/Requerimientos/RequerimientosAudio.md`.

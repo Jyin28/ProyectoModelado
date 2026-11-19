@@ -15,7 +15,7 @@ Estos valores vinculan la aplicación web, la base de datos de Supabase y el mic
 | **Device ID Colchón** | `pico-figuras-colchon-01` | `.env.local` (`VITE_COLCHON_DEVICE_ID`), `config.py` en la Pico y base de datos. |
 | **Usuario Cuidador (Auth)** | `abf7efd4-4dc6-4975-820b-c6b633eebf93` | Email `kev.hernandezr@gmail.com` en `auth.users`. |
 | **Bebé ID** | `a2d531d5-2349-439c-a087-4e538be5579c` | `cuna_private.bebes`, asignado en eventos del colchón. |
-| **Pico `DEVICE_TOKEN` (secreto)** | `7a471f9e008f9942f60d2b5f1a6e5d84043e7d0654c18ddc2e1d97b58d020cfd` | En `src/firmware/pico/common/utilities/secrets.py`. |
+| **Pico `DEVICE_TOKEN` (secreto)** | `7a471f9e008f9942f60d2b5f1a6e5d84043e7d0654c18ddc2e1d97b58d020cfd` | En `src/firmware/pico/secrets.py`. |
 | **Token SHA-256** | `37bb59b5518bb850335e132453757b80de630cedbd9394eef650778147ddc557` | Almacenado en `cuna_private.dispositivos(token_sha256)`. |
 | **Supabase URL** | `https://tlbwsdnqhwvuvgjcxgsg.supabase.co` | Endpoint del backend. |
 | **Ingesta Edge Function** | `https://tlbwsdnqhwvuvgjcxgsg.supabase.co/functions/v1/ingesta` | Endpoint de envío de eventos desde la Pico. |

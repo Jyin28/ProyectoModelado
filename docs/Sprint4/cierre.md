@@ -21,8 +21,8 @@ Todo el software de las 35 historias está implementado y probado con dobles (PG
 |---|---|---|
 | Backend (`supabase/`) | 14 migraciones locales: ambiente, lámpara, movimiento, cuentas y propiedad, avisos y Telegram, órdenes por módulo, colchón, habitación, alimentación, historial, recuperación, notificador inmediato | 184 pruebas con PGlite; medición de rendimiento aparte |
 | Web (`src/frontend/`) | Cuna, bebés y dispositivos, colchón, figuras, habitación y cámara, alimentación, historial con gráficos y Excel | 434 pruebas con Vitest; lint y build sin errores |
-| Firmware (`src/firmware/`) | Cuna, figuras, colchón, habitación, juego y alimentación; órdenes remotas, voz, recuperación al conectar | 378 pruebas con Python de escritorio |
-| Firmware simplificado (`src/firmware/pico/`) | Versión de Kevin, conservada tal cual | Sin pruebas versionadas |
+| Firmware (`src/firmware/pico/`) | Cuna, figuras, colchón, habitación, juego y alimentación; órdenes remotas, voz, recuperación al conectar | 378 pruebas con Python de escritorio |
+| Colchón (`src/firmware/pico/colchon/`) | Versión de Kevin (la de `Documentos\pico`), ahora el único colchón del firmware; `main.py` lo atiende con `ciclo_colchon()` | Sin pruebas versionadas de `monitoreo.py` y `peso.py` |
 | Contratos (`src/shared/contracts/`) | Ingesta, órdenes, voz, habitación, alimentación, historial | — |
 
 ## 4. Qué falta y quién lo desbloquea

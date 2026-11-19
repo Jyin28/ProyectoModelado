@@ -29,7 +29,7 @@ El evento ocupa hasta 2048 bytes. Respuestas: `201` guardado, `409` el mismo eve
 ## Cuándo genera un evento el firmware
 
 - Un evento por **flanco ascendente** del HC-SR501 (GPIO del PIR sin cambios).
-- Solo si el monitoreo está explícitamente habilitado. Hay un único interruptor, local: `MONITOREO_MOVIMIENTO_HABILITADO` en `src/firmware/common/utilities/config.py`, con valor `False` por defecto. Para la maqueta se pone `True` en ese archivo y se completan `MOVIMIENTO_DEVICE_ID` y `MOVIMIENTO_TOKEN` en `secrets.py`. No hay activación remota ni horario en este incremento.
+- Solo si el monitoreo está explícitamente habilitado. Hay un interruptor local, `MONITOREO_MOVIMIENTO_HABILITADO` en `src/firmware/common/utilities/config.py` (ahora `True` en la maqueta del módulo cuna; requiere `MOVIMIENTO_DEVICE_ID` y `MOVIMIENTO_TOKEN` en `secrets.py`). Con órdenes remotas configuradas, el monitoreo arranca apagado y solo lo enciende una orden `motion_set` confirmada; con el interruptor en `False`, `motion_set` responde `movimiento_no_habilitado`.
 - Sin hora NTP confiable, con el monitor deshabilitado o sin conexión, el evento se omite. Nunca se acumula: el firmware guarda como máximo un evento pendiente en RAM, descarta el pendiente al perder la conexión y también omite un flanco nuevo mientras haya uno pendiente. Un evento pendiente se descarta si pasan 10 s sin poder enviarlo.
 - El envío lo hace el mismo hilo de red de ambiente, con su cliente HTTPS, certificado y reloj. Es secuencial, sin segundo hilo.
 
