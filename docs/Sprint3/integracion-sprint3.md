@@ -85,7 +85,7 @@ Aplicado después, también con autorización expresa:
 | Aviso de `aura@gmail.com` como dueña | Dueña de ambiente, movimiento, lámpara, audio, figuras y colchón. Una cuenta no puede ser a la vez cuidadora y dispositivo (disparador `separar_cuenta_dispositivo`). |
 
 **Sigue pendiente**
-1. Los secretos de las funciones de Telegram (`TELEGRAM_BOT_TOKEN`, `NOTIFICADOR_SECRET`, `TELEGRAM_WEBHOOK_SECRET`) se escriben en el panel de Supabase; hasta entonces las dos funciones responden 500. Después, vincular un chat desde la web.
+1. Vincular un chat de Telegram desde la web (Destinatarios de Telegram). Los secretos de las funciones están en Vault (`public.leer_secreto_funcion`, migración `20261119001400`) porque el panel de secretos no estaba disponible; si luego se crean como secretos de Edge Functions, estos tienen prioridad.
 2. Prueba positiva con la Pico real. Ningún dato falso se envió a los módulos reales.
 3. `pico2-cuna-01` es un dispositivo de prueba antiguo; se puede desactivar.
 4. Quien despliegue otra versión de `ingesta` sobrescribe a la anterior.

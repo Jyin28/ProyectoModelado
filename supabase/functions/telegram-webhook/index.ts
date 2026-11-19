@@ -1,9 +1,10 @@
+import { secreto as leerSecreto } from '../_shared/secretos.ts'
 import { rpc } from '../_shared/supabase.ts'
 import { crearEnviarTelegram } from '../_shared/telegram.ts'
 import { crearWebhookTelegram, type EstadoVinculacion } from './handler.ts'
 
-const tokenBot = Deno.env.get('TELEGRAM_BOT_TOKEN')
-const secreto = Deno.env.get('TELEGRAM_WEBHOOK_SECRET')
+const tokenBot = await leerSecreto('TELEGRAM_BOT_TOKEN')
+const secreto = await leerSecreto('TELEGRAM_WEBHOOK_SECRET')
 
 if (!tokenBot || !secreto) throw new Error('Falta la configuración del webhook de Telegram.')
 
