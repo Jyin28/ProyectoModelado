@@ -69,8 +69,8 @@ function PanelColchon({ dispositivoId, controles }: Props) {
         {textoEstado(leerEstadoColchon(estado))}
       </p>
       <p>
-        Es el último estado informado. Si la Pico se reinició, puede no
-        reflejarlo hasta su siguiente aviso.
+        Es el último estado informado. Al reiniciarse o reconectarse, la Pico
+        informa su estado real; mientras no lo haga, puede no reflejarse.
       </p>
 
       <h3>Configuración</h3>

@@ -26,6 +26,7 @@ import type {
   MomentoPeso,
   Toma,
 } from '../models/alimentacion.ts'
+import type { RespuestaHistorial } from '../models/historial.ts'
 import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
 import type {
   EventoHabitacion,
@@ -270,6 +271,11 @@ export interface ServicioAlimentacion {
   ultimaTemperatura(dispositivoId: string): Promise<Resultado<LecturaTemperatura | null>>
 }
 
+export interface ServicioHistorial {
+  /** Registros del bebé en [desde, hasta) (milisegundos UTC), ya unificados por el servidor. */
+  consultar(bebeId: string, desde: number, hasta: number): Promise<Resultado<RespuestaHistorial>>
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -281,6 +287,7 @@ export type Servicios = {
   colchon: ServicioColchon
   habitacion: ServicioHabitacion
   alimentacion: ServicioAlimentacion
+  historial: ServicioHistorial
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram
