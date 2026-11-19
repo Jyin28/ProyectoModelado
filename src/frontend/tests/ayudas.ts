@@ -1,10 +1,10 @@
 import { fireEvent, screen } from '@testing-library/react'
 
 /**
- * Abre el panel de una función de producto (lista «Funciones») y espera a que
- * exista. Es idempotente: si ya está abierto, no lo cierra.
+ * Abre la pestaña de una función de producto y espera a que exista. Es
+ * idempotente: si ya está elegida, no hace nada.
  */
 export async function abrirFuncion(nombre: string | RegExp) {
-  const boton = await screen.findByRole('button', { name: nombre })
-  if (boton.getAttribute('aria-expanded') !== 'true') fireEvent.click(boton)
+  const pestana = await screen.findByRole('tab', { name: nombre })
+  if (pestana.getAttribute('aria-selected') !== 'true') fireEvent.click(pestana)
 }

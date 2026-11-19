@@ -52,7 +52,6 @@ export function botTelegram(): string | null {
 export const DISPOSITIVO_FIGURAS_POR_DEFECTO = 'cuna-figuras-01'
 export const DISPOSITIVO_AUDIO_POR_DEFECTO = 'cuna-audio-01'
 export const PRODUCTO_CUNA_POR_DEFECTO = 'cuna-01'
-export const DISPOSITIVO_COLCHON_POR_DEFECTO = 'cuna-colchon-01'
 
 const IDENTIFICADOR = /^[a-z0-9][a-z0-9_-]{0,63}$/
 
@@ -116,13 +115,7 @@ export function dispositivoAlimentacionId(): string {
   )
 }
 
-/** Módulo del colchón. Es un módulo separado de la cuna. */
-export function dispositivoColchonId(): string {
-  return identificador(import.meta.env.VITE_COLCHON_DEVICE_ID, DISPOSITIVO_COLCHON_POR_DEFECTO)
-}
-
-// Módulo lógico del colchón de la Pico del colchón (convive con el módulo
-// cuna-colchon-NN de la fase 6).
+// Colchón: el dispositivo de la Pico del colchón (único colchón de la web).
 export const DISPOSITIVO_COLCHON_PICO_POR_DEFECTO = 'pico-figuras-colchon-01'
 
 export function dispositivoColchonPicoId(): string {

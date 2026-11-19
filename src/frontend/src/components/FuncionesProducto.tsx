@@ -1,7 +1,4 @@
-import { useState, type ReactNode } from 'react'
-import type { ImagenProducto, PuntoEscena } from '../models/productos.ts'
-import EscenaInteractiva from './EscenaInteractiva.tsx'
-import HojaPanel from './HojaPanel.tsx'
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import Icono from './Icono.tsx'
 import type { NombreIcono } from '../utils/iconos.ts'
 import './FuncionesProducto.css'
@@ -10,76 +7,86 @@ export type FuncionProducto = {
   id: string
   etiqueta: string
   icono: NombreIcono
-  /** Panel que abre. Siempre es un componente que ya resuelve la operación. */
+  /** Panel de la pestaña. Siempre es un componente que ya resuelve la operación. */
   contenido: ReactNode
-  /** Posición sobre la imagen; sin ella, la función solo está en la lista. */
-  punto?: Pick<PuntoEscena, 'x' | 'y' | 'compacto'>
 }
 
 type Props = {
   funciones: FuncionProducto[]
-  /** Imagen del producto con sus puntos. Opcional: la lista funciona sin ella. */
-  imagen?: ImagenProducto
-  /** Contenido que no debe esconderse (lecturas, alarmas activas). */
-  children?: ReactNode
 }
 
 /**
- * Un producto: imagen con botones (si hay arte), lista compacta «Funciones» y
- * el panel de la función elegida. Tocar un botón solo abre el panel; ninguna
- * orden sale hasta que la persona pulse la acción del panel.
+ * Las funciones de un producto como pestañas: una barra con todas a la vista y,
+ * debajo, el panel de la elegida, que ocupa casi todo el alto. Solo la pestaña
+ * activa está montada; elegir una pestaña no envía ninguna orden: eso ocurre
+ * únicamente cuando la persona pulsa la acción del panel.
  */
-function FuncionesProducto({ funciones, imagen, children }: Props) {
-  const [abierta, setAbierta] = useState<string | null>(null)
-  const [imagenRota, setImagenRota] = useState(false)
-  const actual = funciones.find((f) => f.id === abierta) ?? null
-  const alternar = (id: string) => setAbierta((a) => (a === id ? null : id))
-  const puntos = funciones.flatMap((f) =>
-    f.punto
-      ? [
-          {
-            id: f.id,
-            etiqueta: f.etiqueta,
-            icono: f.icono,
-            ...f.punto,
-            activo: abierta === f.id,
-            alSeleccionar: () => alternar(f.id),
-          },
-        ]
-      : [],
+function FuncionesProducto({ funciones }: Props) {
+  const base = useId()
+  const [elegida, setElegida] = useState<string | null>(null)
+  const botones = useRef<Array<HTMLButtonElement | null>>([])
+  const indiceActual = Math.max(
+    0,
+    funciones.findIndex((f) => f.id === elegida),
   )
+  const actual = funciones[indiceActual] ?? null
+
+  function alTeclear(evento: KeyboardEvent<HTMLDivElement>) {
+    const ultimo = funciones.length - 1
+    const destinos: Record<string, number> = {
+      ArrowRight: indiceActual === ultimo ? 0 : indiceActual + 1,
+      ArrowLeft: indiceActual === 0 ? ultimo : indiceActual - 1,
+      Home: 0,
+      End: ultimo,
+    }
+    const destino = destinos[evento.key]
+    if (destino === undefined) return
+    evento.preventDefault()
+    setElegida(funciones[destino].id)
+    botones.current[destino]?.focus()
+  }
+
+  if (!actual) return null
 
   return (
-    <div className={actual ? 'producto producto-con-panel' : 'producto'}>
-      <div className="producto-principal">
-        {imagen && !imagenRota && puntos.length > 0 && (
-          <EscenaInteractiva imagen={imagen} puntos={puntos} alFallar={() => setImagenRota(true)} />
-        )}
-        {children}
-        <nav aria-label="Funciones" className="producto-funciones">
-          <h2>Funciones</h2>
-          <ul>
-            {funciones.map((f) => (
-              <li key={f.id}>
-                <button
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={abierta === f.id}
-                  onClick={() => alternar(f.id)}
-                >
-                  <Icono nombre={f.icono} />
-                  <span>{f.etiqueta}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+    <div className="producto">
+      <div role="tablist" aria-label="Funciones" className="producto-pestanas" onKeyDown={alTeclear}>
+        {funciones.map((f, i) => {
+          const activa = f.id === actual.id
+          return (
+            <button
+              key={f.id}
+              ref={(el) => {
+                botones.current[i] = el
+              }}
+              type="button"
+              role="tab"
+              id={`${base}-pestana-${f.id}`}
+              aria-selected={activa}
+              aria-controls={`${base}-panel`}
+              tabIndex={activa ? 0 : -1}
+              onClick={() => setElegida(f.id)}
+            >
+              <Icono nombre={f.icono} tamano={22} />
+              <span>{f.etiqueta}</span>
+            </button>
+          )
+        })}
       </div>
-      {actual && (
-        <HojaPanel key={actual.id} titulo={actual.etiqueta} alCerrar={() => setAbierta(null)}>
+      <div
+        role="tabpanel"
+        id={`${base}-panel`}
+        aria-labelledby={`${base}-pestana-${actual.id}`}
+        className="producto-panel"
+      >
+        <div key={actual.id} className="producto-cuerpo">
           {actual.contenido}
-        </HojaPanel>
-      )}
+        </div>
+        <p className="producto-vacio">
+          Este panel necesita el backend configurado y una sesión iniciada; sin
+          ellos no hay nada que consultar ni controlar.
+        </p>
+      </div>
     </div>
   )
 }

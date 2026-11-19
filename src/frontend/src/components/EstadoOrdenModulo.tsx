@@ -1,7 +1,7 @@
 import { useAhora } from '../hooks/useAhora.ts'
 import type { EstadoVisibleOrden, OrdenModulo } from '../models/ordenes.ts'
 import { estadoVisibleOrden } from '../utils/ordenes.ts'
-import { formatearHoraCR } from '../utils/tiempo.ts'
+import FechasOrden from './FechasOrden.tsx'
 
 const ETIQUETA: Record<EstadoVisibleOrden, string> = {
   pendiente: 'Solicitud registrada',
@@ -45,12 +45,9 @@ function EstadoOrdenModulo({ orden, cargando, fallo, errorEnvio }: Props) {
           <dd role="status">
             {ETIQUETA[estado]}. {DETALLE[estado]}
           </dd>
-          <dt>Solicitada</dt>
-          <dd>{formatearHoraCR(orden.creado_en)}</dd>
-          <dt>Vence</dt>
-          <dd>{formatearHoraCR(orden.vence_en)}</dd>
         </dl>
       )}
+      {orden && estado && <FechasOrden creadoEn={orden.creado_en} venceEn={orden.vence_en} />}
     </div>
   )
 }

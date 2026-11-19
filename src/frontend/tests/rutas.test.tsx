@@ -27,7 +27,7 @@ describe('rutas', () => {
     ['/bebes', 'Bebés y dispositivos'],
     ['/registro', 'Crear cuenta'],
     ['/colchon', 'Colchón'],
-    ['/colchon-pico', 'Colchón (Pico)'],
+    ['/colchon-pico', 'Colchón'],   // ruta antigua: redirige a /colchon
     ['/figuras', 'Figuras LED'],
     ['/historial', 'Historial'],
   ])('%s muestra el título "%s"', (ruta, titulo) => {

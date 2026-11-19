@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from '../src/App.tsx'
 import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
 import type { EventoColchonPico } from '../src/models/colchonPico.ts'
@@ -9,7 +9,11 @@ import type { Servicios, Sesion } from '../src/services/tipos.ts'
 
 const SESION: Sesion = { usuario_id: 'u-1', correo: 'usuario@ejemplo.test' }
 
-function montar(evento: EventoColchonPico | null, historial: EventoColchonPico[] = []) {
+function montar(
+  evento: EventoColchonPico | null,
+  historial: EventoColchonPico[] = [],
+  solicitarComando?: Servicios['colchonPico']['solicitarComando'],
+) {
   const servicios: Servicios = {
     ...serviciosNoConfigurados,
     auth: {
@@ -21,22 +25,23 @@ function montar(evento: EventoColchonPico | null, historial: EventoColchonPico[]
       obtenerUltimoEvento: () => Promise.resolve({ ok: true, datos: evento }),
       obtenerHistorialEventos: () => Promise.resolve({ ok: true, datos: historial }),
       suscribirEventos: () => () => {},
+      ...(solicitarComando ? { solicitarComando } : {}),
     },
   }
 
   return render(
     <ProveedorServicios configurado servicios={servicios}>
-      <MemoryRouter initialEntries={['/colchon-pico']}>
+      <MemoryRouter initialEntries={['/colchon']}>
         <App />
       </MemoryRouter>
     </ProveedorServicios>,
   )
 }
 
-describe('PaginaColchonPico', () => {
+describe('PaginaColchon', () => {
   it('muestra estado detenido y formulario de inicio cuando no hay eventos', async () => {
     montar(null, [])
-    expect(await screen.findByRole('heading', { level: 1, name: 'Colchón (Pico)' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Colchón' })).toBeInTheDocument()
     expect(await screen.findByText('⏹️ Monitoreo Inactivo')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Iniciar Monitoreo' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Capturar Referencia de Peso' })).toBeInTheDocument()
@@ -97,5 +102,51 @@ describe('PaginaColchonPico', () => {
     expect(await screen.findByText('⏹️ Monitoreo Inactivo')).toBeInTheDocument()
     expect(screen.getByText(/inactividad/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Iniciar Monitoreo' })).toBeInTheDocument()
+  })
+
+  it('calibrar exige un peso conocido válido y pide scale_calibrate con known_g', async () => {
+    const solicitar = vi.fn(() =>
+      Promise.resolve({
+        ok: true as const,
+        datos: {
+          command_id: 'c-1',
+          device_id: 'pico-figuras-colchon-01',
+          command: 'scale_calibrate',
+          params: { known_g: 1000 },
+          estado: 'pendiente' as const,
+        },
+      }),
+    )
+    montar(null, [], solicitar as unknown as Servicios['colchonPico']['solicitarComando'])
+    const boton = await screen.findByRole('button', { name: 'Calibrar con Peso Conocido' })
+    expect(boton).toBeDisabled()
+
+    const campo = screen.getByLabelText('Peso conocido para calibrar (g)')
+    fireEvent.change(campo, { target: { value: '9000' } })
+    expect(boton).toBeDisabled()
+
+    fireEvent.change(campo, { target: { value: '1000' } })
+    expect(boton).toBeEnabled()
+    fireEvent.click(boton)
+    await waitFor(() =>
+      expect(solicitar).toHaveBeenCalledWith('pico-figuras-colchon-01', 'scale_calibrate', { known_g: 1000 }),
+    )
+    expect(await screen.findByText(/Calibrar Balanza.*registrada/)).toBeInTheDocument()
+  })
+
+  it('calibrar no se ofrece con el monitoreo en marcha', async () => {
+    const ahora = new Date().toISOString()
+    const evento: EventoColchonPico = {
+      event_id: 'ev-1',
+      device_id: 'pico-figuras-colchon-01',
+      bebe_id: 'b-1',
+      ts: ahora,
+      recibido_en: ahora,
+      tipo: 'monitoring_started',
+      datos: { duration_s: 120, reference_g: 200, tolerance_pct: 10 },
+    }
+    montar(evento, [evento])
+    expect(await screen.findByText('🟢 Monitoreando Presencia')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Calibrar con Peso Conocido' })).not.toBeInTheDocument()
   })
 })

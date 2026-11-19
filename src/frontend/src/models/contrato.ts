@@ -2,7 +2,7 @@
 //
 // Tipos que la web espera recibir y enviar. Los nombres de los comandos y de
 // las confirmaciones (command_id, command, params, ok, result, error) son los
-// que ya usa el firmware en src/firmware/common/utilities/comandos.py.
+// que ya usa el firmware en src/firmware/pico/common/utilities/comandos.py.
 // Las fechas son cadenas ISO 8601 en UTC.
 
 // ---- Lecturas ----

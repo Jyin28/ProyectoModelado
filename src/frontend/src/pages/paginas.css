@@ -2,8 +2,9 @@
 .pagina {
   border: 1px solid var(--border);
   background: var(--card-bg);
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-suave);
+  padding: 20px;
 }
 
 .pagina h1 {
@@ -34,16 +35,26 @@
 
 .panel-horarios {
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  background: var(--bg-suave);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 
 .panel-horarios h3 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
+.pagina .panel-horarios > p {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+/* Horas guardadas: fichas pequeñas que se quitan con la ×. */
 .panel-horarios ul {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin: 8px 0 0;
   padding: 0;
@@ -51,33 +62,52 @@
 }
 
 .panel-horarios li {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 4px 4px 12px;
-  background: var(--bg);
+  gap: 2px;
+  padding: 0 2px 0 12px;
+  background: var(--accent-suave);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 999px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.panel-horarios-acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+.panel-horarios li button {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
 }
 
-/* Paneles de órdenes: bloques separados, controles con espacio suficiente. */
+.panel-horarios-acciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.panel-horarios-acciones button {
+  padding: 0 8px;
+}
+
+/* Paneles de órdenes: tarjetas separadas, controles con espacio suficiente. */
 .panel-modulo {
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  background: var(--bg-suave);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 
 .panel-modulo h2 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .panel-modulo label {
@@ -127,4 +157,78 @@
   .estado-orden dl {
     grid-template-columns: 1fr;
   }
+}
+
+/* Pantalla de un módulo: sin tarjeta propia, ocupa todo el alto y reparte cabecera, pestañas y ajustes. */
+.pagina-modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.modulo-cabecera {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.modulo-cabecera h1 {
+  margin-right: auto;
+}
+
+.pagina .modulo-estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagina .modulo-estado > * {
+  margin: 0;
+}
+
+.pagina .modulo-estado .aviso {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.rejilla-lecturas-compacta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 560px;
+}
+
+.pagina .modulo-nota {
+  flex: none;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+/* Celular: lecturas más pequeñas para que quepan las dos junto al panel lateral. */
+@media (max-width: 599px) {
+  .modulo-cabecera h1 {
+    flex: 1 0 100%;
+  }
+
+  .rejilla-lecturas-compacta {
+    flex-basis: 100%;
+    gap: 8px;
+  }
+}
+
+.panel-modulo select,
+.panel-modulo input {
+  min-width: 0;
+  max-width: 100%;
 }

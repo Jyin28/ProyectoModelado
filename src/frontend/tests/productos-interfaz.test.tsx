@@ -91,8 +91,8 @@ describe('Productos: habitación interactiva', () => {
     expect(principales.map((e) => [e.querySelector('strong')?.textContent, e.getAttribute('href')])).toEqual(
       ESPERADOS.map((e) => [e.nombre, e.destino]),
     )
-    // Vistas especializadas: Colchón (Pico) sigue accesible.
-    expect(within(lista).getByRole('link', { name: /Colchón \(Pico\)/ })).toHaveAttribute('href', '/colchon-pico')
+    // El colchón es uno solo: ya no hay una vista aparte «Colchón (Pico)».
+    expect(within(lista).queryByRole('link', { name: /Colchón \(Pico\)/ })).not.toBeInTheDocument()
   })
 
   it('la cámara del teléfono solo se ofrece si está habilitada', () => {
@@ -160,13 +160,11 @@ describe('Usuario', () => {
 })
 
 describe('Funciones de un producto', () => {
-  const imagen = { src: '/productos/prueba.png', ancho: 400, alto: 300, alt: 'Producto de prueba' }
   const funciones = [
     {
       id: 'luz',
       etiqueta: 'Lámpara',
       icono: 'lampara' as const,
-      punto: { x: 20, y: 30 },
       contenido: <button type="button">Aplicar</button>,
     },
     {
@@ -177,55 +175,51 @@ describe('Funciones de un producto', () => {
     },
   ]
 
-  it('tocar el botón de la imagen solo abre el panel, con foco; Escape lo cierra y devuelve el foco', async () => {
+  it('las funciones son pestañas: la primera ya está elegida y su panel a la vista', () => {
+    render(<FuncionesProducto funciones={funciones} />)
+    const pestanas = screen.getByRole('tablist', { name: 'Funciones' })
+    expect(within(pestanas).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Lámpara', 'Parlante'])
+    expect(screen.getByRole('tab', { name: 'Lámpara' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Parlante' })).toHaveAttribute('aria-selected', 'false')
+    const panel = screen.getByRole('tabpanel', { name: 'Lámpara' })
+    expect(within(panel).getByRole('button', { name: 'Aplicar' })).toBeInTheDocument()
+    expect(screen.queryByText('Ajustes del parlante')).not.toBeInTheDocument()
+  })
+
+  it('elegir una pestaña cambia el panel y no pulsa nada dentro de él', async () => {
     const alAplicar = vi.fn()
     render(
       <FuncionesProducto
-        imagen={imagen}
         funciones={[
           { ...funciones[0], contenido: <button type="button" onClick={alAplicar}>Aplicar</button> },
           funciones[1],
         ]}
       />,
     )
-    const punto = screen.getByRole('button', { name: 'Lámpara', pressed: false })
-    expect(punto).toHaveStyle({ '--x': '20%', '--y': '30%' })
-    await userEvent.click(punto)
-    const panel = screen.getByRole('dialog', { name: 'Lámpara' })
-    expect(panel).toHaveFocus()
+    await userEvent.click(screen.getByRole('tab', { name: 'Parlante' }))
+    expect(screen.getByRole('tabpanel', { name: 'Parlante' })).toHaveTextContent('Ajustes del parlante')
+    expect(screen.queryByRole('button', { name: 'Aplicar' })).not.toBeInTheDocument()
     expect(alAplicar).not.toHaveBeenCalled()
-    expect(within(panel).getByRole('button', { name: 'Aplicar' })).toBeInTheDocument()
-
-    await userEvent.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(punto).toHaveFocus()
   })
 
-  it('la lista «Funciones» abre los mismos paneles y tiene cierre visible', async () => {
-    render(<FuncionesProducto imagen={imagen} funciones={funciones} />)
-    const lista = screen.getByRole('navigation', { name: 'Funciones' })
-    // Solo la función con punto aparece sobre la imagen; las dos están en la lista.
-    expect(within(lista).getAllByRole('button').map((b) => b.textContent)).toEqual(['Lámpara', 'Parlante'])
-    await userEvent.click(within(lista).getByRole('button', { name: 'Parlante' }))
-    const panel = screen.getByRole('dialog', { name: 'Parlante' })
-    expect(within(panel).getByText('Ajustes del parlante')).toBeInTheDocument()
-    await userEvent.click(within(panel).getByRole('button', { name: 'Cerrar' }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  it('las flechas y Inicio/Fin recorren las pestañas con el foco', async () => {
+    render(<FuncionesProducto funciones={funciones} />)
+    screen.getByRole('tab', { name: 'Lámpara' }).focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Parlante' })).toHaveFocus()
+    expect(screen.getByRole('tab', { name: 'Parlante' })).toHaveAttribute('aria-selected', 'true')
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Lámpara' })).toHaveAttribute('aria-selected', 'true')
+    await userEvent.keyboard('{End}')
+    expect(screen.getByRole('tab', { name: 'Parlante' })).toHaveAttribute('aria-selected', 'true')
+    await userEvent.keyboard('{Home}')
+    expect(screen.getByRole('tab', { name: 'Lámpara' })).toHaveAttribute('aria-selected', 'true')
   })
 
-  it('funciona aunque falte la imagen: sigue la lista', async () => {
-    render(<FuncionesProducto imagen={imagen} funciones={funciones} />)
-    fireEvent.error(screen.getByRole('img', { name: 'Producto de prueba' }))
-    expect(screen.queryByRole('img')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Lámpara' }))
-    expect(screen.getByRole('dialog', { name: 'Lámpara' })).toBeInTheDocument()
-  })
-
-  it('un panel vacío (sin sesión o backend) lo explica en vez de quedar en blanco', async () => {
+  it('un panel vacío (sin sesión o backend) lo explica en vez de quedar en blanco', () => {
     render(<FuncionesProducto funciones={[{ ...funciones[1], contenido: null }]} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Parlante' }))
-    const panel = screen.getByRole('dialog', { name: 'Parlante' })
-    expect(panel.querySelector('.hoja-cuerpo')).toBeEmptyDOMElement()
+    const panel = screen.getByRole('tabpanel', { name: 'Parlante' })
+    expect(panel.querySelector('.producto-cuerpo')).toBeEmptyDOMElement()
     expect(within(panel).getByText(/necesita el backend configurado/)).toBeInTheDocument()
   })
 })

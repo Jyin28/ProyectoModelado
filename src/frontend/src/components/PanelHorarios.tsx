@@ -4,6 +4,9 @@ import { useSesion } from '../hooks/useSesion.ts'
 import { horaValida } from '../utils/ordenes.ts'
 import SelectorHora from './SelectorHora.tsx'
 
+// Las ruedas siempre muestran una hora; no se agrega nada hasta pulsar «Agregar».
+const HORA_INICIAL = '08:00'
+
 type Props = {
   dispositivoId: string
   /** Tipo de horario del backend, por ejemplo figuras_encender. */
@@ -26,7 +29,7 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
   const activo = backendConfigurado && sesion.tipo === 'autenticado'
   const [guardadas, setGuardadas] = useState<string[] | null>(null)
   const [borrador, setBorrador] = useState<string[]>([])
-  const [nueva, setNueva] = useState('')
+  const [nueva, setNueva] = useState(HORA_INICIAL)
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
   const idTitulo = `horarios-${tipo}`
@@ -55,7 +58,6 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
     }
     setError(null)
     setBorrador((b) => (b.includes(nueva) ? b : [...b, nueva].sort()))
-    setNueva('')
   }
 
   async function guardar() {
@@ -95,7 +97,7 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
                 onClick={() => setBorrador((b) => b.filter((h) => h !== hora))}
                 aria-label={`Quitar ${hora} de ${titulo}`}
               >
-                Quitar
+                <span aria-hidden="true">×</span>
               </button>
             </li>
           ))}
@@ -103,8 +105,8 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
       )}
       <SelectorHora etiqueta={`Nueva hora para ${titulo}`} valor={nueva} alCambiar={setNueva} />
       <div className="panel-horarios-acciones">
-        <button type="button" onClick={agregar}>
-          Agregar hora a {titulo}
+        <button type="button" onClick={agregar} aria-label={`Agregar hora a ${titulo}`}>
+          Agregar
         </button>
         <button
           type="button"
@@ -112,8 +114,9 @@ function PanelHorarios({ dispositivoId, tipo, titulo, descripcion, soloAviso = f
           onClick={guardar}
           disabled={guardando || sinCambios}
           aria-busy={guardando}
+          aria-label={`Guardar horarios de ${titulo}`}
         >
-          {guardando ? 'Guardando…' : `Guardar horarios de ${titulo}`}
+          {guardando ? 'Guardando…' : 'Guardar'}
         </button>
       </div>
       {error && <p role="alert">{error}</p>}

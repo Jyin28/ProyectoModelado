@@ -14,8 +14,8 @@ Actualizado el 12 nov 2026 (CR), según `origin/development` (`34d7993`, PR #8).
 - Nada de datos inventados ni controles que finjan operar hardware. Sin datos: «Sin datos» / «Desactualizado». Datos de ejemplo solo en tests.
 - Nada de estado optimista: un control cambia de estado solo con confirmación real (`ok: true`) y muestra con texto los estados de su contrato (p. ej. `lampara.md`: solicitud registrada, enviada, confirmada por la Pico, error, sin respuesta).
 - Supabase solo desde `src/services/`; solo la clave publicable; nunca secretos en el repo.
-- `src/shared/contracts/*.md` manda sobre `src/models/contrato.ts`. Comandos idénticos a `src/firmware/common/utilities/comandos.py`; no inventar comandos.
-- No modificar `src/shared/`, `supabase/`, `src/firmware/` ni la documentación académica.
+- `src/shared/contracts/*.md` manda sobre `src/models/contrato.ts`. Comandos idénticos a `src/firmware/pico/common/utilities/comandos.py`; no inventar comandos.
+- No modificar `src/shared/`, `supabase/`, `src/firmware/pico/` ni la documentación académica.
 - Fechas en UTC (ISO), mostradas en `America/Costa_Rica` con `Intl`.
 - Responsivo a 360 px y 1280 px. Todo en español.
 - Claude no hace commit ni push: muestra el diff y propone el mensaje (Conventional Commits, alcance `web`).
@@ -124,7 +124,7 @@ Hito **H5 (23 nov)**: congelamiento de funciones.
 
 - Al empezar cada sesión: `git fetch origin` + `git rebase origin/development`; revisar si B tocó `src/frontend`.
 - Antes de push: `git status` (sin `.env.local`), `git log --oneline origin/development..HEAD`, `/verificar`.
-- Conflictos en `src/shared/`, `supabase/` o `src/firmware/`: no se resuelven aquí; avisar a B o C.
+- Conflictos en `src/shared/`, `supabase/` o `src/firmware/pico/`: no se resuelven aquí; avisar a B o C.
 - PR a `development` con commits, capturas 360/1280 px y criterios cubiertos; lo revisa B o C.
 
 ## 9. Candidatas Sprint 4 (fuera del alcance actual)

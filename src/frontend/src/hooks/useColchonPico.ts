@@ -37,6 +37,7 @@ export type InfoColchonPico = {
   detenerAlarma: () => Promise<boolean>
   capturarReferencia: (referenciaG?: number | null) => Promise<boolean>
   tararBalanza: () => Promise<boolean>
+  calibrarBalanza: (pesoConocidoG: number) => Promise<boolean>
   refrescar: () => Promise<void>
 }
 
@@ -207,6 +208,7 @@ export function useColchonPico(dispositivoId: string): InfoColchonPico {
           alarm_stop: 'Detener Alarma',
           mattress_reference: 'Capturar Referencia de Peso',
           scale_tare: 'Tarar Balanza',
+          scale_calibrate: 'Calibrar Balanza',
         }
         setMensajeExito(
           `Orden "${nombresComando[comando] ?? comando}" registrada en Supabase (pendiente de ejecución por el colchón).`,
@@ -262,6 +264,15 @@ export function useColchonPico(dispositivoId: string): InfoColchonPico {
     return ejecutarComando('scale_tare', {})
   }
 
+  // El firmware acepta known_g entre 1 y 5000 (comandos.py); se valida igual aquí.
+  const calibrarBalanza = async (pesoConocidoG: number) => {
+    if (!Number.isFinite(pesoConocidoG) || pesoConocidoG < 1 || pesoConocidoG > 5000) {
+      setErrorComando('El peso conocido debe estar entre 1 y 5000 g.')
+      return false
+    }
+    return ejecutarComando('scale_calibrate', { known_g: pesoConocidoG })
+  }
+
   return {
     activo: habilitado,
     cargando,
@@ -282,6 +293,7 @@ export function useColchonPico(dispositivoId: string): InfoColchonPico {
     detenerAlarma,
     capturarReferencia,
     tararBalanza,
+    calibrarBalanza,
     refrescar: () => {
       setRefresco((prev) => prev + 1)
       return Promise.resolve()

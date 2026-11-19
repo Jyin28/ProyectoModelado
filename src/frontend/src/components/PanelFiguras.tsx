@@ -12,7 +12,6 @@ import {
 import { MENSAJE_INTERVALO, parsearIntervalo } from '../utils/ordenes.ts'
 import EstadoOrdenModulo from './EstadoOrdenModulo.tsx'
 import PerillaIntervalo from './PerillaIntervalo.tsx'
-import PanelHorarios from './PanelHorarios.tsx'
 
 type Props = { dispositivoId: string }
 
@@ -55,46 +54,48 @@ function PanelFiguras({ dispositivoId }: Props) {
   }
 
   return (
-    <section className="panel-modulo" aria-labelledby="titulo-panel-figuras">
+    <section className="panel-modulo panel-figuras" aria-labelledby="titulo-panel-figuras">
       <h2 id="titulo-panel-figuras">Control de las figuras</h2>
       <p>
         Las órdenes llegan a la Pico y se muestran como confirmadas solo cuando
         ella lo informa. Una confirmación no comprueba que la luz esté
         encendida.
       </p>
-      <div role="group" aria-label="Todos los LED">
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_all', params: { on: true } })}>
-          Encender todos
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_all', params: { on: false } })}>
-          Apagar todos
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_stop', params: {} })}>
-          Detener secuencia
-        </button>
-      </div>
-      <div role="group" aria-label="Un LED">
-        <label>
-          LED
-          <select value={indice} onChange={(e) => setIndice(e.target.value)}>
-            {LEDS.map((i) => (
-              <option key={i} value={i}>
-                Figura {i + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: true } })}>
-          Encender la figura
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: false } })}>
-          Apagar la figura
-        </button>
+      <div className="panel-figuras-leds">
+        <div role="group" aria-label="Todos los LED">
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_all', params: { on: true } })}>
+            Encender todos
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_all', params: { on: false } })}>
+            Apagar todos
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_stop', params: {} })}>
+            Detener secuencia
+          </button>
+        </div>
+        <div role="group" aria-label="Un LED">
+          <label>
+            LED
+            <select value={indice} onChange={(e) => setIndice(e.target.value)}>
+              {LEDS.map((i) => (
+                <option key={i} value={i}>
+                  Figura {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: true } })}>
+            Encender la figura
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: false } })}>
+            Apagar la figura
+          </button>
+        </div>
       </div>
       <form onSubmit={alSecuencia} noValidate aria-label="Secuencia">
         <label>
@@ -143,18 +144,6 @@ function PanelFiguras({ dispositivoId }: Props) {
       <p role="status">{confirmada}</p>
       {solicitada && <p>{solicitada} La Pico confirma la secuencia, pero no informa el intervalo que aplicó.</p>}
       <EstadoOrdenModulo orden={orden} cargando={cargando} fallo={fallo} errorEnvio={errorEnvio} />
-      <PanelHorarios
-        dispositivoId={dispositivoId}
-        tipo="figuras_encender"
-        titulo="Encender figuras"
-        descripcion="A cada hora se pide encender las figuras con la última secuencia que la Pico confirmó (con su intervalo en segundos); si no hay ninguna, se encienden todas fijas."
-      />
-      <PanelHorarios
-        dispositivoId={dispositivoId}
-        tipo="figuras_apagar"
-        titulo="Apagar figuras"
-        descripcion="A cada hora se pide apagar todas las figuras."
-      />
     </section>
   )
 }

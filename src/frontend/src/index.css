@@ -1,48 +1,30 @@
 :root {
-  /* Marfil, superficies claras, texto oscuro y verde petróleo como acento. */
-  --text: #26302f;
-  --text-muted: #55605e;
-  --bg: #fbf7ee;
-  --border: #ded6c4;
-  --card-bg: #fffdf8;
-  --accent: #0e6b6b;
-  --accent-strong: #0a5252;
+  /* App de hogar inteligente: crema de fondo, blanco cálido en las tarjetas y ámbar como acento. */
+  --text: #3a342a;
+  --text-muted: #6f6656;
+  --bg: #f6efe1;
+  --bg-suave: #fbf6ec;
+  --border: #e8dec9;
+  --card-bg: #fffdf9;
+  --accent: #a85a14;
+  --accent-strong: #8a470c;
   --accent-contraste: #ffffff;
-  --accent-suave: #dff0ee;
-  --notice-bg: #fff3cd;
-  --notice-border: #f0d78c;
-  --dot: #a0a0ab;
-  --ok: #2e7d4a;
+  --accent-suave: #f8e8d1;
+  --notice-bg: #fdf1cf;
+  --notice-border: #ecd48c;
+  --dot: #b2a994;
+  --ok: #3b7a4b;
   /* Solo para estados que requieren atención, siempre con texto. */
   --error: #b3261e;
-  --sombra: 0 6px 20px rgb(38 48 47 / 14%);
-  --radio: 12px;
+  --sombra: 0 8px 24px rgb(94 72 36 / 12%);
+  --sombra-suave: 0 2px 10px rgb(94 72 36 / 8%);
+  --radio: 18px;
 
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #e8ecea;
-    --text-muted: #b5c0bd;
-    --bg: #131817;
-    --border: #35403e;
-    --card-bg: #1c2322;
-    --accent: #5dc4bf;
-    --accent-strong: #86d7d2;
-    --accent-contraste: #0b1d1c;
-    --accent-suave: #1f3a38;
-    --notice-bg: #3a3419;
-    --notice-border: #5c531f;
-    --dot: #55565f;
-    --ok: #5fbf77;
-    --error: #ef7b73;
-    --sombra: 0 6px 20px rgb(0 0 0 / 40%);
-  }
 }
 
 * {
@@ -55,7 +37,8 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   color: var(--text);
   font-weight: 600;
   margin: 0;
@@ -70,7 +53,8 @@ button {
   color: var(--text);
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
+  box-shadow: var(--sombra-suave);
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
 }
@@ -88,7 +72,9 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-[role='slider']:focus-visible {
+[role='slider']:focus-visible,
+[role='listbox']:focus-visible,
+[role='tab']:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -122,11 +108,11 @@ input,
 select {
   font: inherit;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 12px;
   color: var(--text);
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 [role='alert'] {

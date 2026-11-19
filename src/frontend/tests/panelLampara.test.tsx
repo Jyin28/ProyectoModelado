@@ -82,14 +82,14 @@ function montar(
   }
 }
 
-// El panel de la lámpara se abre desde la lista «Funciones» de la Cuna. Con
+// El panel de la lámpara es una pestaña de la Cuna (la primera, ya elegida al abrir). Con
 // temporizadores falsos se abre tras avanzar, apenas existe el botón.
 const avanzar = async (ms = 0) => {
   await act(async () => {
     await vi.advanceTimersByTimeAsync(ms)
   })
-  const boton = screen.queryByRole('button', { name: 'Lámpara' })
-  if (boton && boton.getAttribute('aria-expanded') === 'false') {
+  const boton = screen.queryByRole('tab', { name: 'Lámpara' })
+  if (boton && boton.getAttribute('aria-selected') === 'false') {
     await act(async () => {
       fireEvent.click(boton)
       await vi.advanceTimersByTimeAsync(0)
@@ -110,6 +110,14 @@ const estado = () =>
   screen.getByText('Estado de la última orden').nextElementSibling as HTMLElement
 const valor = (etiqueta: string) =>
   screen.getByText(etiqueta).nextElementSibling as HTMLElement
+
+// El brillo se elige con la perilla: por teclado, de 0 con Inicio y de 10 en 10 con Re Pág.
+function elegirBrillo(nivel: number) {
+  const perilla = screen.getByRole('slider', { name: 'Brillo' })
+  fireEvent.keyDown(perilla, { key: 'Home' })
+  for (let i = 0; i < Math.floor(nivel / 10); i++) fireEvent.keyDown(perilla, { key: 'PageUp' })
+  for (let i = 0; i < nivel % 10; i++) fireEvent.keyDown(perilla, { key: 'ArrowUp' })
+}
 
 function habilitar() {
   vi.stubEnv('VITE_LAMPARA_HABILITADA', 'true')
@@ -255,18 +263,15 @@ describe('Panel de lámpara', () => {
 })
 
 describe('Panel de lámpara: solicitud', () => {
-  it('niveles inválidos no llaman al servicio', async () => {
+  it('sin nivel elegido no llama al servicio y lo explica; con uno elegido sí envía', async () => {
     habilitar()
     const { solicitarLampara } = montar([ok(null)])
     await avanzar()
-    const campo = screen.getByLabelText('Nivel pedido (0 a 100)')
-    for (const v of ['', '101', '-1', '4.5']) {
-      fireEvent.change(campo, { target: { value: v } })
-      fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
-      expect(screen.getByRole('alert')).toHaveTextContent('Ingrese un número entero de 0 a 100.')
-      expect(campo).toHaveAttribute('aria-invalid', 'true')
-    }
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Ingrese un número entero de 0 a 100.')
     expect(solicitarLampara).not.toHaveBeenCalled()
+    elegirBrillo(30)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('el botón envía el nivel entero, no se duplica en curso y muestra la orden devuelta', async () => {
@@ -277,7 +282,7 @@ describe('Panel de lámpara: solicitud', () => {
       () => new Promise<Solicitud>((r) => (resolver = r)),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '0' } })
+    elegirBrillo(0)
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(solicitarLampara).toHaveBeenCalledWith('cuna-lampara-01', 0)
@@ -328,7 +333,7 @@ describe('Panel de lámpara: solicitud', () => {
       () => Promise.resolve({ ok: false, error: 'No se pudo registrar la solicitud de la lámpara.' }),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '10' } })
+    elegirBrillo(10)
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(screen.getByText('No se pudo registrar la solicitud de la lámpara.')).toBeInTheDocument()
@@ -344,7 +349,7 @@ describe('Panel de lámpara: solicitud', () => {
     )
     await avanzar()
     await avanzar(2_000) // segunda consulta queda en vuelo
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '10' } })
+    elegirBrillo(10)
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(valor('Nivel pedido')).toHaveTextContent('10 %')
@@ -353,10 +358,10 @@ describe('Panel de lámpara: solicitud', () => {
   })
 })
 
-describe('Panel de lámpara: deslizador de brillo', () => {
+describe('Panel de lámpara: perilla de brillo', () => {
   const deslizador = () => screen.getByRole('slider', { name: 'Brillo' })
 
-  it('mover el deslizador solo cambia el borrador: ninguna orden sale hasta «Aplicar brillo»', async () => {
+  it('girar la perilla solo cambia el borrador: ninguna orden sale hasta «Aplicar brillo»', async () => {
     habilitar()
     const { solicitarLampara } = montar(
       [ok(null)],
@@ -364,9 +369,10 @@ describe('Panel de lámpara: deslizador de brillo', () => {
     )
     await avanzar()
     expect(screen.getByText('Valor elegido: sin elegir')).toBeInTheDocument()
-    for (const v of ['10', '40', '65']) fireEvent.change(deslizador(), { target: { value: v } })
+    for (const v of [10, 40, 65]) elegirBrillo(v)
     expect(screen.getByText('Valor elegido: 65 %')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nivel pedido (0 a 100)')).toHaveValue(65)
+    expect(deslizador()).toHaveAttribute('aria-valuenow', '65')
+    expect(deslizador()).toHaveAttribute('aria-valuetext', '65 %')
     expect(solicitarLampara).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
@@ -382,7 +388,7 @@ describe('Panel de lámpara: deslizador de brillo', () => {
     habilitar()
     montar([ok(orden({ nivel: 40, estado: 'confirmado', nivel_confirmado: 35 }))])
     await avanzar()
-    fireEvent.change(deslizador(), { target: { value: '90' } })
+    elegirBrillo(90)
     expect(screen.getByText('Valor elegido: 90 %')).toBeInTheDocument()
     expect(valor('Nivel pedido')).toHaveTextContent('40 %')
     expect(valor('Nivel confirmado por la Pico')).toHaveTextContent('35 %')
@@ -395,7 +401,7 @@ describe('Panel de lámpara: deslizador de brillo', () => {
       () => Promise.resolve({ ok: false, error: 'No se pudo registrar la solicitud de la lámpara.' }),
     )
     await avanzar()
-    fireEvent.change(deslizador(), { target: { value: '30' } })
+    elegirBrillo(30)
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(screen.getByRole('alert')).toHaveTextContent('No se pudo registrar la solicitud')
@@ -439,7 +445,7 @@ describe('Panel de lámpara: cuenta y desmontaje', () => {
       () => new Promise<Solicitud>((r) => (resolver = r)),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '55' } })
+    elegirBrillo(55)
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     emitir(OTRA)

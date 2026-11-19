@@ -93,6 +93,5 @@ export const ACCESOS_PRODUCTOS: AccesoProducto[] = [
 
 /** Vistas especializadas que no tienen un objeto en la escena. */
 export const VISTAS_ESPECIALIZADAS = [
-  { ruta: '/colchon-pico', etiqueta: 'Colchón (Pico)', descripcion: 'Lecturas de la Pico del colchón' },
   { ruta: '/habitacion/camara', etiqueta: 'Cámara del teléfono', descripcion: 'Usar este teléfono como cámara' },
 ]

@@ -1,6 +1,6 @@
 // Órdenes remotas por módulo, tal como las guarda public.ordenes_modulo.
 // Contrato: src/shared/contracts/ordenes.md. Las fechas son ISO 8601 en UTC.
-// Los comandos y rangos son idénticos a src/firmware/common/utilities/comandos.py.
+// Los comandos y rangos son idénticos a src/firmware/pico/common/utilities/comandos.py.
 
 export const SECUENCIAS_LED = ['chase', 'alternate', 'blink_all'] as const
 export type SecuenciaLed = (typeof SECUENCIAS_LED)[number]
@@ -17,7 +17,7 @@ export const LED_INTERVALO_MAX_S = 3600
 
 /**
  * Sonidos del catálogo pregrabado. Deben coincidir con AUDIO_CATALOGO de
- * src/firmware/common/utilities/config.py (el nombre es el `sound` de audio_play).
+ * src/firmware/pico/common/utilities/config.py (el nombre es el `sound` de audio_play).
  * Para sumar una canción: copiar su WAV a la Pico, agregarla allá y agregarla aquí.
  */
 export const CATALOGO_AUDIO = [

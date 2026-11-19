@@ -10,8 +10,13 @@ import './paginas.css'
 function PaginaAlimentacion() {
   const dispositivoId = dispositivoAlimentacionId()
   return (
-    <section className="pagina" aria-labelledby="titulo-alimentacion">
-      <h1 id="titulo-alimentacion">Alimentación</h1>
+    <section className="pagina pagina-modulo" aria-labelledby="titulo-alimentacion">
+      <header className="modulo-cabecera">
+        <h1 id="titulo-alimentacion">Alimentación</h1>
+        <div className="modulo-estado">
+          <AvisoSinDatos />
+        </div>
+      </header>
       <FuncionesProducto
         funciones={[
           {
@@ -47,8 +52,7 @@ function PaginaAlimentacion() {
           },
         ]}
       />
-      <AvisoSinDatos />
-      <p>
+      <p className="modulo-nota">
         El módulo de alimentación es independiente de la cuna: pesa el biberón
         y mide su temperatura. No calienta, no enfría y no da de comer. La web
         conduce la toma y la Pico pesa solo cuando se lo piden; los botones de

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -23,37 +23,75 @@ describe('SelectorHora', () => {
     return <SelectorHora etiqueta="Nueva hora" valor={valor} alCambiar={setValor} />
   }
 
+  const opcion = (rueda: 'Hora' | 'Minutos', texto: string) =>
+    screen.getByRole('option', { name: `${rueda} ${texto}` })
+
   it('sin hora elegida lo dice y no inventa una', () => {
     render(<Prueba />)
     expect(screen.getByText('Hora elegida: sin elegir')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nueva hora')).toHaveValue('')
+    expect(screen.queryByRole('option', { selected: true })).not.toBeInTheDocument()
   })
 
-  it('se elige con el dedo: hora y minutos en botones de 24 h, con la hora elegida a la vista', async () => {
+  it('hora y minutos son dos ruedas lado a lado, como en la alarma del iPhone', () => {
+    render(<Prueba inicial="07:30" />)
+    const grupo = screen.getByRole('group', { name: 'Nueva hora' })
+    const ruedas = within(grupo).getAllByRole('listbox')
+    expect(ruedas.map((r) => r.getAttribute('aria-label'))).toEqual(['Hora', 'Minutos'])
+    // Mismo contenedor y orden horizontal: la hora a la izquierda y los minutos a la derecha.
+    expect(ruedas[0].parentElement).toBe(ruedas[1].parentElement)
+    expect(ruedas[0].compareDocumentPosition(ruedas[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('se elige tocando una fila de cada rueda, con la hora elegida a la vista', async () => {
     render(<Prueba />)
-    await userEvent.click(screen.getByRole('button', { name: 'Hora 06' }))
+    await userEvent.click(opcion('Hora', '06'))
     expect(screen.getByText('Hora elegida: 06:00')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Minutos 30' }))
-    expect(screen.getByText('Hora elegida: 06:30')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nueva hora')).toHaveValue('06:30')
-    expect(screen.getByRole('button', { name: 'Hora 06' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Minutos 30' })).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(screen.getByRole('button', { name: 'Hora 21' }))
-    expect(screen.getByText('Hora elegida: 21:30')).toBeInTheDocument()
+    await userEvent.click(opcion('Minutos', '37'))
+    expect(screen.getByText('Hora elegida: 06:37')).toBeInTheDocument()
+    expect(opcion('Hora', '06')).toHaveAttribute('aria-selected', 'true')
+    expect(opcion('Minutos', '37')).toHaveAttribute('aria-selected', 'true')
+    await userEvent.click(opcion('Hora', '21'))
+    expect(screen.getByText('Hora elegida: 21:37')).toBeInTheDocument()
   })
 
-  it('también se escribe con el teclado y los botones reflejan la hora escrita', () => {
-    render(<Prueba />)
-    fireEvent.change(screen.getByLabelText('Nueva hora'), { target: { value: '23:45' } })
+  it('el teclado mueve la rueda enfocada: flechas, Re Pág/Av Pág, Inicio y Fin', async () => {
+    render(<Prueba inicial="23:45" />)
+    const horas = screen.getByRole('listbox', { name: 'Hora' })
+    const minutos = screen.getByRole('listbox', { name: 'Minutos' })
+    horas.focus()
+    await userEvent.keyboard('{ArrowUp}')
+    expect(screen.getByText('Hora elegida: 22:45')).toBeInTheDocument()
+    await userEvent.keyboard('{End}')
     expect(screen.getByText('Hora elegida: 23:45')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Hora 23' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Minutos 45' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.keyboard('{Home}')
+    expect(screen.getByText('Hora elegida: 00:45')).toBeInTheDocument()
+    minutos.focus()
+    await userEvent.keyboard('{PageDown}')
+    expect(screen.getByText('Hora elegida: 00:55')).toBeInTheDocument()
+    await userEvent.keyboard('{End}{ArrowDown}')
+    expect(screen.getByText('Hora elegida: 00:59')).toBeInTheDocument()
   })
 
-  it('ofrece 24 horas y los minutos de 5 en 5', () => {
+  it('ofrece las 24 horas y los 60 minutos', () => {
     render(<Prueba />)
-    expect(within(screen.getByRole('group', { name: 'Hora' })).getAllByRole('button')).toHaveLength(24)
-    expect(within(screen.getByRole('group', { name: 'Minutos' })).getAllByRole('button')).toHaveLength(12)
+    expect(within(screen.getByRole('listbox', { name: 'Hora' })).getAllByRole('option')).toHaveLength(24)
+    expect(within(screen.getByRole('listbox', { name: 'Minutos' })).getAllByRole('option')).toHaveLength(60)
+  })
+
+  it('al detenerse el desplazamiento elige la fila que quedó en el centro', () => {
+    vi.useFakeTimers()
+    try {
+      render(<Prueba inicial="08:00" />)
+      const horas = screen.getByRole('listbox', { name: 'Hora' })
+      horas.scrollTop = 38 * 15 // 15 filas de 38 px
+      fireEvent.scroll(horas)
+      act(() => {
+        vi.advanceTimersByTime(150)
+      })
+      expect(screen.getByText('Hora elegida: 15:00')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

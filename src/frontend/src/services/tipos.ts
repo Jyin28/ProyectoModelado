@@ -27,7 +27,6 @@ import type {
   Toma,
 } from '../models/alimentacion.ts'
 import type { RespuestaHistorial } from '../models/historial.ts'
-import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
 import type { EventoColchonPico, OrdenColchonPico } from '../models/colchonPico.ts'
 import type {
   EventoHabitacion,
@@ -212,21 +211,6 @@ export interface ServicioVoz {
   ): Promise<Resultado<null>>
 }
 
-export interface ServicioColchon {
-  /** Configuración guardada, o null si nunca se guardó (no hay valores por defecto). */
-  obtenerConfig(dispositivoId: string): Promise<Resultado<ConfigColchon | null>>
-  /** Un rechazo conserva la configuración anterior. */
-  guardarConfig(
-    dispositivoId: string,
-    config: ConfigColchon,
-  ): Promise<Resultado<ConfigColchon>>
-  /** Eventos de armado, alarma y parada, del más reciente al más antiguo. */
-  listarEventos(
-    dispositivoId: string,
-    limite: number,
-  ): Promise<Resultado<EventoColchon[]>>
-}
-
 export interface ServicioHabitacion {
   /** Eventos de puerta y movimiento, del más reciente al más antiguo. */
   listarEventos(
@@ -278,9 +262,8 @@ export interface ServicioHistorial {
 }
 
 /**
- * Colchón de la Pico del colchón (pico-figuras-colchon-01): lee eventos_colchon y
- * pide órdenes con solicitar_comando_colchon. Convive con `ServicioColchon`
- * (fase 6, módulo cuna-colchon-NN con órdenes por módulo).
+ * Colchón (el de la Pico, pico-figuras-colchon-01): lee eventos_colchon y pide
+ * órdenes con solicitar_comando_colchon. Es el único colchón de la web.
  */
 export interface ServicioColchonPico {
   obtenerUltimoEvento(
@@ -309,7 +292,6 @@ export type Servicios = {
   limites: ServicioLimites
   horarios: ServicioHorarios
   voz: ServicioVoz
-  colchon: ServicioColchon
   colchonPico: ServicioColchonPico
   habitacion: ServicioHabitacion
   alimentacion: ServicioAlimentacion

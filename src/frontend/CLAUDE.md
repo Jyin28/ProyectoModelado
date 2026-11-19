@@ -41,7 +41,7 @@ Reglas permanentes de la web. Complementan el `CLAUDE.md` de la raíz.
 ## Plan y contratos
 - El plan de la web está en `src/frontend/PLAN.md`; cada prompt cita su fase y commit.
 - `src/shared/contracts/*.md` manda sobre `src/models/contrato.ts`. Si difieren, se corrige el modelo, nunca el contrato.
-- Los comandos y sus parámetros son idénticos a `src/firmware/common/utilities/comandos.py`; no inventar comandos.
+- Los comandos y sus parámetros son idénticos a `src/firmware/pico/common/utilities/comandos.py`; no inventar comandos.
 
 ## Controles de hardware
 - Nada de estado optimista: un control muestra el estado nuevo solo con una confirmación real (`ok: true`).
@@ -50,4 +50,4 @@ Reglas permanentes de la web. Complementan el `CLAUDE.md` de la raíz.
 
 ## Forma de trabajar
 - No hacer commit ni push: mostrar el diff y proponer el mensaje (Conventional Commits, alcance `web`).
-- No modificar `src/shared/`, `supabase/` ni `src/firmware/`: son de B y C.
+- No modificar `src/shared/`, `supabase/` ni `src/firmware/pico/`: son de B y C.

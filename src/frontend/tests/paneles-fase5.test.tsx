@@ -15,7 +15,7 @@ import type {
   SesionVoz,
 } from '../src/services/tipos.ts'
 import { MENSAJE_INTERVALO } from '../src/utils/ordenes.ts'
-import { MENSAJE_SIN_MICROFONO } from '../src/hooks/useVoz.ts'
+import { MENSAJE_CONTEXTO_INSEGURO, MENSAJE_SIN_MICROFONO } from '../src/hooks/useVoz.ts'
 import type { Capturador } from '../src/utils/voz.ts'
 import { abrirFuncion } from './ayudas.ts'
 
@@ -217,10 +217,12 @@ describe('Figuras LED', () => {
     abrir('/figuras', {
       horarios: { listar: (_d, tipo) => ok(tipo === 'figuras_encender' ? ['20:00'] : []), reemplazar },
     })
-    await abrirFuncion('Secuencias e intervalo')
+    await abrirFuncion('Horarios')
     const grupo = await screen.findByRole('group', { name: 'Encender figuras' })
     expect(await within(grupo).findByText('20:00')).toBeInTheDocument()
-    fireEvent.change(within(grupo).getByLabelText(/Nueva hora/), { target: { value: '06:30' } })
+    // Las ruedas de hora y minutos empiezan en 08:00; se llevan a 06:30 tocando una fila de cada una.
+    fireEvent.click(within(grupo).getByRole('option', { name: 'Hora 06' }))
+    fireEvent.click(within(grupo).getByRole('option', { name: 'Minutos 30' }))
     fireEvent.click(within(grupo).getByRole('button', { name: /Agregar hora/ }))
     fireEvent.click(within(grupo).getByRole('button', { name: /Guardar horarios/ }))
     await waitFor(() =>
@@ -299,23 +301,91 @@ describe('Monitoreo de movimiento y audio', () => {
 
 describe('Límites de ambiente', () => {
   const campo = (panel: HTMLElement, nombre: RegExp) => within(panel).getByLabelText(nombre)
+  const escribir = (panel: HTMLElement) =>
+    fireEvent.click(within(panel).getByRole('button', { name: 'Escribir valores' }))
+  const tirador = (panel: HTMLElement, nombre: string) => within(panel).getByRole('slider', { name: nombre })
+  const pulsar = (el: HTMLElement, tecla: string, veces = 1) => {
+    for (let i = 0; i < veces; i++) fireEvent.keyDown(el, { key: tecla })
+  }
 
   it('sin límites guardados lo dice y no inventa valores (CA-10.1)', async () => {
     abrir('/cuna')
     const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     expect(await within(panel).findByText('Todavía no hay límites guardados.')).toBeInTheDocument()
+    // Los deslizadores dicen «Sin elegir» y los valores escritos están ocultos hasta pedirlos.
+    expect(tirador(panel, 'Límite inferior de temperatura')).toHaveAttribute('aria-valuetext', 'Sin elegir')
+    expect(tirador(panel, 'Límite superior de humedad')).toHaveAttribute('aria-valuetext', 'Sin elegir')
+    expect(within(panel).queryByLabelText(/Temperatura mínima/)).not.toBeInTheDocument()
+    escribir(panel)
     expect(campo(panel, /Temperatura mínima/)).toHaveValue('')
   })
 
-  it('guarda límites válidos y muestra los guardados (CA-10.1, CA-10.3)', async () => {
+  it('los valores escritos se despliegan y se ocultan con el botón', async () => {
+    abrir('/cuna')
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
+    const boton = await within(panel).findByRole('button', { name: 'Escribir valores' })
+    expect(boton).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(boton)
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+    expect(campo(panel, /Humedad máxima/)).toBeInTheDocument()
+    fireEvent.click(boton)
+    expect(within(panel).queryByLabelText(/Humedad máxima/)).not.toBeInTheDocument()
+  })
+
+  it('los deslizadores de dos extremos eligen el rango y se guarda lo que se ve (CA-10.1)', async () => {
     const guardar = vi.fn((_d: string, l: LimitesAmbiente) => ok(l))
     abrir('/cuna', { limites: { guardar } })
     const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     await within(panel).findByText('Todavía no hay límites guardados.')
+    const tMin = tirador(panel, 'Límite inferior de temperatura')
+    const tMax = tirador(panel, 'Límite superior de temperatura')
+    pulsar(tMin, 'PageUp', 4) // 0 → 20 °C (cada Re Pág suma 10 pasos de 0,5)
+    pulsar(tMax, 'PageDown', 4) // 50 → 30 °C
+    pulsar(tMax, 'ArrowLeft', 8) // 30 → 26 °C
+    pulsar(tirador(panel, 'Límite inferior de humedad'), 'PageUp', 4) // 0 → 40 %
+    pulsar(tirador(panel, 'Límite superior de humedad'), 'PageDown', 4) // 100 → 60 %
+    expect(tMin).toHaveAttribute('aria-valuetext', '20,0 °C')
+    expect(tMax).toHaveAttribute('aria-valuetext', '26,0 °C')
+    // El valor se ve también en los campos escritos.
+    escribir(panel)
+    expect(campo(panel, /Temperatura máxima/)).toHaveValue('26')
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
+    await waitFor(() =>
+      expect(guardar).toHaveBeenCalledWith('cuna-ambiente-01', {
+        temp_min: 20,
+        temp_max: 26,
+        hum_min: 40,
+        hum_max: 60,
+      }),
+    )
+    expect(await within(panel).findByText('Límites guardados.')).toBeInTheDocument()
+  })
+
+  it('un extremo nunca cruza al otro y mover uno deja los dos elegidos', async () => {
+    abrir('/cuna')
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
+    await within(panel).findByText('Todavía no hay límites guardados.')
+    const hMin = tirador(panel, 'Límite inferior de humedad')
+    const hMax = tirador(panel, 'Límite superior de humedad')
+    pulsar(hMax, 'Home') // el máximo no baja de mínimo + paso
+    expect(hMax).toHaveAttribute('aria-valuenow', '1')
+    expect(hMin).toHaveAttribute('aria-valuenow', '0')
+    expect(hMin).toHaveAttribute('aria-valuetext', '0 %')
+    pulsar(hMin, 'End') // el mínimo no sube de máximo - paso
+    expect(hMin).toHaveAttribute('aria-valuenow', '0')
+  })
+
+  it('guarda límites válidos escritos a mano (CA-10.1, CA-10.3)', async () => {
+    const guardar = vi.fn((_d: string, l: LimitesAmbiente) => ok(l))
+    abrir('/cuna', { limites: { guardar } })
+    const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
+    await within(panel).findByText('Todavía no hay límites guardados.')
+    escribir(panel)
     fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '20' } })
     fireEvent.change(campo(panel, /Temperatura máxima/), { target: { value: '26,5' } })
     fireEvent.change(campo(panel, /Humedad mínima/), { target: { value: '40' } })
     fireEvent.change(campo(panel, /Humedad máxima/), { target: { value: '60' } })
+    expect(tirador(panel, 'Límite superior de temperatura')).toHaveAttribute('aria-valuenow', '26.5')
     fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
     await waitFor(() =>
       expect(guardar).toHaveBeenCalledWith('cuna-ambiente-01', {
@@ -337,7 +407,10 @@ describe('Límites de ambiente', () => {
       },
     })
     const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
-    await waitFor(() => expect(campo(panel, /Temperatura mínima/)).toHaveValue('20'))
+    await waitFor(() =>
+      expect(tirador(panel, 'Límite inferior de temperatura')).toHaveAttribute('aria-valuenow', '20'),
+    )
+    escribir(panel)
     fireEvent.change(campo(panel, /Temperatura mínima/), { target: { value: '30' } })
     fireEvent.click(within(panel).getByRole('button', { name: 'Guardar límites' }))
     expect(await within(panel).findByRole('alert')).toHaveTextContent('el mínimo debe ser menor que el máximo')
@@ -352,6 +425,7 @@ describe('Límites de ambiente', () => {
     })
     const panel = await regionDe('Temperatura y humedad', 'Límites de ambiente')
     await within(panel).findByText('Todavía no hay límites guardados.')
+    escribir(panel)
     for (const [n, v] of [[/Temperatura mínima/, '10'], [/Temperatura máxima/, '20'], [/Humedad mínima/, '30'], [/Humedad máxima/, '70']] as const) {
       fireEvent.change(campo(panel, n), { target: { value: v } })
     }
@@ -411,6 +485,24 @@ describe('Voz', () => {
     const panel = await regionDe('Parlante', 'Hablar a la cuna')
     expect(within(panel).getByText(/no se graba ni se guarda/)).toBeInTheDocument()
     expect(within(panel).getByText(/Todavía no se probó/)).toBeInTheDocument()
+  })
+
+  it('en una dirección sin contexto seguro avisa de https y no abre el canal de voz', async () => {
+    vi.stubEnv('VITE_VOZ_HABILITADA', 'true')
+    const previo = Object.getOwnPropertyDescriptor(window, 'isSecureContext')
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true })
+    try {
+      const abrirCanal = vi.fn(() => ok<SesionVoz>(sesionFalsa()))
+      abrir('/cuna', { voz: { abrir: abrirCanal } })
+      const panel = await regionDe('Parlante', 'Hablar a la cuna')
+      fireEvent.click(within(panel).getByRole('button', { name: 'Hablar' }))
+      expect(await within(panel).findByRole('alert')).toHaveTextContent(MENSAJE_CONTEXTO_INSEGURO)
+      expect(abrirCanal).not.toHaveBeenCalled()
+      expect(within(panel).getByRole('button', { name: 'Hablar' })).toBeEnabled()
+    } finally {
+      if (previo) Object.defineProperty(window, 'isSecureContext', previo)
+      else Reflect.deleteProperty(window, 'isSecureContext')
+    }
   })
 
   it('sin permiso de micrófono cierra el canal y avisa', async () => {

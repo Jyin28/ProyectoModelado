@@ -61,16 +61,15 @@ function PaginaCuna() {
       id: 'movimiento',
       etiqueta: 'Sensor de movimiento',
       icono: 'movimiento',
-      contenido: (
-        <>
-          <PanelMovimiento
-            dispositivoId={dispositivoMovimientoId}
-            habilitado={movimientoHabilitado}
-          />
-          {ordenesHabilitadas() && (
-            <PanelMonitoreoMovimiento dispositivoId={dispositivoMovimientoId} />
-          )}
-        </>
+      contenido: ordenesHabilitadas() ? (
+        <PanelMonitoreoMovimiento
+          dispositivoId={dispositivoMovimientoId}
+          previo={
+            <PanelMovimiento dispositivoId={dispositivoMovimientoId} habilitado={movimientoHabilitado} />
+          }
+        />
+      ) : (
+        <PanelMovimiento dispositivoId={dispositivoMovimientoId} habilitado={movimientoHabilitado} />
       ),
     })
   }
@@ -82,33 +81,38 @@ function PaginaCuna() {
   })
 
   return (
-    <section className="pagina" aria-labelledby="titulo-cuna">
-      <h1 id="titulo-cuna">Cuna</h1>
-      {activo && fallo && <BannerConexion estado="desconectado" />}
-      {activo && cargando && (
-        <p role="status">Cargando la última lectura…</p>
-      )}
-      {!cargando && lectura === null && <AvisoSinDatos />}
-      {!cargando && (
-        <div className="rejilla-lecturas">
-          <TarjetaLectura
-            etiqueta="Temperatura"
-            valor={lectura?.temperatura_c ?? null}
-            unidad="°C"
-            decimales={1}
-            registradoEn={lectura?.registrado_en ?? null}
-            umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
-          />
-          <TarjetaLectura
-            etiqueta="Humedad"
-            valor={lectura?.humedad_pct ?? null}
-            unidad="% HR"
-            decimales={0}
-            registradoEn={lectura?.registrado_en ?? null}
-            umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
-          />
+    <section className="pagina pagina-modulo" aria-labelledby="titulo-cuna">
+      <header className="modulo-cabecera">
+        <h1 id="titulo-cuna">Cuna</h1>
+        <div className="modulo-estado">
+          {activo && fallo && <BannerConexion estado="desconectado" />}
+          {activo && cargando && <p role="status">Cargando la última lectura…</p>}
+          {!cargando && lectura === null && <AvisoSinDatos />}
         </div>
-      )}
+        {!cargando && (
+          <div className="rejilla-lecturas rejilla-lecturas-compacta">
+            <TarjetaLectura
+              compacta
+              etiqueta="Temperatura"
+              valor={lectura?.temperatura_c ?? null}
+              unidad="°C"
+              decimales={1}
+              registradoEn={lectura?.registrado_en ?? null}
+              umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
+            />
+            <TarjetaLectura
+              compacta
+              etiqueta="Humedad"
+              valor={lectura?.humedad_pct ?? null}
+              unidad="% HR"
+              decimales={0}
+              registradoEn={lectura?.registrado_en ?? null}
+              umbralDesactualizadoS={UMBRAL_AMBIENTE_S}
+            />
+          </div>
+        )}
+      </header>
+
       <FuncionesProducto funciones={funciones} />
 
       {!activo && (

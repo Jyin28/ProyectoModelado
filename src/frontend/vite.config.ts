@@ -1,3 +1,4 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
@@ -16,12 +17,15 @@ const ENTORNO_NEUTRO = Object.fromEntries(
 )
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
+// `npm run dev:https` (modo "https") sirve la web por https con un certificado autofirmado y
+// escucha en la red local: el navegador del telefono solo da el microfono en un contexto
+// seguro (https o localhost), y desde el telefono la direccion es https://<IP>:5173.
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), ...(mode === 'https' ? [basicSsl()] : [])],
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
     env: ENTORNO_NEUTRO,
   },
-})
+}))

@@ -14,6 +14,8 @@ interface Props {
   decimales: number
   registradoEn: string | null
   umbralDesactualizadoS: number
+  /** Versión baja para la cabecera de un módulo: la misma información en menos alto. */
+  compacta?: boolean
 }
 
 type Estado = 'sin-datos' | 'actual' | 'desactualizado'
@@ -31,6 +33,7 @@ function TarjetaLectura({
   decimales,
   registradoEn,
   umbralDesactualizadoS,
+  compacta = false,
 }: Props) {
   const ahora = useAhora()
 
@@ -46,7 +49,7 @@ function TarjetaLectura({
 
   return (
     <article
-      className="tarjeta-lectura"
+      className={compacta ? 'tarjeta-lectura tarjeta-lectura-compacta' : 'tarjeta-lectura'}
       aria-label={etiqueta}
       data-estado={estado}
     >

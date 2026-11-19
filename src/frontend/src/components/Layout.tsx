@@ -23,6 +23,11 @@ function rutaPadre(ruta: string): string {
   return '/productos'
 }
 
+/**
+ * Estructura de la app: panel lateral izquierdo con los destinos generales y,
+ * a la derecha, la pantalla actual. La página no se desplaza: cada pantalla
+ * ocupa el alto disponible y solo se desplaza por dentro si no le cabe.
+ */
 function Layout() {
   const { backendConfigurado } = useServicios()
   const ubicacion = useLocation()
@@ -38,10 +43,14 @@ function Layout() {
 
   return (
     <div className="layout">
-      <header className="layout-header">
+      <aside className="layout-lateral">
         <Link to="/productos" className="layout-marca">
-          Cuna Inteligente IoT
+          <span className="layout-marca-logo" aria-hidden="true">
+            ☾
+          </span>
+          <span className="layout-marca-texto">Cuna Inteligente IoT</span>
         </Link>
+
         <nav className="layout-nav" aria-label="Principal">
           <ul>
             {DESTINOS.map((d) => (
@@ -58,28 +67,29 @@ function Layout() {
             ))}
           </ul>
         </nav>
-      </header>
 
-      {/* Con backend configurado, cada pantalla informa su propia conexión. */}
-      {!backendConfigurado && <BannerConexion estado="sin-configurar" />}
+        {!esRaiz && (
+          <button type="button" className="layout-atras" onClick={atras}>
+            <span aria-hidden="true">←</span> <span>Atrás</span>
+          </button>
+        )}
 
-      {!esRaiz && (
-        <button type="button" className="layout-atras" onClick={atras}>
-          <span aria-hidden="true">←</span> Atrás
-        </button>
-      )}
+        <footer className="layout-pie">
+          <p>
+            Aplicación base del Sprint 3. La integración con Supabase y el
+            firmware de la Raspberry Pi Pico 2 W todavía está pendiente de
+            prueba.
+          </p>
+        </footer>
+      </aside>
 
-      <main className="layout-contenido">
-        <Outlet />
-      </main>
-
-      <footer className="layout-pie">
-        <p>
-          Aplicación base del Sprint 3. La integración con Supabase y el
-          firmware de la Raspberry Pi Pico 2 W todavía está pendiente de
-          prueba.
-        </p>
-      </footer>
+      <div className="layout-columna">
+        {/* Con backend configurado, cada pantalla informa su propia conexión. */}
+        {!backendConfigurado && <BannerConexion estado="sin-configurar" />}
+        <main className="layout-contenido">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

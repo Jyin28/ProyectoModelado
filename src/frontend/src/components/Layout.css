@@ -1,28 +1,58 @@
+/* La app ocupa exactamente la pantalla: panel izquierdo fijo y contenido a la derecha. */
 .layout {
-  max-width: 1100px;
-  margin: 0 auto;
-  /* Espacio inferior para que la barra fija del celular y el área segura no tapen el contenido. */
-  padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
 }
 
-.layout-header {
+.layout-lateral {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 0;
+  padding: 12px 6px calc(12px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 18px rgb(94 72 36 / 6%);
 }
 
 .layout-marca {
-  font-size: 1.25rem;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 8px;
   color: var(--accent-strong);
+  font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
 }
 
+.layout-marca-logo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  font-size: 1.4rem;
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-radius: 14px;
+}
+
+.layout-marca-texto {
+  display: none;
+}
+
 .layout-nav ul {
-  list-style: none;
+  display: grid;
+  gap: 6px;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .nav-enlace {
@@ -31,100 +61,111 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
+  min-height: 60px;
+  padding: 8px 2px;
+  font-size: 0.68rem;
+  line-height: 1.2;
   text-align: center;
   text-decoration: none;
   color: var(--text-muted);
+  border-radius: 16px;
+  transition: background-color 0.15s, color 0.15s;
 }
 
-.nav-enlace-activo {
+.nav-enlace:hover {
+  background: var(--bg-suave);
+}
+
+.nav-enlace-activo,
+.nav-enlace-activo:hover {
   color: var(--accent-strong);
   font-weight: 600;
-}
-
-/* Celular: barra inferior fija con tres destinos rotulados. */
-.layout-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 30;
-  background: var(--card-bg);
-  border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.layout-nav ul {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.layout-nav .nav-enlace {
-  min-height: 60px;
-  padding: 8px 4px;
-  font-size: 0.8rem;
-  line-height: 1.2;
-}
-
-.layout-nav .nav-enlace-activo {
-  box-shadow: inset 0 3px 0 var(--accent);
   background: var(--accent-suave);
 }
 
 .layout-atras {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-bottom: 12px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 0.78rem;
   color: var(--accent-strong);
-}
-
-.layout-contenido {
-  min-width: 0;
+  box-shadow: none;
 }
 
 .layout-pie {
-  margin-top: 32px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  display: none;
 }
 
-/* Escritorio: los mismos destinos en la barra superior. */
+.layout-columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+}
+
+.layout-contenido {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  /* Si una pantalla no cabe, se desplaza ella sola; el panel lateral nunca se mueve. */
+  overflow: auto;
+}
+
 @media (min-width: 720px) {
   .layout {
-    padding-bottom: 48px;
+    grid-template-columns: 224px minmax(0, 1fr);
   }
 
-  .layout-header {
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 12px;
+  .layout-lateral {
+    padding: 20px 14px;
+    gap: 10px;
   }
 
-  .layout-nav {
-    position: static;
-    background: none;
-    border-top: none;
-    padding-bottom: 0;
+  .layout-marca {
+    justify-content: flex-start;
+    padding: 0 6px 14px;
   }
 
-  .layout-nav ul {
-    display: flex;
-    gap: 4px;
+  .layout-marca-texto {
+    display: block;
+    font-size: 1.05rem;
   }
 
-  .layout-nav .nav-enlace {
+  .nav-enlace {
     flex-direction: row;
-    gap: 8px;
-    min-height: 44px;
-    padding: 8px 16px;
-    font-size: 0.95rem;
-    border-radius: 10px;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 48px;
+    padding: 8px 14px;
+    font-size: 0.97rem;
   }
 
-  .layout-nav .nav-enlace-activo {
-    box-shadow: none;
-    background: var(--accent-suave);
+  .layout-atras {
+    justify-content: flex-start;
+    padding: 0 14px;
+    font-size: 0.95rem;
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .layout-pie {
+    display: block;
+    margin-top: auto;
+    padding: 0 6px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .layout-pie p {
+    margin: 0;
+  }
+
+  .layout-columna {
+    padding: 20px 24px;
   }
 }
