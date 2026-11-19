@@ -28,6 +28,7 @@ import type {
 } from '../models/alimentacion.ts'
 import type { RespuestaHistorial } from '../models/historial.ts'
 import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
+import type { EventoColchonPico, OrdenColchonPico } from '../models/colchonPico.ts'
 import type {
   EventoHabitacion,
   FotoHabitacion,
@@ -276,6 +277,30 @@ export interface ServicioHistorial {
   consultar(bebeId: string, desde: number, hasta: number): Promise<Resultado<RespuestaHistorial>>
 }
 
+/**
+ * Colchón de la Pico del colchón (pico-figuras-colchon-01): lee eventos_colchon y
+ * pide órdenes con solicitar_comando_colchon. Convive con `ServicioColchon`
+ * (fase 6, módulo cuna-colchon-NN con órdenes por módulo).
+ */
+export interface ServicioColchonPico {
+  obtenerUltimoEvento(
+    dispositivoId: string,
+  ): Promise<Resultado<EventoColchonPico | null>>
+  obtenerHistorialEventos(
+    dispositivoId: string,
+    limite?: number,
+  ): Promise<Resultado<EventoColchonPico[]>>
+  solicitarComando(
+    dispositivoId: string,
+    comando: string,
+    parametros?: Record<string, unknown>,
+  ): Promise<Resultado<OrdenColchonPico>>
+  suscribirEventos(
+    dispositivoId: string,
+    manejadores: Manejadores<EventoColchonPico>,
+  ): Cancelar
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -285,6 +310,7 @@ export type Servicios = {
   horarios: ServicioHorarios
   voz: ServicioVoz
   colchon: ServicioColchon
+  colchonPico: ServicioColchonPico
   habitacion: ServicioHabitacion
   alimentacion: ServicioAlimentacion
   historial: ServicioHistorial

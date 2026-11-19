@@ -25,6 +25,7 @@ describe('rutas', () => {
     ['/bebes', 'Bebés y dispositivos'],
     ['/registro', 'Crear cuenta'],
     ['/colchon', 'Colchón'],
+    ['/colchon-pico', 'Colchón (Pico)'],
     ['/figuras', 'Figuras LED'],
     ['/historial', 'Historial'],
   ])('%s muestra el título "%s"', (ruta, titulo) => {
@@ -60,7 +61,7 @@ describe('rutas', () => {
 })
 
 describe('Layout', () => {
-  it('muestra la marca y los siete enlaces de navegación', () => {
+  it('muestra la marca y los ocho enlaces de navegación', () => {
     renderizarEn('/cuna')
     expect(screen.getByText('Cuna Inteligente IoT')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Principal' })
@@ -69,6 +70,7 @@ describe('Layout', () => {
       'Cuna',
       'Bebés y dispositivos',
       'Colchón',
+      'Colchón (Pico)',
       'Figuras LED',
       'Habitación',
       'Alimentación',

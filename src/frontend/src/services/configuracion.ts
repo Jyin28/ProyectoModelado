@@ -120,3 +120,14 @@ export function dispositivoAlimentacionId(): string {
 export function dispositivoColchonId(): string {
   return identificador(import.meta.env.VITE_COLCHON_DEVICE_ID, DISPOSITIVO_COLCHON_POR_DEFECTO)
 }
+
+// Módulo lógico del colchón de la Pico del colchón (convive con el módulo
+// cuna-colchon-NN de la fase 6).
+export const DISPOSITIVO_COLCHON_PICO_POR_DEFECTO = 'pico-figuras-colchon-01'
+
+export function dispositivoColchonPicoId(): string {
+  return identificador(
+    import.meta.env.VITE_COLCHON_PICO_DEVICE_ID,
+    DISPOSITIVO_COLCHON_PICO_POR_DEFECTO,
+  )
+}

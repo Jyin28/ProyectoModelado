@@ -97,23 +97,31 @@ def _ejecutar(nombre, params):
         return {"factor": peso.calibrar(conocido)}
 
     if nombre == "mattress_reference":
+        if "reference_g" in params and params["reference_g"] is not None:
+            ref = _numero(params, "reference_g", 1, 20000)
+            return {"reference_g": monitoreo.fijar_referencia(ref)}
         return {"reference_g": monitoreo.capturar_referencia()}
 
     if nombre == "mattress_start":
         duracion = _numero(params, "duration_s", 1, 86400, setup_colchon.MONITORING_TIME)
-        tolerancia = _numero(params, "tolerance_pct", 1, 50,config.TOLERANCIA_PESO_PCT)
+        tolerancia = _numero(params, "tolerance_pct", 1, 50, config.TOLERANCIA_PESO_PCT)
         alarma = _numero(params, "alarm_s", 1, 600, config.ALARMA_S)
+        if "reference_g" in params and params["reference_g"] is not None:
+            ref = _numero(params, "reference_g", 1, 20000)
+            monitoreo.fijar_referencia(ref)
         monitoreo.iniciar(duracion, tolerancia, alarma)
-        return {"duration_s": duracion, "tolerance_pct": tolerancia, "alarm_s": alarma}
+        return {"duration_s": duracion, "tolerance_pct": tolerancia, "alarm_s": alarma, "reference_g": monitoreo._s["referencia_g"]}
 
     if nombre == "mattress_stop":
         if not monitoreo.detener("web"):
-            raise ValueError("monitoreo_inactivo")
+            monitoreo.notificar_inactivo("web_sync")
+            return {"stopped": True, "already_idle": True}
         return {}
 
     if nombre == "alarm_stop":
         if monitoreo.estado() != monitoreo.ALARMA:
-            raise ValueError("sin_alarma")
+            monitoreo.notificar_inactivo("web_sync")
+            return {"alarm_stopped": True, "already_idle": True}
         monitoreo.detener("web")
         return {}
 

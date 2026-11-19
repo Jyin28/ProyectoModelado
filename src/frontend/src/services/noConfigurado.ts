@@ -52,6 +52,13 @@ export const serviciosNoConfigurados: Servicios = {
     guardarConfig: () => fallo(),
     listarEventos: () => fallo(),
   },
+  colchonPico: {
+    obtenerUltimoEvento: () => fallo(),
+    obtenerHistorialEventos: () => fallo(),
+    solicitarComando: () => fallo(),
+    suscribirEventos: (_dispositivoId, manejadores) =>
+      suscripcionVacia(manejadores),
+  },
   habitacion: {
     listarEventos: () => fallo(),
     listarFotos: () => fallo(),

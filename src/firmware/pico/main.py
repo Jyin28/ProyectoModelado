@@ -63,6 +63,12 @@ def iniciar():
     print("Tomando tara: la balanza debe estar vacia...")
     peso.tomar_tara()
 
+    if eventos.hora_valida():
+        monitoreo.notificar_inactivo("boot")
+        for ev in monitoreo.tomar_eventos():
+            nube.encolar(ev)
+        nube.enviar_pendientes()
+
 
 def han_pasado(inicio_ms, segundos):
     """Comprueba si transcurrio el intervalo indicado."""
@@ -95,6 +101,8 @@ def atender_ordenes():
     for orden in ordenes:
         confirmacion = comandos.ejecutar(orden)
         print("Confirmacion:", confirmacion)
+        if not str(orden.get("command_id", "")).startswith("prueba-"):
+            nube.confirmar_orden(confirmacion)
 
 
 def ciclo_principal():
@@ -104,6 +112,8 @@ def ciclo_principal():
     ultimo_peso = ahora
     ultimo_intento_hx711 = ahora
     ultima_revision_wifi = ahora
+    ultima_revision_ordenes = ahora
+    ultimo_latido = ahora
 
     while True:
 
@@ -122,8 +132,21 @@ def ciclo_principal():
             print("Conexion o hora no valida: deteniendo monitoreo.")
             monitoreo.detener("connection")
 
-        # 4. Ejecutar ordenes.
-        atender_ordenes()
+        # 4. Ejecutar ordenes (cada 3 segundos para no bloquear la balanza).
+        if han_pasado(ultima_revision_ordenes, 3):
+            ultima_revision_ordenes = time.ticks_ms()
+            atender_ordenes()
+
+        # 4.5. Latido de presencia (cada 20 s) mientras monitorea
+        if monitoreo.activo() and han_pasado(ultimo_latido, 20):
+            ultimo_latido = time.ticks_ms()
+            if eventos.hora_valida():
+                monitoreo._evento("monitoring_started", {
+                    "reference_g": monitoreo._s["referencia_g"],
+                    "tolerance_pct": monitoreo._s["tolerancia_pct"],
+                    "duration_s": monitoreo._s["duracion_s"],
+                    "alarm_s": monitoreo._s["alarma_s"],
+                })
 
         # 5. Lectura de peso.
         if not peso.tiene_tara():

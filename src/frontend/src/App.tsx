@@ -4,6 +4,7 @@ import ProveedorSesion from './components/ProveedorSesion.tsx'
 import RutaProtegida from './components/RutaProtegida.tsx'
 import PaginaBebesDispositivos from './pages/PaginaBebesDispositivos.tsx'
 import PaginaColchon from './pages/PaginaColchon.tsx'
+import PaginaColchonPico from './pages/PaginaColchonPico.tsx'
 import PaginaCamara from './pages/PaginaCamara.tsx'
 import PaginaCuna from './pages/PaginaCuna.tsx'
 import PaginaFiguras from './pages/PaginaFiguras.tsx'
@@ -28,6 +29,7 @@ function App() {
             <Route path="/cuna" element={<PaginaCuna />} />
             <Route path="/bebes" element={<PaginaBebesDispositivos />} />
             <Route path="/colchon" element={<PaginaColchon />} />
+            <Route path="/colchon-pico" element={<PaginaColchonPico />} />
             <Route path="/figuras" element={<PaginaFiguras />} />
             <Route path="/alimentacion" element={<PaginaAlimentacion />} />
             <Route path="/habitacion" element={<PaginaHabitacion />} />
