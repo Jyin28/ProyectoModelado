@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs tests/movimiento.test.mjs tests/cuentas.test.mjs tests/avisos.test.mjs tests/notificador.test.mjs tests/ordenes-modulo.test.mjs tests/colchon.test.mjs tests/habitacion.test.mjs tests/alimentacion.test.mjs tests/historial.test.mjs tests/recuperacion.test.mjs tests/privacidad.test.mjs tests/lote-handler.test.mjs tests/lote.test.mjs",
+    "test": "node --test tests/ingesta.test.mjs tests/lampara.test.mjs tests/lampara-entrega.test.mjs tests/movimiento.test.mjs tests/cuentas.test.mjs tests/avisos.test.mjs tests/notificador.test.mjs tests/ordenes-modulo.test.mjs tests/colchon.test.mjs tests/habitacion.test.mjs tests/alimentacion.test.mjs tests/historial.test.mjs tests/recuperacion.test.mjs tests/privacidad.test.mjs tests/lote-handler.test.mjs tests/lote.test.mjs tests/colchon-aviso.test.mjs tests/ambiente-reinicio.test.mjs",
     "rendimiento": "node scripts/rendimiento.mjs"
   },
   "devDependencies": {

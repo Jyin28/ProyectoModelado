@@ -54,6 +54,9 @@ const ESQUEMAS = `
   alter table storage.objects enable row level security;
   grant usage on schema storage to authenticated, anon;
   grant select, insert on storage.objects to authenticated;
+  -- Vault no existe en PGlite: public.leer_secreto_funcion (SQL) lo referencia al crearse.
+  create schema vault;
+  create table vault.decrypted_secrets (name text, decrypted_secret text);
 `
 
 export async function crearBase() {

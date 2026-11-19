@@ -67,6 +67,7 @@ test('Órdenes por módulo, límites, monitoreo, horarios y voz (fase 5)', async
     '20261118000100_cuentas_propiedad.sql',
     '20261118000200_avisos_telegram.sql',
     '20261118000400_ordenes_modulo.sql',
+    '20261119001500_horario_figuras_secuencia.sql',
   ]) {
     await db.exec(await readFile(new URL(`../migrations/${archivo}`, import.meta.url), 'utf8'))
   }
@@ -393,8 +394,9 @@ test('Órdenes por módulo, límites, monitoreo, horarios y voz (fase 5)', async
     assert.equal(await contar('public.ordenes_modulo'), antes + 2)
     const orden = (await db.query(
       "select * from public.ordenes_modulo where origen = 'horario' and device_id = $1", [FIGURAS])).rows[0]
-    assert.equal(orden.command, 'led_all')
-    assert.deepEqual(orden.params, { on: true })
+    // Antes se confirmó una secuencia chase de 2 s: «Encender figuras» la arranca (CA-13.1, CA-13.2).
+    assert.equal(orden.command, 'led_sequence')
+    assert.deepEqual(orden.params, { name: 'chase', step_s: 2 })
     assert.equal(orden.solicitante_id, null)
 
     // Mismo minuto otra vez, o un minuto después: nada nuevo.
@@ -410,8 +412,70 @@ test('Órdenes por módulo, límites, monitoreo, horarios y voz (fase 5)', async
       if (tomada === null) break
       entregadas.push(tomada)
     }
-    assert.ok(entregadas.some((o) => o.command === 'led_all' && o.params.on === true && o.device_id === FIGURAS))
+    assert.ok(entregadas.some((o) => o.command === 'led_sequence' && o.params.name === 'chase'
+      && o.params.step_s === 2 && o.device_id === FIGURAS))
     assert.equal(entregadas.some((o) => o.device_id === MOVIMIENTO), false, 'las órdenes de la cuna no llegan a las figuras')
+  })
+
+  await t.test('el horario de figuras arranca la última secuencia confirmada, y sin ninguna enciende todas fijas', async () => {
+    const horario = (dispositivo, tipo, horas) =>
+      web(ana, 'public.reemplazar_horarios($1, $2, $3::time[])', [dispositivo, tipo, horas])
+    const procesar = (instante) => servicio('public.procesar_horarios($1::timestamptz)', [instante])
+    const ultimaDelHorario = async (dispositivo) => (await db.query(
+      `select command, params from public.ordenes_modulo
+       where origen = 'horario' and device_id = $1 order by creado_en desc, command_id desc limit 1`,
+      [dispositivo])).rows[0]
+    // Toma órdenes hasta encontrar la pedida (descarta las pendientes de pruebas anteriores).
+    const entregar = async (id) => {
+      for (let i = 0; i < 10; i += 1) {
+        const tomada = await tomar(picoFiguras)
+        assert.notEqual(tomada, null, 'la orden debe entregarse')
+        if (tomada.command_id === id) return tomada
+      }
+      assert.fail('la orden no se entregó')
+    }
+    const pedirSecuencia = async (name, step_s) => {
+      const id = randomUUID()
+      await solicitar(ana, id, FIGURAS, 'led_sequence', { name, step_s })
+      return entregar(id)
+    }
+
+    // 1. La última confirmada manda: una nueva secuencia con otro intervalo reemplaza a la anterior.
+    const nueva = await pedirSecuencia('blink_all', 5)
+    await confirmar(picoFiguras, nueva.command_id, true, { sequence: 'blink_all' }, null)
+    await horario(FIGURAS, 'figuras_encender', ['21:00'])           // 21:00 CR = 03:00 UTC
+    assert.equal((await procesar('2026-11-19T03:00:00Z')).ordenes, 1)
+    let orden = await ultimaDelHorario(FIGURAS)
+    assert.equal(orden.command, 'led_sequence')
+    assert.deepEqual(orden.params, { name: 'blink_all', step_s: 5 })
+
+    // 2. Una secuencia con error o sin confirmar no cuenta.
+    const fallida = await pedirSecuencia('alternate', 7)
+    await confirmar(picoFiguras, fallida.command_id, false, null, 'fallo_de_prueba')
+    await pedirSecuencia('chase', 9)                                // entregada, sin confirmar
+    await horario(FIGURAS, 'figuras_encender', ['22:00'])
+    assert.equal((await procesar('2026-11-19T04:00:00Z')).ordenes, 1)
+    orden = await ultimaDelHorario(FIGURAS)
+    assert.deepEqual(orden.params, { name: 'blink_all', step_s: 5 })
+
+    // 3. «Apagar figuras» sigue siendo led_stop.
+    await horario(FIGURAS, 'figuras_apagar', ['22:30'])
+    assert.equal((await procesar('2026-11-19T04:30:00Z')).ordenes, 1)
+    orden = await ultimaDelHorario(FIGURAS)
+    assert.equal(orden.command, 'led_stop')
+    assert.deepEqual(orden.params, {})
+
+    // 4. Un módulo de figuras sin ninguna secuencia confirmada enciende todas fijas.
+    const NUEVO = 'cuna-figuras-02'
+    await db.query(
+      "insert into cuna_private.dispositivos (id, token_sha256, tipo, producto_id) values ($1, $2, 'figuras', 'figuras-02')",
+      [NUEVO, '5'.repeat(64)])
+    await db.query('insert into cuna_private.duenos_dispositivo (dispositivo_id, usuario_id) values ($1, $2)', [NUEVO, ana])
+    await horario(NUEVO, 'figuras_encender', ['23:00'])             // 23:00 CR = 05:00 UTC
+    assert.equal((await procesar('2026-11-19T05:00:00Z')).ordenes, 1)
+    orden = await ultimaDelHorario(NUEVO)
+    assert.equal(orden.command, 'led_all')
+    assert.deepEqual(orden.params, { on: true })
   })
 
   await t.test('CA-12: la voz viaja por un canal privado que usan solo los dueños y la Pico de la cuna', async () => {
