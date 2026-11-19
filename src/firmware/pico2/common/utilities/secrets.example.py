@@ -16,3 +16,8 @@ SUPABASE_URL = ""         # ej: https://<proyecto>.supabase.co
 SUPABASE_ANON_KEY = ""
 DEVICE_TOKEN = ""
 TOKEN_SHA256 = ""
+
+# PIR: modulo propio (cuna-movimiento-NN) con su token. Genera el par igual que arriba.
+MOVIMIENTO_DEVICE_ID = ""    # ej: cuna-movimiento-01
+MOVIMIENTO_TOKEN = ""
+MOVIMIENTO_TOKEN_SHA256 = ""

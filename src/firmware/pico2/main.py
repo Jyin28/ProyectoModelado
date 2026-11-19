@@ -9,7 +9,8 @@ Que hace:
   Modulo "cuna":
   2. Cada 10 s lee temperatura y humedad, las muestra y las envia a Supabase
      (Ingesta) si secrets.py tiene INGESTA_URL y DEVICE_TOKEN.
-  3. Avisa por consola cuando el PIR detecta movimiento (tras estabilizarse 60 s).
+  3. Avisa por consola cuando el PIR detecta movimiento (tras estabilizarse 60 s)
+     y lo envia a Supabase si MONITOREO_MOVIMIENTO_HABILITADO esta en True.
   4. Si secrets.py configura la lampara remota, ejecuta sus ordenes (la demo
      se desactiva para no pisar el PWM). Si config.py lo habilita, atiende el audio
      y reproduce el WAV de inicio una vez. Sin lampara remota, la lampara sube y baja
@@ -141,6 +142,8 @@ def ciclo_principal(envio=None, remota=None, reproductor=None):
             hay = sensores.hay_movimiento()
             if hay and not habia_movimiento:
                 print("Movimiento detectado")
+                if envio is not None and config.MONITOREO_MOVIMIENTO_HABILITADO:
+                    envio.registrar_movimiento(time.ticks_ms())
             habia_movimiento = hay
 
         # --- Tarea 3: avanzar la secuencia de los LED (solo modulo figuras) ---

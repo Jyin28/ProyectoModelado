@@ -23,8 +23,10 @@ PIN_LAMPARA = 13    # compuerta del MOSFET (LED blanco)
 PINES_LEDS = (6, 7, 8, 9, 10, 11)       # los seis LED de las figuras (codigo funcional)
 
 # ---- Movimiento (PIR) ----
-# El PIR solo avisa por consola: la Ingesta desplegada en Supabase aun no
-# acepta eventos de movimiento, asi que no se envian.
+# Cada flanco ascendente del PIR se envia a Supabase como evento de movimiento
+# (modulo cuna-movimiento-NN, con MOVIMIENTO_DEVICE_ID y MOVIMIENTO_TOKEN en
+# secrets.py). Ponlo en False para que solo avise por consola.
+MONITOREO_MOVIMIENTO_HABILITADO = True
 PIR_ESTABILIZACION_S = 60    # el HC-SR501 tarda en estabilizarse tras encender
 PIR_REPOSO_S = 2             # segundos seguidos en reposo antes de confiar en el
 

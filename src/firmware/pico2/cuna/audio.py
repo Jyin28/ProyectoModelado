@@ -35,6 +35,8 @@ import struct
 import time
 from array import array
 
+import rutas
+
 INACTIVO = "inactivo"
 REPRODUCIENDO = "reproduciendo"
 DRENANDO = "drenando"
@@ -127,7 +129,7 @@ class ReproductorAudio:
         abrir(ruta) -> archivo binario; por defecto open(ruta, "rb") (inyectable en pruebas).
         """
         self._fabrica = fabrica
-        self._abrir = abrir if abrir is not None else (lambda ruta: open(ruta, "rb"))
+        self._abrir = abrir if abrir is not None else (lambda ruta: open(rutas.buscar(ruta), "rb"))
         self._ruta_wav = getattr(cfg, "AUDIO_ARCHIVO", None)
         self._archivo = None
         self._restante = 0

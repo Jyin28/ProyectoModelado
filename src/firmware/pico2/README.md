@@ -9,7 +9,7 @@ Elige cuál está conectado con `MODULO` en `config.py` (ver abajo).
 
 | `MODULO` | Qué hay conectado | Qué atiende el firmware | Credenciales (`secrets.py`) | Comandos que acepta |
 |---|---|---|---|---|
-| `"cuna"` | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento (solo consola), lámpara remota y audio local | WiFi, `INGESTA_URL`, `DEVICE_TOKEN` y `LAMPARA_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
+| `"cuna"` | AM2301, PIR, lámpara (MOSFET) y audio MAX98357A | ambiente (envío a Supabase), movimiento (envío a Supabase), lámpara remota y audio local | WiFi, `INGESTA_URL`, `DEVICE_TOKEN`, `MOVIMIENTO_*` y `LAMPARA_*` según lo que uses | `lamp_set`, `audio_*`, `get_status` |
 | `"figuras"` | los seis LED | secuencias de LED | solo WiFi | `led_*`, `get_status` |
 | `"completo"` (por defecto) | todo lo anterior a la vez, como el código funcional | todo lo de `cuna` y `figuras` | las de `cuna` | `lamp_set`, `led_*`, `audio_*`, `get_status` |
 
@@ -44,7 +44,8 @@ Como el código funcional, sin esperar órdenes de la web:
 - La lámpara sube y baja su brillo (onda triangular de 2,6 s, `lampara.respirar`).
   No lo hace si hay lámpara remota ni si la demo del módulo tiene órdenes de lámpara.
 - El PIR espera 60 s a estabilizarse y 2 s seguidos en reposo antes de informar
-  movimiento (`pir.py`). Lo imprime en consola; no se envía a Supabase.
+  movimiento (`pir.py`). Lo imprime en consola y lo envía a Supabase como el módulo
+  `cuna-movimiento-01` (con `MONITOREO_MOVIMIENTO_HABILITADO = False` solo avisa por consola).
 - El ambiente se lee cada 15 s.
 - Al arrancar se reproduce una vez el WAV `prueba` (`AUDIO_AL_INICIAR`).
 
@@ -79,6 +80,7 @@ firmware/
       ├─ demo.py                simula órdenes de la web (por módulo); MODO_DEMO = False lo apaga
       ├─ efectos.py             patrones de LED y onda de la lámpara (lógica pura)
       ├─ modulo.py              qué periféricos y comandos corresponden a MODULO
+      ├─ rutas.py               busca archivos (certificado, WAV) en las carpetas habituales de la Pico
       ├─ secrets.example.py     plantilla de WiFi y Supabase (se copia a secrets.py)
       └─ indicador.py           parpadeo del LED interno de la Pico
 ```
@@ -118,9 +120,9 @@ simplemente como `import config` o `import wifi`.
    Transfiere el archivo binario `gts-root-r4.der` a `/common/communication/`
    usando el panel de archivos de Thonny.
 4. Enciende el hotspot, abre `main.py` y pulsa Run. Verifica en consola
-   «hora UTC sincronizada», una lectura real y «HTTP 201». Comprueba que el
+   «hora UTC sincronizada», una lectura real y «HTTP 200». Comprueba que el
    PIR y las figuras respondan durante el envío, y que vuelva a aparecer
-   «HTTP 201» al cortar y restablecer el hotspot.
+   «HTTP 200» al cortar y restablecer el hotspot.
 
 El cliente valida el certificado y el nombre del servidor. El certificado
 público incluido es GTS Root R4. Si cambia la cadena del servidor, comprueba
@@ -133,8 +135,16 @@ con un firmware que lo admita. [Configuración de TLS de MicroPython 1.28.0](htt
 Formato del envío (igual que el de la Pico del colchón, Edge Function `ingesta`):
 `POST {INGESTA_URL}` con `Authorization: Bearer <DEVICE_TOKEN>` y
 `{"device_id": ..., "events": [{"event_id", "type": "ambiente", "at", "data": {"temperatura_c", "humedad_pct"}}]}`.
-La Ingesta desplegada solo acepta los tipos `ambiente` y los del colchón, por eso
-el PIR solo avisa por consola y no se envía.
+La respuesta correcta es HTTP 200 (`{"estado": "recibido"}`).
+
+El PIR es otro módulo, con credencial propia: `MOVIMIENTO_DEVICE_ID`
+(`cuna-movimiento-NN`, el que espera la tabla `eventos_movimiento` y la web) y
+`MOVIMIENTO_TOKEN` (64 hex). Envía un lote con un solo evento
+`{"type": "movimiento", "data": {}}` por cada flanco ascendente del PIR, con
+`Authorization: Bearer <MOVIMIENTO_TOKEN>`. La función `ingesta` desplegada debe
+ser la versión de `supabase/functions/ingesta-lote/` (la anterior rechazaba el tipo
+`movimiento` con HTTP 400). Mientras no esté desplegada, el PIR responde
+`Movimiento: HTTP 400`; el ambiente no se ve afectado.
 
 [Contrato de ambiente](../shared/contracts/ambiente.md)
 
@@ -268,7 +278,7 @@ WAV se lee del archivo, se atenúa por software y se escribe bloque a bloque.
 
 1. Con `MODULO = "completo"` (o `"cuna"`), confirma cableado y revisión eléctrica.
    Comprueba que sube sin errores y que `prueba.wav` está en la Pico.
-2. Con el hotspot encendido, verifica: lectura de ambiente y «HTTP 201», PIR,
+2. Con el hotspot encendido, verifica: lectura de ambiente y «HTTP 200», PIR (con «Movimiento: HTTP 200»),
    lámpara y `audio_play`.
 3. Durante `audio_play`, comprueba que el muestreo de ambiente y las órdenes de
    la lámpara siguen respondiendo.

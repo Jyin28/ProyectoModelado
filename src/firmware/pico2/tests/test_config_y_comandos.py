@@ -36,6 +36,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.PINES_LEDS, (6, 7, 8, 9, 10, 11))
         self.assertEqual((config.PIN_I2S_BCLK, config.PIN_I2S_WS, config.PIN_I2S_DIN), (18, 19, 20))
 
+    def test_el_envio_de_movimiento_esta_habilitado(self):
+        self.assertTrue(config.MONITOREO_MOVIMIENTO_HABILITADO)
+
     def test_modulo_por_defecto_es_completo(self):
         self.assertEqual(config.MODULO, "completo")
         self.assertEqual(config.INTERVALO_AMBIENTE_S, 15)
