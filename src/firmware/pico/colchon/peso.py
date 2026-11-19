@@ -48,6 +48,22 @@ def _guardar_calibracion(factor):
 
 _cargar_calibracion()
 
+# El HX711 entrega 0x7FFFFF / -0x800000 cuando la entrada esta saturada: celda de carga
+# desconectada, cables A+/A- sueltos o invertidos, o E+/E- mal puestos. No es un peso.
+_SATURADO_MAX = 0x7FFFFF
+_SATURADO_MIN = -0x800000
+
+
+def _promedio(muestras):
+    """Promedio de lecturas crudas. Lanza OSError si el HX711 no responde o esta saturado."""
+    total = 0
+    for _ in range(muestras):
+        valor = setup_colchon.read_hx711()
+        if valor == _SATURADO_MAX or valor == _SATURADO_MIN:
+            raise OSError("HX711 saturado (revisa celda de carga y cables A+/A-/E+/E-)")
+        total += valor
+    return total / muestras
+
 
 def factor():
     return setup_colchon.CALIBRATION_FACTOR
@@ -57,7 +73,7 @@ def tomar_tara():
     """Toma la tara con la balanza vacia. Devuelve True si lo logra."""
     global _referencia
     try:
-        _referencia = setup_colchon.tare(10)
+        _referencia = _promedio(10)
         print("HX711 listo. Tara:", _referencia)
         return True
     except OSError as error:
@@ -79,7 +95,7 @@ def calibrar(gramos_conocidos):
         raise ValueError("sin_tara")
     if gramos_conocidos <= 0:
         raise ValueError("fuera_de_rango")
-    crudo = setup_colchon.read_average(10)
+    crudo = _promedio(10)
     diferencia = crudo - _referencia
     if abs(diferencia) < 1:
         raise ValueError("sin_diferencia")      # no se puso el peso
@@ -95,7 +111,7 @@ def leer_peso():
     if _referencia is None:
         return None
     try:
-        crudo = setup_colchon.read_average(1)
+        crudo = _promedio(1)
         return setup_colchon.get_weight(crudo, _referencia)
     except OSError as error:
         print("Error leyendo HX711:", error)
@@ -106,5 +122,5 @@ def leer_muestras(cantidad):
     """Lee 'cantidad' pesos seguidos. Lanza ValueError sin tara u OSError si falla."""
     if _referencia is None:
         raise ValueError("sin_tara")
-    return [setup_colchon.get_weight(setup_colchon.read_average(1), _referencia)
+    return [setup_colchon.get_weight(_promedio(1), _referencia)
             for _ in range(cantidad)]
