@@ -38,8 +38,8 @@ Estado: **Implementada** = código y pruebas con dobles (PGlite, Vitest, Python 
 | PM-67 | HU-04 | Implementada | idem | `cuentas.test.mjs`: la invitación concede acceso solo al aceptarla; retirar revoca; no se retira al último dueño | No se envía el correo de invitación (sin SMTP). |
 | PM-71 | HU-05 | Implementada | idem | `cuentas.test.mjs`, `historial.test.mjs`: tras reasignar, cada registro conserva su bebé | Con Supabase real. |
 | PM-75 | HU-06 | Implementada | `…000200_avisos_telegram.sql`, `services/telegram.ts`, `functions/telegram-webhook` | `avisos.test.mjs`, `notificador.test.mjs` (Telegram simulado) | Un bot real y una cuenta de Telegram. |
-| PM-80 | HU-07 | Implementada | `functions/notificador`, `…000300_cron.sql`, `…001000_notificador_inmediato.sql` | `avisos.test.mjs`, `notificador.test.mjs`, `lote.test.mjs` (un aviso por destinataria y por episodio) | **`pg_cron` y `pg_net` no están aplicados en el Supabase remoto**; entrega real a Telegram. |
-| PM-84 | HU-08 | Implementada | `firmware/common/sensors/pir.py`, `ambiente.py`, `ingestar_movimiento`, `PanelMovimiento.tsx` | `lote.test.mjs`, `ordenes-modulo.test.mjs`, `test_pir.py` | PIR real enviando a `cuna-movimiento-01` (hay que registrar el módulo y desplegar la función). |
+| PM-80 | HU-07 | Implementada | `functions/notificador`, `…000300_cron.sql`, `…001000_notificador_inmediato.sql` | `avisos.test.mjs`, `notificador.test.mjs`, `lote.test.mjs` (un aviso por destinataria y por episodio) | **`pg_cron` y `pg_net` no están activos en el Supabase remoto**; entrega real a Telegram. |
+| PM-84 | HU-08 | Implementada | `firmware/common/sensors/pir.py`, `ambiente.py`, `ingestar_movimiento`, `PanelMovimiento.tsx` | `lote.test.mjs`, `ordenes-modulo.test.mjs`, `test_pir.py` | PIR real enviando a `cuna-movimiento-01` (módulo registrado y función desplegada; falta la prueba con la Pico). |
 | PM-88 | HU-09 | Implementada | `ambiente.py`, `PaginaCuna.tsx`, `services/lecturas.ts` | `lote.test.mjs`, `test_ambiente_tls.py`, `paginaCuna.test.tsx`. **Prueba física previa** (2026-11-19, firmware antiguo `pico2`, dispositivo de prueba `pico2-cuna-01`): 3 lecturas con HTTP 200 y 3 filas en `lecturas_ambiente` | Repetir con `cuna-ambiente-01` y el firmware unificado. |
 | PM-92 | HU-10 | Implementada | `guardar_limites`, `PanelLimites`, `…000400_ordenes_modulo.sql` | `ordenes-modulo.test.mjs`, `lote.test.mjs` (salir, seguir fuera, volver y salir de nuevo) | Telegram real. |
 | PM-96 | HU-11 | Implementada | `lampara_remota.py`, `audio.py`, `PanelLampara.tsx`, `PanelAudio` | `lampara*.test.mjs`, `test_lampara_remota.py`, `test_audio.py` (incl. WAV) | Lámpara y I²S reales. Catálogo: `tono_suave` y `prueba` (antes solo el tono). |
@@ -65,14 +65,22 @@ Estado: **Implementada** = código y pruebas con dobles (PGlite, Vitest, Python 
 
 Fallos abiertos de pruebas: ninguno. Durante el trabajo salieron y se resolvieron: 8 fallos del frontend por mi `.env.local` (ahora las pruebas lo ignoran), 3 del backend por una migración de datos de prueba y 2 por permisos de tablas de Kevin.
 
-## 5. Lo que queda por hacer (necesita autorización o hardware)
+## 5. Estado del Supabase remoto (`cuna-inteligente-dev`)
 
-Nada de esto se aplicó al Supabase remoto (`CLAUDE.md`: sin pedido explícito).
+Aplicado el 2026-11-19 con autorización expresa:
 
-1. **Aplicar migraciones** `20261118000800` a `…001300` en `cuna-inteligente-dev`. `…001100` y `…001300` recrean lo que ya existe y endurecen permisos (idempotente).
-2. **Desplegar la función `ingesta`** de `supabase/functions/ingesta/` (verificación de JWT **desactivada**). La desplegada hoy es una versión solo de lote que además convierte `monitoreo_inactivo` en un 503 reintentable; la del repositorio responde 409.
-3. **Registrar los módulos** con su token: `cuna-ambiente-01`, `cuna-movimiento-01`, etc. (hash SHA-256 en `cuna_private.dispositivos`, asignación de bebé y dueño).
-4. **Aviso de coordinación:** quien despliegue otra versión de `ingesta` sobrescribe a la anterior.
+| Qué | Resultado |
+|---|---|
+| Migraciones `historial`, `recuperacion`, `eventos_y_ordenes_colchon_endurecido`, `ingestar_lote` | Aplicadas. Existen `historial_bebe` y `reportar_estado_modulo`; `eventos_colchon` y `ordenes_colchon` quedan solo de lectura para `authenticated`; los 75 eventos del colchón siguen intactos. |
+| Edge Function `ingesta` | Desplegada como **versión 6** (JWT desactivado). Probada con token falso en los diez caminos (lote de ambiente, movimiento y colchón; evento único; 400, 401, 405 y 413). |
+| Módulos `cuna-ambiente-01` y `cuna-movimiento-01` | Con credencial nueva (tokens solo en `src/firmware/secrets.py`, ignorado por Git), bebé y dueño asignados. No tenían datos. |
+
+**Sigue pendiente**
+1. `20261118000300_cron.sql` y `20261118001000_notificador_inmediato.sql`: `pg_cron` y `pg_net` están disponibles pero **no activos**; faltan también los secretos de Vault y desplegar `notificador` y `telegram-webhook`.
+2. Un bot de Telegram real.
+3. Prueba positiva con la Pico real (no se envió ninguna lectura falsa a los módulos reales).
+4. `pico2-cuna-01` es un dispositivo de prueba antiguo (3 lecturas); se puede desactivar.
+5. Quien despliegue otra versión de `ingesta` sobrescribe a la anterior.
 
 ## 6. Levantar el proyecto en Windows
 
