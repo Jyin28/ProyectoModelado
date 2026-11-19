@@ -75,12 +75,21 @@ Aplicado el 2026-11-19 con autorización expresa:
 | Edge Function `ingesta` | Desplegada como **versión 6** (JWT desactivado). Probada con token falso en los diez caminos (lote de ambiente, movimiento y colchón; evento único; 400, 401, 405 y 413). |
 | Módulos `cuna-ambiente-01` y `cuna-movimiento-01` | Con credencial nueva (tokens solo en `src/firmware/secrets.py`, ignorado por Git), bebé y dueño asignados. No tenían datos. |
 
+Aplicado después, también con autorización expresa:
+
+| Qué | Resultado |
+|---|---|
+| Módulos `cuna-audio-01` y `cuna-figuras-01` | Registrados (producto `cuna-01`, bebé y dueña asignados). `cuna-movimiento-01` pasó a tener producto `cuna-01`. |
+| Cuenta de dispositivo de la Pico | `pico.cuna@example.com`, vinculada a `cuna-lampara-01` (producto `cuna-01`). Reemplaza a `elmenma1890@gmail.com`, que era la cuenta anterior de ese módulo. Inicia sesión y el sistema la reconoce (`tomar_orden_modulo` responde 200). Su contraseña solo está en `src/firmware/secrets.py`. |
+| Telegram | Funciones `notificador` y `telegram-webhook` desplegadas (JWT desactivado), `pg_cron` y `pg_net` activos, trabajos `notificador` y `procesar-horarios` cada minuto, disparador de aviso inmediato, secretos de Vault `project_url` y `notificador_secret`, webhook del bot `@cunabot_bot` registrado. |
+| Aviso de `aura@gmail.com` como dueña | Dueña de ambiente, movimiento, lámpara, audio, figuras y colchón. Una cuenta no puede ser a la vez cuidadora y dispositivo (disparador `separar_cuenta_dispositivo`). |
+
 **Sigue pendiente**
-1. `20261118000300_cron.sql` y `20261118001000_notificador_inmediato.sql`: `pg_cron` y `pg_net` están disponibles pero **no activos**; faltan también los secretos de Vault y desplegar `notificador` y `telegram-webhook`.
-2. Un bot de Telegram real.
-3. Prueba positiva con la Pico real (no se envió ninguna lectura falsa a los módulos reales).
-4. `pico2-cuna-01` es un dispositivo de prueba antiguo (3 lecturas); se puede desactivar.
-5. Quien despliegue otra versión de `ingesta` sobrescribe a la anterior.
+1. Los secretos de las funciones de Telegram (`TELEGRAM_BOT_TOKEN`, `NOTIFICADOR_SECRET`, `TELEGRAM_WEBHOOK_SECRET`) se escriben en el panel de Supabase; hasta entonces las dos funciones responden 500. Después, vincular un chat desde la web.
+2. Prueba positiva con la Pico real. Ningún dato falso se envió a los módulos reales.
+3. `pico2-cuna-01` es un dispositivo de prueba antiguo; se puede desactivar.
+4. Quien despliegue otra versión de `ingesta` sobrescribe a la anterior.
+5. El token del bot se compartió en un chat: conviene regenerarlo con BotFather (`/revoke`) cuando termine la puesta en marcha.
 
 ## 6. Levantar el proyecto en Windows
 
