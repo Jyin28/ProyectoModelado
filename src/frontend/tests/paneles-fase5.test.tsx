@@ -267,7 +267,7 @@ describe('Monitoreo de movimiento y audio', () => {
     abrir('/cuna', { ordenes: { solicitar } })
     const panel = await regionDe('Parlante', 'Audio de la cuna')
     const opciones = within(within(panel).getByLabelText('Sonido')).getAllByRole('option')
-    expect(opciones.map((o) => o.textContent)).toEqual(['Tono suave', 'Sonido de prueba (WAV)'])
+    expect(opciones.map((o) => o.textContent)).toEqual(['Tono suave'])
     fireEvent.click(within(panel).getByRole('button', { name: 'Reproducir' }))
     await waitFor(() =>
       expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', {
@@ -275,15 +275,8 @@ describe('Monitoreo de movimiento y audio', () => {
         params: { sound: 'tono_suave' },
       }),
     )
-    // Elegir otro sonido del catálogo pide ese sonido (CA-11.4).
-    fireEvent.change(within(panel).getByLabelText('Sonido'), { target: { value: 'prueba' } })
-    fireEvent.click(within(panel).getByRole('button', { name: 'Reproducir' }))
-    await waitFor(() =>
-      expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', {
-        command: 'audio_play',
-        params: { sound: 'prueba' },
-      }),
-    )
+    // El WAV de prueba ya no se ofrece en la web.
+    expect(within(panel).queryByRole('option', { name: /prueba/i })).not.toBeInTheDocument()
     fireEvent.click(within(panel).getByRole('button', { name: 'Detener audio' }))
     await waitFor(() =>
       expect(solicitar).toHaveBeenCalledWith('cuna-audio-01', { command: 'audio_stop', params: {} }),

@@ -16,13 +16,13 @@ export const LED_INTERVALO_MIN_S = 2
 export const LED_INTERVALO_MAX_S = 3600
 
 /**
- * Sonidos del catálogo pregrabado. Deben coincidir con AUDIO_CATALOGO de
+ * Sonidos que la web ofrece. Cada uno debe existir en AUDIO_CATALOGO de
  * src/firmware/pico/common/utilities/config.py (el nombre es el `sound` de audio_play).
+ * La Pico aún tiene `prueba` (prueba.wav), pero la web ya no lo ofrece.
  * Para sumar una canción: copiar su WAV a la Pico, agregarla allá y agregarla aquí.
  */
 export const CATALOGO_AUDIO = [
   { id: 'tono_suave', nombre: 'Tono suave' },
-  { id: 'prueba', nombre: 'Sonido de prueba (WAV)' },
 ] as const
 
 export type ComandoFiguras =
