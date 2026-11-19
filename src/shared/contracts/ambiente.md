@@ -30,7 +30,7 @@ Este ejemplo usa valores ilustrativos.
 | `datos.temperatura_c` | Número finito | Temperatura en °C. |
 | `datos.humedad_pct` | Número finito de 0 a 100 | Humedad relativa en % HR. |
 
-El AM2301 toma una medición cada 10 segundos. Cada evento incluye las dos magnitudes en `datos` y ocupa hasta 2048 bytes. Si falla el sensor o falta alguna magnitud válida, el firmware omite ese evento y espera la siguiente medición.
+El AM2301 toma una medición cada 2 segundos (su mínimo entre lecturas); el envío TLS puede tardar más y solo se entrega la lectura más reciente. Cada evento incluye las dos magnitudes en `datos` y ocupa hasta 2048 bytes. Si falla el sensor o falta alguna magnitud válida, el firmware omite ese evento y espera la siguiente medición.
 
 El firmware sincroniza el reloj por NTP antes del primer envío y vuelve a sincronizarlo al recuperar la conexión. Si aún no tiene una hora confiable, omite el envío. La Ingesta valida el formato UTC y guarda por separado `recibido_en`, la hora de recepción del servidor. La asignación al bebé y la fecha mostrada en la web se basan en `ts`.
 
@@ -47,7 +47,7 @@ Los errores tienen `codigo`, `mensaje` y `reintentable`. Si se corta la conexió
 
 La Ingesta usa la asignación más reciente cuyo inicio sea anterior o igual a `ts`. Cada cambio rige hasta el siguiente. Una entrada con bebé nulo cierra la asignación. Si en `ts` no hay bebé asignado, la Ingesta responde `422` para un evento nuevo. Una fila guardada conserva el `bebe_id` original.
 
-La web consulta `public.lecturas_ambiente` con una sesión de Supabase Auth y la clave publicable. RLS limita la consulta a los dueños activos del módulo. Al abrir Cuna, consulta la última lectura y repite la consulta cada 10 segundos mientras la pantalla esté abierta y haya sesión. En este recorrido se usa consulta periódica. El diseño general conserva Realtime para los flujos previstos en la arquitectura.
+La web consulta `public.lecturas_ambiente` con una sesión de Supabase Auth y la clave publicable. RLS limita la consulta a los dueños activos del módulo. Al abrir Cuna, consulta la última lectura y repite la consulta cada 2 segundos mientras la pantalla esté abierta y haya sesión. En este recorrido se usa consulta periódica. El diseño general conserva Realtime para los flujos previstos en la arquitectura.
 
 La consulta selecciona `event_id`, `device_id`, `ts`, `recibido_en`, `temperatura_c` y `humedad_pct`. Filtra por el `device_id` del módulo configurado, ordena por `ts`, `recibido_en` y `event_id` en orden descendente y pide una fila como máximo.
 

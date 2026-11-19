@@ -26,7 +26,8 @@ import type {
   MomentoPeso,
   Toma,
 } from '../models/alimentacion.ts'
-import type { ConfigColchon, EventoColchon } from '../models/colchon.ts'
+import type { RespuestaHistorial } from '../models/historial.ts'
+import type { EventoColchonPico, OrdenColchonPico } from '../models/colchonPico.ts'
 import type {
   EventoHabitacion,
   FotoHabitacion,
@@ -210,21 +211,6 @@ export interface ServicioVoz {
   ): Promise<Resultado<null>>
 }
 
-export interface ServicioColchon {
-  /** Configuración guardada, o null si nunca se guardó (no hay valores por defecto). */
-  obtenerConfig(dispositivoId: string): Promise<Resultado<ConfigColchon | null>>
-  /** Un rechazo conserva la configuración anterior. */
-  guardarConfig(
-    dispositivoId: string,
-    config: ConfigColchon,
-  ): Promise<Resultado<ConfigColchon>>
-  /** Eventos de armado, alarma y parada, del más reciente al más antiguo. */
-  listarEventos(
-    dispositivoId: string,
-    limite: number,
-  ): Promise<Resultado<EventoColchon[]>>
-}
-
 export interface ServicioHabitacion {
   /** Eventos de puerta y movimiento, del más reciente al más antiguo. */
   listarEventos(
@@ -270,6 +256,34 @@ export interface ServicioAlimentacion {
   ultimaTemperatura(dispositivoId: string): Promise<Resultado<LecturaTemperatura | null>>
 }
 
+export interface ServicioHistorial {
+  /** Registros del bebé en [desde, hasta) (milisegundos UTC), ya unificados por el servidor. */
+  consultar(bebeId: string, desde: number, hasta: number): Promise<Resultado<RespuestaHistorial>>
+}
+
+/**
+ * Colchón (el de la Pico, pico-figuras-colchon-01): lee eventos_colchon y pide
+ * órdenes con solicitar_comando_colchon. Es el único colchón de la web.
+ */
+export interface ServicioColchonPico {
+  obtenerUltimoEvento(
+    dispositivoId: string,
+  ): Promise<Resultado<EventoColchonPico | null>>
+  obtenerHistorialEventos(
+    dispositivoId: string,
+    limite?: number,
+  ): Promise<Resultado<EventoColchonPico[]>>
+  solicitarComando(
+    dispositivoId: string,
+    comando: string,
+    parametros?: Record<string, unknown>,
+  ): Promise<Resultado<OrdenColchonPico>>
+  suscribirEventos(
+    dispositivoId: string,
+    manejadores: Manejadores<EventoColchonPico>,
+  ): Cancelar
+}
+
 export type Servicios = {
   lecturas: ServicioLecturas
   comandos: ServicioComandos
@@ -278,9 +292,10 @@ export type Servicios = {
   limites: ServicioLimites
   horarios: ServicioHorarios
   voz: ServicioVoz
-  colchon: ServicioColchon
+  colchonPico: ServicioColchonPico
   habitacion: ServicioHabitacion
   alimentacion: ServicioAlimentacion
+  historial: ServicioHistorial
   auth: ServicioAuth
   cuentas: ServicioCuentas
   telegram: ServicioTelegram

@@ -1,0 +1,47 @@
+.panel-modulo.panel-limites form {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.pagina .panel-limites .panel-limites-ayuda {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.panel-limites-rangos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+}
+
+.panel-limites-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Los cuatro valores escritos solo aparecen al pedirlos con el botón. */
+.panel-limites-manual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-suave);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+}
+
+.panel-limites-manual label {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.panel-limites-manual input {
+  width: 100%;
+}

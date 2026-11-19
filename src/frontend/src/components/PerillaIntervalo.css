@@ -1,0 +1,99 @@
+.perilla {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.perilla-caja {
+  position: relative;
+  flex: none;
+  width: clamp(120px, 18vh, 168px);
+  aspect-ratio: 1;
+}
+
+.perilla-dial {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #fff 0%, var(--bg-suave) 70%);
+  box-shadow: inset 0 2px 6px rgb(94 72 36 / 10%), 0 6px 16px rgb(94 72 36 / 12%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.perilla-dial:active {
+  cursor: grabbing;
+}
+
+.perilla-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.perilla-pista,
+.perilla-progreso {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.perilla-pista {
+  stroke: var(--border);
+}
+
+.perilla-progreso {
+  stroke: var(--accent);
+}
+
+.perilla-tirador {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  filter: drop-shadow(0 1px 2px rgb(94 72 36 / 35%));
+}
+
+.perilla-tirador-vacio {
+  stroke: var(--dot);
+}
+
+/* El valor va en el centro del dial y no intercepta el puntero. */
+.perilla-lectura {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.perilla-numero {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.perilla-unidad {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.perilla-ajuste {
+  display: flex;
+  gap: 12px;
+}
+
+.perilla-ajuste button {
+  width: 48px;
+  padding: 0;
+  font-size: 1.3rem;
+  border-radius: 50%;
+}

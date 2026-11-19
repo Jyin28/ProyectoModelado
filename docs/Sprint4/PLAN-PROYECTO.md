@@ -6,7 +6,7 @@
 
 ## Punto de partida y forma de trabajo
 
-Base revisada: `development`, commit `386ca9a`. Supabase ya tiene migraciones de ambiente, comandos y confirmación de lámpara, eventos de movimiento y la función `ingesta`. En `src/frontend` existen login y páginas de cuna, figuras, colchón e historial. En `src/firmware` existen el selector de módulo, control de lámpara, figuras, audio y lógica de calibración y alarma del colchón. La maqueta del Sprint 3 usa una Pico 2 W conectada a una protoboard por vez. La presencia de una página o un controlador acredita código existente; su aceptación requiere evidencia del recorrido completo.
+Base revisada: `development`, commit `386ca9a`. Supabase ya tiene migraciones de ambiente, comandos y confirmación de lámpara, eventos de movimiento y la función `ingesta`. En `src/frontend` existen login y páginas de cuna, figuras, colchón e historial. En `src/firmware/pico` existen el selector de módulo, control de lámpara, figuras, audio y lógica de calibración y alarma del colchón. La maqueta del Sprint 3 usa una Pico 2 W conectada a una protoboard por vez. La presencia de una página o un controlador acredita código existente; su aceptación requiere evidencia del recorrido completo.
 
 **Instrucción para Claude Code:** ejecutá la fase indicada desde el estado vigente de `development`. Para cada HU, usá los CA de este documento y las decisiones DEC-01 a DEC-13 en `docs/Jira/DecisionesAprobadas.md`. Conservá los comportamientos ya comprobados. Al terminar, registrá commit, archivos modificados, comandos, resultados y CA pendientes. Usá los estados pendiente, parcial, verificado o bloqueado; para los bloqueos indicá el recurso o decisión que falta. Una prueba simulada acredita lógica; una prueba física requiere evidencia del equipo. Las fases son incrementos propuestos, no fechas comprometidas.
 
@@ -53,7 +53,7 @@ Base revisada: `development`, commit `386ca9a`. Supabase ya tiene migraciones de
 ## 1. Establecer la línea base y los contratos · HU-31 y HU-32
 
 - [ ] Comparar las 35 historias con rutas de la web, migraciones, funciones, firmware y pruebas. Inventariar también discrepancias entre el plan histórico del Sprint 3 y el código integrado.
-- [ ] Reproducir la web y Supabase de desarrollo con configuración de ejemplo. Correr `npm test`, `npm run lint` y `npm run build` en `src/frontend`, `npm test` en `supabase` y `python -m unittest discover -s src/firmware/tests` desde la raíz. Registrar dependencias y fallos iniciales.
+- [ ] Reproducir la web y Supabase de desarrollo con configuración de ejemplo. Correr `npm test`, `npm run lint` y `npm run build` en `src/frontend`, `npm test` en `supabase` y `python -m unittest discover -s src/firmware/pico/tests` desde la raíz. Registrar dependencias y fallos iniciales.
 - [ ] Documentar productor y consumidor de cada evento/comando, identidad del dispositivo, bebé asociado en el instante del evento, hora, unidad, reintentos, errores y confirmación física. Definir estados de alarma, toma y horarios tras cortes.
 - **Salida:** matriz HU/CA con evidencia o brecha, arquitectura actualizada e instrucciones reproducibles. Comprobar un envío desde dispositivo de prueba hasta lectura persistida.
 

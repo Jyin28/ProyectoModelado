@@ -16,7 +16,7 @@
 
 ## Persona C — Firmware
 
-- Firmware único de la Raspberry Pi Pico 2 W (`src/firmware`), que se conecta
+- Firmware único de la Raspberry Pi Pico 2 W (`src/firmware/pico`), que se conecta
   a un módulo por vez (cuna, colchón o figuras LED).
 - Coordinación con quienes montan los circuitos en las tres protoboards.
 

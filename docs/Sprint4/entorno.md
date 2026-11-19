@@ -31,7 +31,7 @@ Los archivos de ejemplo están versionados. Los reales están ignorados por Git 
 | Archivo de ejemplo | Copiar a | Contenido (solo nombres de variables) |
 |---|---|---|
 | `src/frontend/.env.example` | `src/frontend/.env.local` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_AMBIENTE_DEVICE_ID`, `VITE_LAMPARA_HABILITADA`, `VITE_LAMPARA_DEVICE_ID`, `VITE_MOVIMIENTO_HABILITADO`, `VITE_MOVIMIENTO_DEVICE_ID` |
-| `src/firmware/secrets.example.py` | `src/firmware/secrets.py` | `WIFI_SSID`, `WIFI_PASSWORD`, `AMBIENTE_URL`, `AMBIENTE_DEVICE_ID`, `AMBIENTE_TOKEN`, `LAMPARA_SUPABASE_URL`, `LAMPARA_PUBLISHABLE_KEY`, `LAMPARA_DEVICE_ID`, `LAMPARA_AUTH_EMAIL`, `LAMPARA_AUTH_PASSWORD`, `MOVIMIENTO_DEVICE_ID`, `MOVIMIENTO_TOKEN` |
+| `src/firmware/pico/secrets.example.py` | `src/firmware/pico/secrets.py` | `WIFI_SSID`, `WIFI_PASSWORD`, `AMBIENTE_URL`, `AMBIENTE_DEVICE_ID`, `AMBIENTE_TOKEN`, `LAMPARA_SUPABASE_URL`, `LAMPARA_PUBLISHABLE_KEY`, `LAMPARA_DEVICE_ID`, `LAMPARA_AUTH_EMAIL`, `LAMPARA_AUTH_PASSWORD`, `MOVIMIENTO_DEVICE_ID`, `MOVIMIENTO_TOKEN` |
 
 Sin `.env.local`, la web arranca en modo «Backend no configurado»: entra sin sesión y no muestra datos. Es el modo de las pruebas automáticas.
 
@@ -57,7 +57,7 @@ npm.cmd test
 cd ..
 
 # Firmware (CPython de escritorio)
-python -m unittest discover -s src/firmware/tests
+python -m unittest discover -s src/firmware/pico/tests
 ```
 
 Arrancar la web:
@@ -67,6 +67,19 @@ cd src\frontend
 npm.cmd run dev   # http://localhost:5173
 ```
 
+**Voz desde el teléfono (hotspot).** El navegador solo da el micrófono en `https` o en
+`localhost`. Desde el portátil basta `npm.cmd run dev`. Para el teléfono, sirve la web por
+https en la red local:
+
+```powershell
+npm.cmd run dev:https   # muestra «Network: https://<IP>:5173»; abre esa dirección en el teléfono
+```
+
+El certificado es autofirmado: el teléfono mostrará una advertencia que hay que aceptar (solo
+la primera vez). Con `VITE_VOZ_HABILITADA=true` en `.env.local` aparece «Hablar a la cuna»
+en la pestaña «Parlante». Si la dirección no es segura, el panel lo dice en lugar de pedir el
+micrófono.
+
 Resultado esperado: 14 archivos y 159 pruebas en la web, 29 pruebas en Supabase, 171 pruebas en el firmware, lint y build sin errores.
 
 ## 4. Qué demuestra y qué no cada prueba
@@ -75,7 +88,7 @@ Resultado esperado: 14 archivos y 159 pruebas en la web, 29 pruebas en Supabase,
 |---|---|---|
 | `src/frontend` (Vitest, jsdom) | Lógica de pantallas, sesión y consultas con Supabase simulado | Conexión con un Supabase real |
 | `supabase` (PGlite) | Migraciones, RLS, RPC e ingesta con PostgreSQL en memoria | Despliegue real, Realtime real, políticas sobre `realtime.messages` en la nube |
-| `src/firmware/tests` | Lógica de órdenes, colchón, audio y comandos con dispositivos simulados | TLS, NTP, I²S, GPIO ni sensores reales |
+| `src/firmware/pico/tests` | Lógica de órdenes, colchón, audio y comandos con dispositivos simulados | TLS, NTP, I²S, GPIO ni sensores reales |
 
 Una prueba simulada acredita lógica. Una prueba física requiere evidencia del equipo.
 
@@ -88,7 +101,7 @@ Ejecuta una persona del equipo con acceso:
 1. Instala Supabase CLI y ejecuta `supabase login` y `supabase link` con la referencia del proyecto (ver `supabase/README.md`, sección «Preparar el proyecto de desarrollo»).
 2. `supabase db push --dry-run`, revisa el plan y luego `supabase db push`. Después `supabase functions deploy ingesta`.
 3. Crea en Authentication un usuario de prueba y anota su UUID.
-4. Genera un token de módulo y calcula su SHA-256 sin escribirlo en el repositorio (comandos en `supabase/README.md`, paso 3). Guarda el token solo en `src/firmware/secrets.py` o en una variable de entorno de tu sesión.
+4. Genera un token de módulo y calcula su SHA-256 sin escribirlo en el repositorio (comandos en `supabase/README.md`, paso 3). Guarda el token solo en `src/firmware/pico/secrets.py` o en una variable de entorno de tu sesión.
 5. En el editor SQL, ejecuta el bloque de provisión de `supabase/README.md` (paso 4): inserta el módulo con el hash, el dueño y un bebé de prueba con asignación anterior a la primera medición.
 6. Envía un evento de prueba, por ejemplo con `curl` desde PowerShell. Pon la URL y el token en variables de entorno de tu sesión, no en el comando guardado:
 
@@ -118,11 +131,11 @@ La revisión de esta fase está en [validacion-fase1.md](validacion-fase1.md). P
 
 ```powershell
 git ls-files | Select-String -Pattern '(^|/)(\.env|secrets)'
-git check-ignore -v src/frontend/.env.local src/firmware/secrets.py
+git check-ignore -v src/frontend/.env.local src/firmware/pico/secrets.py
 git grep -l -I -E "eyJ[A-Za-z0-9_-]{20,}\.|sb_secret_[A-Za-z0-9]{10,}"
 ```
 
-Solo deben aparecer `src/frontend/.env.example` y `src/firmware/secrets.example.py` como archivos versionados, ambos con nombres de variables y sin valores.
+Solo deben aparecer `src/frontend/.env.example` y `src/firmware/pico/secrets.example.py` como archivos versionados, ambos con nombres de variables y sin valores.
 
 ## 7. Problemas conocidos del entorno
 

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PanelMovimiento from '../src/components/PanelMovimiento.tsx'
 import ProveedorServicios from '../src/components/ProveedorServicios.tsx'
 import ProveedorSesion from '../src/components/ProveedorSesion.tsx'
+import { INTERVALO_CONSULTA_MS } from '../src/hooks/useUltimaAmbiental.ts'
 import type { EventoMovimiento } from '../src/models/contrato.ts'
 import {
   DISPOSITIVO_MOVIMIENTO_POR_DEFECTO,
@@ -109,13 +110,13 @@ describe('PanelMovimiento', () => {
     expect(screen.getByRole('region', { name: 'Último movimiento' })).toHaveTextContent('10:04:10')
   })
 
-  it('consulta al montar y cada 10 s sin superponerse', async () => {
+  it('consulta al montar y cada 2 s sin superponerse', async () => {
     const { obtenerUltimoMovimiento } = montar([() => new Promise(() => {})])
     await avanzar(35_000)
     expect(obtenerUltimoMovimiento).toHaveBeenCalledTimes(1)
     const otro = montar([ok(evento())])
     await avanzar()
-    await avanzar(10_000)
+    await avanzar(INTERVALO_CONSULTA_MS)
     expect(otro.obtenerUltimoMovimiento).toHaveBeenCalledTimes(2)
   })
 

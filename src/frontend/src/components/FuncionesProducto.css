@@ -1,0 +1,189 @@
+/* Pestañas arriba y el panel de ajustes debajo, ocupando todo el alto que sobra. */
+.producto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.producto-pestanas {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 5px;
+  overflow-x: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--sombra-suave);
+  scrollbar-width: none;
+}
+
+.producto-pestanas button {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.producto-pestanas button:hover:not(:disabled) {
+  background: var(--bg-suave);
+}
+
+.producto-pestanas button[aria-selected='true'] {
+  color: var(--accent-contraste);
+  font-weight: 600;
+  background: var(--accent);
+}
+
+/* El panel de la pestaña es lo más grande de la pantalla. */
+.producto-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+
+.producto-cuerpo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+/* Dentro de la pestaña, cada panel es una tarjeta blanca sobre el fondo crema. */
+.producto-cuerpo > .panel-modulo,
+.producto-cuerpo > .panel-horarios,
+.producto-cuerpo > .panel-lampara,
+.producto-cuerpo > section,
+.panel-pila > section {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-suave);
+}
+
+.producto-cuerpo .panel-horarios {
+  background: var(--card-bg);
+  box-shadow: var(--sombra-suave);
+}
+
+.producto-cuerpo h2 {
+  font-size: 1.1rem;
+}
+
+/* Varias tarjetas en una misma columna. */
+.panel-pila {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.panel-modulo-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.producto-vacio {
+  display: none;
+  margin: 0;
+  padding: 16px;
+  color: var(--text-muted);
+}
+
+.producto-cuerpo:empty + .producto-vacio {
+  display: block;
+}
+
+/* Figuras: los controles de los LED a la izquierda y la secuencia con su perilla a la derecha. */
+.panel-modulo.panel-figuras {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 24px;
+  align-content: start;
+}
+
+.panel-figuras > h2,
+.panel-figuras > p,
+.panel-figuras > .estado-orden {
+  grid-column: 1 / -1;
+}
+
+.panel-figuras-leds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panel-figuras .estado-orden dl {
+  margin-top: 4px;
+}
+
+/* Secuencia: los campos a la izquierda y la perilla a la derecha, para que todo quepa en pantalla. */
+.panel-modulo.panel-figuras form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 20px;
+  row-gap: 6px;
+  margin-top: 0;
+}
+
+.panel-modulo.panel-figuras form > label,
+.panel-modulo.panel-figuras form > p,
+.panel-modulo.panel-figuras form > button {
+  grid-column: 1;
+  margin-top: 0;
+}
+
+.panel-modulo.panel-figuras form > .perilla {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+}
+
+.panel-modulo.panel-figuras form > [role='alert'] {
+  grid-column: 1 / -1;
+}
+
+.panel-modulo.panel-figuras > p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.panel-figuras-leds [role='group'] {
+  margin-top: 0;
+}
+
+@media (min-width: 1000px) {
+  .panel-modulo.panel-figuras {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+}
+
+/* Celular: todas las pestañas a la vista, en dos filas si hace falta. */
+@media (max-width: 599px) {
+  .producto-pestanas {
+    flex-wrap: wrap;
+  }
+
+  .producto-pestanas button {
+    flex: 1 1 auto;
+    padding: 0 10px;
+  }
+}

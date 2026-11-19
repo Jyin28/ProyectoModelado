@@ -62,7 +62,7 @@ Líneas continuas: existen en el código (lámpara y ambiente/movimiento). Líne
 | **Notificador + Telegram** | Un aviso por evento y destinatario, con la web cerrada. Vinculación con código de un uso. | Propuesta (fase 4) | `src/backend/Integrations/Telegram/` está vacío |
 | **pg_cron** | Ejecuta horarios en `America/Costa_Rica` sin depender de la web. | Propuesta (fase 4) | — |
 | **Storage** | Fotos privadas de eventos de habitación, accesibles solo al dueño. Sin audio. | Propuesta (fase 7) | — |
-| **Firmware (Pico 2 W)** | Lee sensores, ejecuta comandos, confirma físicamente y calcula localmente las alarmas del colchón. Un solo módulo por vez (`MODULO`). | Parcial: ambiente, movimiento y lámpara conectados; figuras, colchón y audio solo locales | `src/firmware/` |
+| **Firmware (Pico 2 W)** | Lee sensores, ejecuta comandos, confirma físicamente y calcula localmente las alarmas del colchón. Un solo módulo por vez (`MODULO`). | Parcial: ambiente, movimiento y lámpara conectados; figuras, colchón y audio solo locales | `src/firmware/pico/` |
 | **Fotos** | La maqueta admite un teléfono como cámara. La cámara no graba video. | Propuesta (fase 7) | — |
 | **Voz en vivo** | Un sentido: celular → altavoz de la cuna. Sin almacenamiento. | Propuesta (fase 5). Riesgo de arquitectura: probar primero (fase 2). | — |
 
@@ -149,7 +149,7 @@ Las lecturas de peso del colchón se miden cada segundo **solo en la Pico**. No 
 | `mattress_tare`, `mattress_calibrate`, `mattress_arm`, `mattress_rearm`, `mattress_stop`, `mattress_status` | Web → Pico (colchón) | Igual | Firmware local. Sin canal de red. |
 | `get_status` | Web → Pico (todos los módulos) | Igual | Firmware local. |
 
-Formato local del firmware (`src/firmware/common/utilities/comandos.py`): entrada `{command_id, command, params}`, salida `{command_id, command, ok, result|error}`. Un comando de otro módulo se rechaza con `comando_de_otro_modulo:<módulo>`.
+Formato local del firmware (`src/firmware/pico/common/utilities/comandos.py`): entrada `{command_id, command, params}`, salida `{command_id, command, ok, result|error}`. Un comando de otro módulo se rechaza con `comando_de_otro_modulo:<módulo>`.
 
 Ciclo de una orden (existe para la lámpara; propuesta generalizarlo):
 
@@ -202,7 +202,7 @@ El firmware conserva a lo sumo un evento pendiente por tipo y lo descarta si cae
 
 ### 6.1 Monitoreo del colchón y alarma
 
-Existe en firmware: `src/firmware/colchon/logica_colchon.py` (clase `Monitor`) y `control_colchon.py`. Los parámetros por defecto son tolerancia 10 %, 3 lecturas consecutivas, 1 lectura por segundo y alarma de 60 s (DEC-03, DEC-07, DEC-13). Nada de esto llega aún a la web ni a la nube.
+Existe en firmware: `src/firmware/pico/colchon/monitoreo.py` (estados, filtro de 3 lecturas y alarma) y `peso.py` (tara y calibración), con envío de eventos y recepción de órdenes por `common/communication/nube.py`. Los parámetros por defecto son tolerancia 10 %, 3 lecturas consecutivas, 1 lectura por segundo y alarma de 60 s (`ALARMA_S`). La web de `/colchon` lee esos eventos (`eventos_colchon`) y pide órdenes (`ordenes_colchon`); falta probarlo con la Pico y Supabase reales.
 
 ```mermaid
 stateDiagram-v2
@@ -305,4 +305,4 @@ Reglas permanentes de la web (de `src/frontend/CLAUDE.md` y `CLAUDE.md`): no mos
 - Especificación: `docs/Sprint1/EntregableSprint1.pdf` (HU-31, CA-31.1 a CA-31.4; HU-32, CA-32.4).
 - Decisiones: `docs/Jira/DecisionesAprobadas.md` (DEC-01 a DEC-13).
 - Contratos: `src/shared/contracts/ambiente.md`, `lampara.md`, `movimiento.md`.
-- Código: `supabase/migrations/`, `supabase/functions/ingesta/`, `src/firmware/`, `src/frontend/`.
+- Código: `supabase/migrations/`, `supabase/functions/ingesta/`, `src/firmware/pico/`, `src/frontend/`.

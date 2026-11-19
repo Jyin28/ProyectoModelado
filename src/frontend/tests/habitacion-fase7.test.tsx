@@ -118,8 +118,8 @@ describe('Habitación: pantalla', () => {
     expect(screen.queryByRole('region', { name: 'Monitoreo de la habitación' })).not.toBeInTheDocument()
   })
 
-  it('el menú principal enlaza la habitación', async () => {
-    abrir()
+  it('Productos enlaza la habitación', async () => {
+    abrir({}, '/productos')
     expect(await screen.findByRole('link', { name: 'Habitación' })).toHaveAttribute('href', '/habitacion')
   })
 

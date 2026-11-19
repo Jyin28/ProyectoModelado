@@ -8,6 +8,10 @@ export type EstadoVoz = 'inactiva' | 'conectando' | 'hablando' | 'error'
 export const MENSAJE_SIN_MICROFONO =
   'No se pudo usar el micrófono. Revisa el permiso del navegador.'
 
+/** El navegador solo da el micrófono en https o en localhost (contexto seguro). */
+export const MENSAJE_CONTEXTO_INSEGURO =
+  'El navegador no da el micrófono en esta dirección. Abre la web con https o desde localhost.'
+
 /**
  * Sesión de voz en vivo. La voz se envía por el canal privado y se descarta:
  * ni la web ni el backend la guardan. El estado «hablando» solo significa que
@@ -42,6 +46,12 @@ export function useVoz(
 
   const iniciar = useCallback(async () => {
     if (ocupado.current || sesion.current) return
+    // Sin contexto seguro no hay micrófono: se avisa antes de abrir el canal de voz.
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      setError(MENSAJE_CONTEXTO_INSEGURO)
+      setEstado('error')
+      return
+    }
     ocupado.current = true
     setError(null)
     setEstado('conectando')

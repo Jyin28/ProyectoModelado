@@ -1,0 +1,83 @@
+.selector-hora {
+  --alto-fila: 38px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* Dos ruedas juntas con una banda que marca la fila elegida, como en la app de alarma. */
+.selector-hora-ruedas {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 220px;
+}
+
+.selector-hora-banda {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - var(--alto-fila) / 2);
+  height: var(--alto-fila);
+  background: var(--accent-suave);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.rueda {
+  position: relative;
+  flex: 1;
+  /* Cinco filas visibles: la elegida en el centro y dos arriba y abajo. */
+  height: calc(var(--alto-fila) * 5);
+  padding: calc(var(--alto-fila) * 2) 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  border-radius: 12px;
+  /* Las filas se desvanecen hacia los bordes. */
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+
+.rueda::-webkit-scrollbar {
+  display: none;
+}
+
+.rueda-fila {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--alto-fila);
+  scroll-snap-align: center;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rueda-fila[aria-selected='true'] {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.selector-hora-separador {
+  position: relative;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.pagina .selector-hora .selector-hora-elegida,
+.selector-hora .selector-hora-elegida {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

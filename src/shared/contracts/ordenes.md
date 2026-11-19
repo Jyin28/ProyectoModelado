@@ -18,7 +18,7 @@ Estados de la orden: `pendiente`, `enviado`, `confirmado`, `error`. La web los m
 
 | Módulo (`device_id`) | `command` | `params` | Resultado de la Pico |
 |---|---|---|---|
-| `cuna-figuras-NN` | `led_set` | `index` entero 0 a 5, `on` booleano | `{}` |
+| `cuna-figuras-NN` | `led_set` | `index` entero 0 a 5, `on` booleano (cambia solo ese LED; si había una secuencia en curso, la reemplaza y apaga el resto) | `{}` |
 | | `led_all` | `on` booleano | `{}` |
 | | `led_sequence` | `name` en `chase`, `alternate`, `blink_all`; `step_s` de 2 a 3600 | `{sequence}` |
 | | `led_stop` | ninguno | `{}` |
@@ -32,7 +32,7 @@ Estados de la orden: `pendiente`, `enviado`, `confirmado`, `error`. La web los m
 
 Claves de más, tipos distintos o valores fuera de rango se rechazan con `22023` (`parametros_invalidos`). Un comando de otro módulo se rechaza con `comando_de_otro_modulo`.
 
-Catálogo de audio: la Pico solo tiene el sonido `tono_suave` (tono sintetizado). No hay canciones ni ruido blanco pregrabados; añadirlos requiere decisión del equipo y archivos reales. La Pico responde `audio_desconocido` si el identificador no existe.
+Catálogo de audio: lo define la Pico en `AUDIO_CATALOGO` (`src/firmware/common/utilities/config.py`) y la web lo replica en `CATALOGO_AUDIO` (`src/frontend/src/models/ordenes.ts`); los dos deben coincidir. Hoy trae `tono_suave` (tono sintetizado) y `prueba` (el WAV `prueba.wav`, que se copia a la Pico). No hay canciones ni ruido blanco pregrabados incluidos: sumar una es copiar su WAV (PCM 16 bits, mono, 16 kHz) a la Pico y agregarla en esos dos lugares, sin carga de archivos desde la app (DEC-08). La base acepta cualquier identificador con formato válido; la Pico responde `audio_desconocido` si no está en su catálogo y `audio_archivo_no_encontrado` si falta el WAV.
 
 ## Errores del RPC
 
@@ -52,9 +52,22 @@ Catálogo de audio: la Pico solo tiene el sonido `tono_suave` (tono sintetizado)
 - Alimentación: ninguna clave; el pesaje no deja estado confirmado y su resultado es un evento de la toma ([alimentacion.md](alimentacion.md)).
 - Movimiento: `monitoreo` (booleano). Si es `false`, la ingesta ignora los eventos del PIR y responde `409 monitoreo_inactivo` (sin reintento).
 
+### Estado informado por la Pico al conectar
+
+`public.reportar_estado_modulo(p_estado jsonb)` lo llama la cuenta de dispositivo al unirse al canal y tras cada reconexión, antes de tomar órdenes (hasta 3 intentos; si fallan, las órdenes siguen). Devuelve `{actualizados}`. Sin cuenta de dispositivo: `42501 no_autorizado`. Un estado que no cumple el contrato: `22023 estado_invalido`, sin cambiar nada.
+
+| Clave | Valor | Módulo que se actualiza |
+|---|---|---|
+| `monitoreo` | booleano | `cuna-movimiento-NN` |
+| `monitoreo_puerta`, `monitoreo_movimiento` | booleano | `cuna-habitacion-NN` |
+| `secuencia` | `null` o texto `[a-z_]{1,40}` | `cuna-figuras-NN` |
+| `colchon` | `activo`, `alarma` o `detenido` | `cuna-colchon-NN` |
+
+Solo se actualizan los módulos del producto de la cuenta. Para el colchón solo `detenido` cambia algo: queda `{colchon: detenido, motivo: reinicio}` sin tocar `colchon_ts`, salvo que ya figurara detenido (se conserva su motivo real). `activo` y `alarma` no se escriben: los fija el evento de armado o de alarma. Tras un reinicio la Pico informa todo apagado y reanudar el colchón exige armar de nuevo (CA-28.3 y CA-28.4).
+
 ## Horarios que generan órdenes
 
-`public.reemplazar_horarios(p_device_id, p_tipo, p_horas)` acepta, además de `recordatorio_*`, los tipos `figuras_encender` (`led_all` encendido), `figuras_apagar` (`led_stop`), `movimiento_activar` y `movimiento_desactivar` (`motion_set`), y `habitacion_puerta_activar`, `habitacion_puerta_desactivar`, `habitacion_movimiento_activar` y `habitacion_movimiento_desactivar` (`room_monitor_set` del sensor que nombran). `procesar_horarios` crea una orden en el minuto exacto, hora de `America/Costa_Rica`, una vez por día. No recupera horas vencidas (DEC-04, DEC-10): si la Pico no está conectada en esos 15 s, la orden vence.
+`public.reemplazar_horarios(p_device_id, p_tipo, p_horas)` acepta, además de `recordatorio_*`, los tipos `figuras_encender` (arranca la última `led_sequence` que la Pico confirmó para ese módulo, con su `name` y `step_s`; si no hay ninguna confirmada, `led_all` encendido; migración `20261119001500_horario_figuras_secuencia.sql`), `figuras_apagar` (`led_stop`), `movimiento_activar` y `movimiento_desactivar` (`motion_set`), y `habitacion_puerta_activar`, `habitacion_puerta_desactivar`, `habitacion_movimiento_activar` y `habitacion_movimiento_desactivar` (`room_monitor_set` del sensor que nombran). `procesar_horarios` crea una orden en el minuto exacto, hora de `America/Costa_Rica`, una vez por día. No recupera horas vencidas (DEC-04, DEC-10): si la Pico no está conectada en esos 15 s, la orden vence.
 
 ## Actividad de audio
 

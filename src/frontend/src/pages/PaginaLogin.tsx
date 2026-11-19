@@ -4,7 +4,7 @@ import { useSesion } from '../hooks/useSesion.ts'
 import './paginas.css'
 import './PaginaLogin.css'
 
-const DESTINO_POR_DEFECTO = '/cuna'
+const DESTINO_POR_DEFECTO = '/productos'
 
 // Solo se acepta una ruta interna; cualquier otra cosa lleva a Cuna.
 function destinoSeguro(estado: unknown): string {

@@ -1,7 +1,8 @@
 .tarjeta-lectura {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radio);
   background: var(--card-bg);
+  box-shadow: var(--sombra-suave);
   padding: 16px;
 }
 
@@ -44,4 +45,74 @@
 
 .tarjeta-lectura[data-estado='sin-datos'] {
   border-style: dotted;
+}
+
+/* Cabecera de un módulo: nombre y estado arriba, valor grande y fechas pequeñas al lado. */
+.tarjeta-lectura-compacta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  padding: 8px 14px;
+}
+
+.tarjeta-lectura-compacta .tarjeta-lectura-etiqueta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pagina .tarjeta-lectura-compacta .tarjeta-lectura-insignia {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.pagina .tarjeta-lectura-compacta .tarjeta-lectura-valor {
+  grid-column: 1;
+  grid-row: 2 / span 3;
+  margin: 0;
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.pagina .tarjeta-lectura-compacta .tarjeta-lectura-meta,
+.pagina .tarjeta-lectura-compacta .tarjeta-lectura-aviso {
+  grid-column: 2;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 599px) {
+  .tarjeta-lectura-compacta {
+    column-gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .tarjeta-lectura-compacta .tarjeta-lectura-etiqueta {
+    grid-column: 1 / -1;
+  }
+
+  .pagina .tarjeta-lectura-compacta .tarjeta-lectura-valor {
+    grid-row: 2 / span 2;
+    font-size: 1.35rem;
+  }
+
+  .pagina .tarjeta-lectura-compacta .tarjeta-lectura-insignia {
+    grid-row: 2;
+    justify-self: start;
+    font-size: 0.7rem;
+  }
+
+  .pagina .tarjeta-lectura-compacta .tarjeta-lectura-meta,
+  .pagina .tarjeta-lectura-compacta .tarjeta-lectura-aviso {
+    grid-row: 3;
+  }
+
+  /* En pantallas estrechas queda «hace N s»; la fecha completa se ve en pantallas anchas. */
+  .pagina .tarjeta-lectura-compacta .tarjeta-lectura-meta:nth-last-child(2) {
+    display: none;
+  }
 }

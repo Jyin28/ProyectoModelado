@@ -7,7 +7,7 @@ function PaginaNoEncontrada() {
       <h1 id="titulo-no-encontrada">No encontrada</h1>
       <p>La página que buscas no existe.</p>
       <p>
-        <Link to="/cuna">Volver a Cuna</Link>
+        <Link to="/productos">Volver a Productos</Link>
       </p>
     </section>
   )

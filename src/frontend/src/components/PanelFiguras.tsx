@@ -3,13 +3,15 @@ import { useOrdenModulo } from '../hooks/useOrdenModulo.ts'
 import {
   COMANDOS_FIGURAS,
   LED_INDICE_MAX,
+  LED_INTERVALO_MAX_S,
+  LED_INTERVALO_MIN_S,
   NOMBRE_SECUENCIA,
   SECUENCIAS_LED,
   type SecuenciaLed,
 } from '../models/ordenes.ts'
 import { MENSAJE_INTERVALO, parsearIntervalo } from '../utils/ordenes.ts'
 import EstadoOrdenModulo from './EstadoOrdenModulo.tsx'
-import PanelHorarios from './PanelHorarios.tsx'
+import PerillaIntervalo from './PerillaIntervalo.tsx'
 
 type Props = { dispositivoId: string }
 
@@ -31,6 +33,11 @@ function PanelFiguras({ dispositivoId }: Props) {
   if (!activo) return null
 
   const secuencia = estado?.estado.secuencia
+  const intervaloElegido = parsearIntervalo(intervalo)
+  const solicitada =
+    orden?.command === 'led_sequence' && typeof orden.params.step_s === 'number'
+      ? `Última secuencia solicitada: ${NOMBRE_SECUENCIA[orden.params.name as SecuenciaLed] ?? String(orden.params.name)}, cada ${orden.params.step_s} s.`
+      : null
   const confirmada =
     estado === null || estado.actualizado_en === null
       ? 'Sin confirmación de la Pico.'
@@ -47,46 +54,48 @@ function PanelFiguras({ dispositivoId }: Props) {
   }
 
   return (
-    <section className="panel-modulo" aria-labelledby="titulo-panel-figuras">
+    <section className="panel-modulo panel-figuras" aria-labelledby="titulo-panel-figuras">
       <h2 id="titulo-panel-figuras">Control de las figuras</h2>
       <p>
         Las órdenes llegan a la Pico y se muestran como confirmadas solo cuando
         ella lo informa. Una confirmación no comprueba que la luz esté
         encendida.
       </p>
-      <div role="group" aria-label="Todos los LED">
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_all', params: { on: true } })}>
-          Encender todos
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_all', params: { on: false } })}>
-          Apagar todos
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_stop', params: {} })}>
-          Detener secuencia
-        </button>
-      </div>
-      <div role="group" aria-label="Un LED">
-        <label>
-          LED
-          <select value={indice} onChange={(e) => setIndice(e.target.value)}>
-            {LEDS.map((i) => (
-              <option key={i} value={i}>
-                Figura {i + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: true } })}>
-          Encender la figura
-        </button>
-        <button type="button" disabled={enviando}
-          onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: false } })}>
-          Apagar la figura
-        </button>
+      <div className="panel-figuras-leds">
+        <div role="group" aria-label="Todos los LED">
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_all', params: { on: true } })}>
+            Encender todos
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_all', params: { on: false } })}>
+            Apagar todos
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_stop', params: {} })}>
+            Detener secuencia
+          </button>
+        </div>
+        <div role="group" aria-label="Un LED">
+          <label>
+            LED
+            <select value={indice} onChange={(e) => setIndice(e.target.value)}>
+              {LEDS.map((i) => (
+                <option key={i} value={i}>
+                  Figura {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: true } })}>
+            Encender la figura
+          </button>
+          <button type="button" disabled={enviando}
+            onClick={() => void solicitar({ command: 'led_set', params: { index: Number(indice), on: false } })}>
+            Apagar la figura
+          </button>
+        </div>
       </div>
       <form onSubmit={alSecuencia} noValidate aria-label="Secuencia">
         <label>
@@ -109,25 +118,32 @@ function PanelFiguras({ dispositivoId }: Props) {
             aria-invalid={invalido}
           />
         </label>
-        <button type="submit" disabled={enviando}>
+        <PerillaIntervalo
+          etiqueta="Perilla del intervalo"
+          valor={intervaloElegido}
+          minimo={LED_INTERVALO_MIN_S}
+          maximo={LED_INTERVALO_MAX_S}
+          paso={1}
+          unidad="s"
+          alCambiar={(n) => {
+            // Girar la perilla solo cambia el borrador: la orden sale con «Iniciar secuencia».
+            setIntervalo(String(n))
+            setInvalido(false)
+          }}
+        />
+        <p className="panel-modulo-elegido">
+          {intervaloElegido === null
+            ? 'Intervalo elegido: sin elegir'
+            : `Intervalo elegido: ${intervaloElegido} s`}
+        </p>
+        <button type="submit" className="boton-primario" disabled={enviando} aria-busy={enviando}>
           {enviando ? 'Enviando…' : 'Iniciar secuencia'}
         </button>
         {invalido && <p role="alert">{MENSAJE_INTERVALO}</p>}
       </form>
       <p role="status">{confirmada}</p>
+      {solicitada && <p>{solicitada} La Pico confirma la secuencia, pero no informa el intervalo que aplicó.</p>}
       <EstadoOrdenModulo orden={orden} cargando={cargando} fallo={fallo} errorEnvio={errorEnvio} />
-      <PanelHorarios
-        dispositivoId={dispositivoId}
-        tipo="figuras_encender"
-        titulo="Encender figuras"
-        descripcion="A cada hora se pide encender todas las figuras."
-      />
-      <PanelHorarios
-        dispositivoId={dispositivoId}
-        tipo="figuras_apagar"
-        titulo="Apagar figuras"
-        descripcion="A cada hora se pide apagar todas las figuras."
-      />
     </section>
   )
 }

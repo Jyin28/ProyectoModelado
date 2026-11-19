@@ -82,10 +82,20 @@ function montar(
   }
 }
 
-const avanzar = (ms = 0) =>
-  act(async () => {
+// El panel de la lámpara es una pestaña de la Cuna (la primera, ya elegida al abrir). Con
+// temporizadores falsos se abre tras avanzar, apenas existe el botón.
+const avanzar = async (ms = 0) => {
+  await act(async () => {
     await vi.advanceTimersByTimeAsync(ms)
   })
+  const boton = screen.queryByRole('tab', { name: 'Lámpara' })
+  if (boton && boton.getAttribute('aria-selected') === 'false') {
+    await act(async () => {
+      fireEvent.click(boton)
+      await vi.advanceTimersByTimeAsync(0)
+    })
+  }
+}
 
 const ok = (datos: OrdenLampara | null) => () =>
   Promise.resolve<Consulta>({ ok: true, datos })
@@ -100,6 +110,14 @@ const estado = () =>
   screen.getByText('Estado de la última orden').nextElementSibling as HTMLElement
 const valor = (etiqueta: string) =>
   screen.getByText(etiqueta).nextElementSibling as HTMLElement
+
+// El brillo se elige con la perilla: por teclado, de 0 con Inicio y de 10 en 10 con Re Pág.
+function elegirBrillo(nivel: number) {
+  const perilla = screen.getByRole('slider', { name: 'Brillo' })
+  fireEvent.keyDown(perilla, { key: 'Home' })
+  for (let i = 0; i < Math.floor(nivel / 10); i++) fireEvent.keyDown(perilla, { key: 'PageUp' })
+  for (let i = 0; i < nivel % 10; i++) fireEvent.keyDown(perilla, { key: 'ArrowUp' })
+}
 
 function habilitar() {
   vi.stubEnv('VITE_LAMPARA_HABILITADA', 'true')
@@ -141,7 +159,7 @@ describe('Cuna sin el flag', () => {
     const { obtenerUltimaOrdenLampara } = montar([ok(orden())])
     await avanzar(10_000)
     expect(panel()).not.toBeInTheDocument()
-    expect(screen.queryByText('Solicitar nivel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Aplicar brillo')).not.toBeInTheDocument()
     expect(obtenerUltimaOrdenLampara).not.toHaveBeenCalled()
   })
 
@@ -245,18 +263,15 @@ describe('Panel de lámpara', () => {
 })
 
 describe('Panel de lámpara: solicitud', () => {
-  it('niveles inválidos no llaman al servicio', async () => {
+  it('sin nivel elegido no llama al servicio y lo explica; con uno elegido sí envía', async () => {
     habilitar()
     const { solicitarLampara } = montar([ok(null)])
     await avanzar()
-    const campo = screen.getByLabelText('Nivel pedido (0 a 100)')
-    for (const v of ['', '101', '-1', '4.5']) {
-      fireEvent.change(campo, { target: { value: v } })
-      fireEvent.click(screen.getByRole('button', { name: 'Solicitar nivel' }))
-      expect(screen.getByRole('alert')).toHaveTextContent('Ingrese un número entero de 0 a 100.')
-      expect(campo).toHaveAttribute('aria-invalid', 'true')
-    }
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Ingrese un número entero de 0 a 100.')
     expect(solicitarLampara).not.toHaveBeenCalled()
+    elegirBrillo(30)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('el botón envía el nivel entero, no se duplica en curso y muestra la orden devuelta', async () => {
@@ -267,8 +282,8 @@ describe('Panel de lámpara: solicitud', () => {
       () => new Promise<Solicitud>((r) => (resolver = r)),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '0' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar nivel' }))
+    elegirBrillo(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(solicitarLampara).toHaveBeenCalledWith('cuna-lampara-01', 0)
     const boton = screen.getByRole('button', { name: 'Enviando…' })
@@ -278,7 +293,37 @@ describe('Panel de lámpara: solicitud', () => {
     await act(async () => resolver({ ok: true, datos: orden({ nivel: 0 }) }))
     expect(estado()).toHaveTextContent('Solicitud registrada')
     expect(valor('Nivel pedido')).toHaveTextContent('0 %')
-    expect(screen.getByRole('button', { name: 'Solicitar nivel' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Aplicar brillo' })).toBeEnabled()
+  })
+
+  it('Encender pide el nivel 100 y Apagar el nivel 0, sin estado optimista', async () => {
+    habilitar()
+    const { solicitarLampara } = montar(
+      [ok(null)],
+      () => Promise.resolve({ ok: true, datos: orden({ nivel: 100 }) }),
+    )
+    await avanzar()
+    fireEvent.click(screen.getByRole('button', { name: 'Encender' }))
+    await avanzar()
+    expect(solicitarLampara).toHaveBeenLastCalledWith('cuna-lampara-01', 100)
+    // Solo cuenta lo que la Pico confirma: la orden queda "solicitada", no "confirmada".
+    expect(estado()).toHaveTextContent('Solicitud registrada')
+    expect(valor('Nivel confirmado por la Pico')).toHaveTextContent('Sin confirmar')
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }))
+    await avanzar()
+    expect(solicitarLampara).toHaveBeenLastCalledWith('cuna-lampara-01', 0)
+    expect(solicitarLampara).toHaveBeenCalledTimes(2)
+  })
+
+  it('Encender y Apagar se desactivan mientras se envía una solicitud', async () => {
+    habilitar()
+    const { solicitarLampara } = montar([ok(null)], () => new Promise<Solicitud>(() => {}))
+    await avanzar()
+    fireEvent.click(screen.getByRole('button', { name: 'Encender' }))
+    await avanzar()
+    expect(screen.getByRole('button', { name: 'Encender' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Apagar' })).toBeDisabled()
+    expect(solicitarLampara).toHaveBeenCalledTimes(1)
   })
 
   it('un fallo de solicitud muestra aviso genérico y conserva la orden previa', async () => {
@@ -288,8 +333,8 @@ describe('Panel de lámpara: solicitud', () => {
       () => Promise.resolve({ ok: false, error: 'No se pudo registrar la solicitud de la lámpara.' }),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar nivel' }))
+    elegirBrillo(10)
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(screen.getByText('No se pudo registrar la solicitud de la lámpara.')).toBeInTheDocument()
     expect(valor('Nivel pedido')).toHaveTextContent('70 %')
@@ -304,12 +349,65 @@ describe('Panel de lámpara: solicitud', () => {
     )
     await avanzar()
     await avanzar(2_000) // segunda consulta queda en vuelo
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar nivel' }))
+    elegirBrillo(10)
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     expect(valor('Nivel pedido')).toHaveTextContent('10 %')
     await act(async () => resolverConsulta({ ok: true, datos: orden({ command_id: 'vieja', nivel: 70 }) }))
     expect(valor('Nivel pedido')).toHaveTextContent('10 %')
+  })
+})
+
+describe('Panel de lámpara: perilla de brillo', () => {
+  const deslizador = () => screen.getByRole('slider', { name: 'Brillo' })
+
+  it('girar la perilla solo cambia el borrador: ninguna orden sale hasta «Aplicar brillo»', async () => {
+    habilitar()
+    const { solicitarLampara } = montar(
+      [ok(null)],
+      () => Promise.resolve({ ok: true, datos: orden({ nivel: 65 }) }),
+    )
+    await avanzar()
+    expect(screen.getByText('Valor elegido: sin elegir')).toBeInTheDocument()
+    for (const v of [10, 40, 65]) elegirBrillo(v)
+    expect(screen.getByText('Valor elegido: 65 %')).toBeInTheDocument()
+    expect(deslizador()).toHaveAttribute('aria-valuenow', '65')
+    expect(deslizador()).toHaveAttribute('aria-valuetext', '65 %')
+    expect(solicitarLampara).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
+    await avanzar()
+    expect(solicitarLampara).toHaveBeenCalledTimes(1)
+    expect(solicitarLampara).toHaveBeenCalledWith('cuna-lampara-01', 65)
+    // Lo pedido queda registrado; lo confirmado sigue sin confirmar hasta que la Pico lo informe.
+    expect(valor('Nivel pedido')).toHaveTextContent('65 %')
+    expect(valor('Nivel confirmado por la Pico')).toHaveTextContent('Sin confirmar')
+  })
+
+  it('el valor elegido, el pedido y el confirmado se muestran por separado', async () => {
+    habilitar()
+    montar([ok(orden({ nivel: 40, estado: 'confirmado', nivel_confirmado: 35 }))])
+    await avanzar()
+    elegirBrillo(90)
+    expect(screen.getByText('Valor elegido: 90 %')).toBeInTheDocument()
+    expect(valor('Nivel pedido')).toHaveTextContent('40 %')
+    expect(valor('Nivel confirmado por la Pico')).toHaveTextContent('35 %')
+  })
+
+  it('un rechazo nunca aparece como confirmación y conserva el borrador', async () => {
+    habilitar()
+    montar(
+      [ok(null)],
+      () => Promise.resolve({ ok: false, error: 'No se pudo registrar la solicitud de la lámpara.' }),
+    )
+    await avanzar()
+    elegirBrillo(30)
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
+    await avanzar()
+    expect(screen.getByRole('alert')).toHaveTextContent('No se pudo registrar la solicitud')
+    expect(screen.queryByText(/Confirmada por la Pico/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Estado de la última orden')).not.toBeInTheDocument()
+    expect(screen.getByText('Valor elegido: 30 %')).toBeInTheDocument()
   })
 })
 
@@ -347,8 +445,8 @@ describe('Panel de lámpara: cuenta y desmontaje', () => {
       () => new Promise<Solicitud>((r) => (resolver = r)),
     )
     await avanzar()
-    fireEvent.change(screen.getByLabelText('Nivel pedido (0 a 100)'), { target: { value: '55' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar nivel' }))
+    elegirBrillo(55)
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar brillo' }))
     await avanzar()
     emitir(OTRA)
     await avanzar()

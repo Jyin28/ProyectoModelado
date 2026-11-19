@@ -1,4 +1,5 @@
 import AvisoSinDatos from '../components/AvisoSinDatos.tsx'
+import FuncionesProducto from '../components/FuncionesProducto.tsx'
 import PanelHorarios from '../components/PanelHorarios.tsx'
 import PanelLimitesBiberon from '../components/PanelLimitesBiberon.tsx'
 import PanelTemperaturaBiberon from '../components/PanelTemperaturaBiberon.tsx'
@@ -9,20 +10,49 @@ import './paginas.css'
 function PaginaAlimentacion() {
   const dispositivoId = dispositivoAlimentacionId()
   return (
-    <section className="pagina" aria-labelledby="titulo-alimentacion">
-      <h1 id="titulo-alimentacion">Alimentación</h1>
-      <PanelToma dispositivoId={dispositivoId} controles={ordenesHabilitadas()} />
-      <PanelTemperaturaBiberon dispositivoId={dispositivoId} />
-      <PanelLimitesBiberon dispositivoId={dispositivoId} />
-      <PanelHorarios
-        dispositivoId={dispositivoId}
-        tipo="recordatorio_alimentacion"
-        soloAviso
-        titulo="Recordatorios de alimentación"
-        descripcion="A cada hora se envía un aviso por Telegram para recordar la toma."
+    <section className="pagina pagina-modulo" aria-labelledby="titulo-alimentacion">
+      <header className="modulo-cabecera">
+        <h1 id="titulo-alimentacion">Alimentación</h1>
+        <div className="modulo-estado">
+          <AvisoSinDatos />
+        </div>
+      </header>
+      <FuncionesProducto
+        funciones={[
+          {
+            id: 'toma',
+            etiqueta: 'Toma',
+            icono: 'toma',
+            contenido: <PanelToma dispositivoId={dispositivoId} controles={ordenesHabilitadas()} />,
+          },
+          {
+            id: 'temperatura',
+            etiqueta: 'Temperatura del biberón',
+            icono: 'temperatura',
+            contenido: (
+              <>
+                <PanelTemperaturaBiberon dispositivoId={dispositivoId} />
+                <PanelLimitesBiberon dispositivoId={dispositivoId} />
+              </>
+            ),
+          },
+          {
+            id: 'recordatorios',
+            etiqueta: 'Recordatorios',
+            icono: 'horario',
+            contenido: (
+              <PanelHorarios
+                dispositivoId={dispositivoId}
+                tipo="recordatorio_alimentacion"
+                soloAviso
+                titulo="Recordatorios de alimentación"
+                descripcion="A cada hora se envía un aviso por Telegram para recordar la toma."
+              />
+            ),
+          },
+        ]}
       />
-      <AvisoSinDatos />
-      <p>
+      <p className="modulo-nota">
         El módulo de alimentación es independiente de la cuna: pesa el biberón
         y mide su temperatura. No calienta, no enfría y no da de comer. La web
         conduce la toma y la Pico pesa solo cuando se lo piden; los botones de

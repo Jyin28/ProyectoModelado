@@ -3,10 +3,15 @@ import { useAhora } from '../hooks/useAhora.ts'
 import { useLampara } from '../hooks/useLampara.ts'
 import type { EstadoVisibleLampara } from '../models/lampara.ts'
 import { estadoVisible, parsearNivel } from '../utils/lampara.ts'
-import { formatearHoraCR } from '../utils/tiempo.ts'
+import FechasOrden from './FechasOrden.tsx'
+import PerillaIntervalo from './PerillaIntervalo.tsx'
 import './PanelLampara.css'
 
 export const MENSAJE_NIVEL_INVALIDO = 'Ingrese un número entero de 0 a 100.'
+
+// El contrato de la lámpara solo tiene nivel (lampara.md): apagada es 0 y encendida es el máximo.
+const NIVEL_APAGADA = 0
+const NIVEL_ENCENDIDA = 100
 
 const ETIQUETA: Record<EstadoVisibleLampara, string> = {
   pendiente: 'Solicitud registrada',
@@ -51,69 +56,74 @@ function PanelLampara({ dispositivoId }: Props) {
   }
 
   const estado = orden ? estadoVisible(orden, ahora) : null
+  const nivelElegido = parsearNivel(texto)
 
   return (
     <section className="panel-lampara" aria-labelledby="titulo-lampara">
       <h2 id="titulo-lampara">Lámpara</h2>
-      <form onSubmit={alEnviar} noValidate>
-        <label htmlFor="nivel-lampara">Nivel pedido (0 a 100)</label>
-        <div className="panel-lampara-fila">
-          <input
-            id="nivel-lampara"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={100}
-            step={1}
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            aria-invalid={invalido}
-            aria-describedby={invalido ? 'error-nivel-lampara' : undefined}
-          />
-          <button type="submit" disabled={enviando}>
-            {enviando ? 'Enviando…' : 'Solicitar nivel'}
-          </button>
+      <div className="panel-lampara-rejilla">
+        <div className="panel-lampara-control">
+          <div className="panel-lampara-fila" role="group" aria-label="Encendido">
+            <button type="button" disabled={enviando} onClick={() => void solicitar(NIVEL_ENCENDIDA)}>
+              Encender
+            </button>
+            <button type="button" disabled={enviando} onClick={() => void solicitar(NIVEL_APAGADA)}>
+              Apagar
+            </button>
+          </div>
+          <form onSubmit={alEnviar} noValidate aria-label="Brillo de la lámpara">
+            <PerillaIntervalo
+              etiqueta="Brillo"
+              valor={nivelElegido}
+              minimo={NIVEL_APAGADA}
+              maximo={NIVEL_ENCENDIDA}
+              paso={1}
+              unidad="%"
+              escala="lineal"
+              alCambiar={(n) => {
+                // Girar la perilla solo cambia el borrador local: ninguna orden sale hasta «Aplicar brillo».
+                setTexto(String(n))
+                setInvalido(false)
+              }}
+            />
+            <p className="panel-lampara-elegido">
+              {nivelElegido === null ? 'Valor elegido: sin elegir' : `Valor elegido: ${nivelElegido} %`}
+            </p>
+            <button type="submit" className="boton-primario" disabled={enviando} aria-busy={enviando}>
+              {enviando ? 'Enviando…' : 'Aplicar brillo'}
+            </button>
+            {invalido && <p role="alert">{MENSAJE_NIVEL_INVALIDO}</p>}
+          </form>
         </div>
-        {invalido && (
-          <p id="error-nivel-lampara" role="alert">
-            {MENSAJE_NIVEL_INVALIDO}
+
+        <div className="panel-lampara-resumen">
+          {falloEnvio && <p role="alert">No se pudo registrar la solicitud de la lámpara.</p>}
+          {cargando && <p role="status">Consultando la última orden…</p>}
+          {fallo && <p role="alert">No se pudo consultar la última orden de la lámpara.</p>}
+          {!cargando && orden === null && <p>No hay órdenes registradas para esta lámpara.</p>}
+          {orden && estado && (
+            <>
+              <dl className="panel-lampara-estado" data-estado={estado}>
+                <dt>Estado de la última orden</dt>
+                <dd role="status">
+                  {ETIQUETA[estado]}. {DETALLE[estado]}
+                </dd>
+                <dt>Nivel pedido</dt>
+                <dd>{orden.nivel} %</dd>
+                <dt>Nivel confirmado por la Pico</dt>
+                <dd>
+                  {orden.nivel_confirmado === null ? 'Sin confirmar' : `${orden.nivel_confirmado} %`}
+                </dd>
+              </dl>
+              <FechasOrden creadoEn={orden.creado_en} venceEn={orden.vence_en} />
+            </>
+          )}
+          <p className="panel-lampara-nota">
+            El nivel confirmado es el que la Pico aplicó a su salida; no comprueba
+            que la luz esté encendida.
           </p>
-        )}
-      </form>
-      {falloEnvio && (
-        <p role="alert">No se pudo registrar la solicitud de la lámpara.</p>
-      )}
-      {cargando && <p role="status">Consultando la última orden…</p>}
-      {fallo && (
-        <p role="alert">No se pudo consultar la última orden de la lámpara.</p>
-      )}
-      {!cargando && orden === null && (
-        <p>No hay órdenes registradas para esta lámpara.</p>
-      )}
-      {orden && estado && (
-        <dl className="panel-lampara-estado" data-estado={estado}>
-          <dt>Estado de la última orden</dt>
-          <dd role="status">
-            {ETIQUETA[estado]}. {DETALLE[estado]}
-          </dd>
-          <dt>Nivel pedido</dt>
-          <dd>{orden.nivel} %</dd>
-          <dt>Nivel confirmado por la Pico</dt>
-          <dd>
-            {orden.nivel_confirmado === null
-              ? 'Sin confirmar'
-              : `${orden.nivel_confirmado} %`}
-          </dd>
-          <dt>Solicitada</dt>
-          <dd>{formatearHoraCR(orden.creado_en)}</dd>
-          <dt>Vence</dt>
-          <dd>{formatearHoraCR(orden.vence_en)}</dd>
-        </dl>
-      )}
-      <p>
-        El nivel confirmado es el que la Pico aplicó a su salida; no comprueba
-        que la luz esté encendida.
-      </p>
+        </div>
+      </div>
     </section>
   )
 }

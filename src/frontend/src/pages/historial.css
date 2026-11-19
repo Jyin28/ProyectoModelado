@@ -1,0 +1,143 @@
+/* Historial (fase 10). Legible a 360 px y a 1280 px: sin desbordes horizontales de página. */
+.formulario-historial {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  max-width: 480px;
+}
+
+.formulario-historial label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.95rem;
+}
+
+.formulario-historial input,
+.formulario-historial select,
+.formulario-historial button,
+.exportar-historial button,
+.lista-registros button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.formulario-historial-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resumen-noche,
+.grafico-historial,
+.lista-registros,
+.exportar-historial {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.resumen-noche h2,
+.grafico-historial h2,
+.lista-registros h2,
+.exportar-historial h2 {
+  font-size: 1.2rem;
+}
+
+.grafico-historial h3 {
+  font-size: 1.05rem;
+}
+
+.resumen-noche-datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+}
+
+.resumen-noche-datos dt {
+  color: var(--text-muted);
+}
+
+.resumen-noche-datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.grafico-historial-lienzo {
+  width: 100%;
+  min-width: 0;
+}
+
+.tabla-historial-contenedor {
+  overflow-x: auto;
+}
+
+.tabla-historial {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.tabla-historial caption {
+  text-align: left;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.tabla-historial th,
+.tabla-historial td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.lista-registros ul {
+  padding-left: 16px;
+  margin: 8px 0 0;
+}
+
+.lista-registros li {
+  overflow-wrap: anywhere;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 400px) {
+  .resumen-noche-datos {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formulario-historial-modo {
+  display: flex;
+  gap: 8px;
+}
+
+.formulario-historial-modo button[aria-pressed='true'] {
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.formulario-historial-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pagina .formulario-historial-resumen {
+  margin: 0;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent-suave);
+  border-radius: 10px;
+}
+
+.pagina .formulario-historial-resumen[data-valido='false'] {
+  color: var(--error);
+  background: var(--bg);
+  border: 1px solid var(--error);
+}

@@ -14,7 +14,6 @@ interface ImportMetaEnv {
   readonly VITE_FIGURAS_DEVICE_ID?: string
   readonly VITE_AUDIO_DEVICE_ID?: string
   readonly VITE_CUNA_PRODUCTO_ID?: string
-  readonly VITE_COLCHON_DEVICE_ID?: string
   readonly VITE_HABITACION_DEVICE_ID?: string
   readonly VITE_CAMARA_HABILITADA?: string
   readonly VITE_ALIMENTACION_DEVICE_ID?: string

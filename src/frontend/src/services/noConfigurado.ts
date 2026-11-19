@@ -47,10 +47,12 @@ export const serviciosNoConfigurados: Servicios = {
     abrir: () => fallo(),
     registrarActividad: () => fallo(),
   },
-  colchon: {
-    obtenerConfig: () => fallo(),
-    guardarConfig: () => fallo(),
-    listarEventos: () => fallo(),
+  colchonPico: {
+    obtenerUltimoEvento: () => fallo(),
+    obtenerHistorialEventos: () => fallo(),
+    solicitarComando: () => fallo(),
+    suscribirEventos: (_dispositivoId, manejadores) =>
+      suscripcionVacia(manejadores),
   },
   habitacion: {
     listarEventos: () => fallo(),
@@ -68,6 +70,9 @@ export const serviciosNoConfigurados: Servicios = {
     obtenerLimites: () => fallo(),
     guardarLimites: () => fallo(),
     ultimaTemperatura: () => fallo(),
+  },
+  historial: {
+    consultar: () => fallo(),
   },
   auth: {
     obtenerSesion: () => fallo(),

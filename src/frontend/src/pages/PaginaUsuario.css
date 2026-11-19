@@ -1,0 +1,29 @@
+.usuario-bloque {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.usuario-bloque h2 {
+  font-size: 1.2rem;
+}
+
+.usuario-bloque button {
+  margin-top: 8px;
+}
+
+.pagina .usuario-enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--accent-contraste);
+  background: var(--accent);
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pagina .usuario-enlace:hover {
+  background: var(--accent-strong);
+}

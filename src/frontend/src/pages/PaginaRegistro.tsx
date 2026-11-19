@@ -14,7 +14,7 @@ function PaginaRegistro() {
   const [error, setError] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
 
-  if (estado.tipo === 'autenticado') return <Navigate to="/cuna" replace />
+  if (estado.tipo === 'autenticado') return <Navigate to="/productos" replace />
 
   async function alEnviar(evento: FormEvent) {
     evento.preventDefault()

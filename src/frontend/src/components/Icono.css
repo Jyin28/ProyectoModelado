@@ -1,0 +1,24 @@
+.icono {
+  display: inline-block;
+  flex: none;
+  background-color: currentcolor;
+  -webkit-mask: var(--icono) center / contain no-repeat;
+  mask: var(--icono) center / contain no-repeat;
+}
+
+/* Archivo ausente: punto neutro para que el control siga siendo visible. */
+.icono-falta {
+  -webkit-mask: none;
+  mask: none;
+  background: none;
+  position: relative;
+}
+
+.icono-falta::after {
+  content: '';
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: currentcolor;
+  opacity: 0.55;
+}

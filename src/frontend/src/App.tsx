@@ -12,7 +12,9 @@ import PaginaHabitacion from './pages/PaginaHabitacion.tsx'
 import PaginaHistorial from './pages/PaginaHistorial.tsx'
 import PaginaLogin from './pages/PaginaLogin.tsx'
 import PaginaNoEncontrada from './pages/PaginaNoEncontrada.tsx'
+import PaginaProductos from './pages/PaginaProductos.tsx'
 import PaginaRegistro from './pages/PaginaRegistro.tsx'
+import PaginaUsuario from './pages/PaginaUsuario.tsx'
 
 // El router (BrowserRouter en main.tsx, MemoryRouter en los tests) y
 // ProveedorServicios envuelven a App.
@@ -24,10 +26,13 @@ function App() {
         <Route path="/registro" element={<PaginaRegistro />} />
         <Route element={<RutaProtegida />}>
           <Route element={<Layout />}>
-            <Route index element={<Navigate to="/cuna" replace />} />
+            <Route index element={<Navigate to="/productos" replace />} />
+            <Route path="/productos" element={<PaginaProductos />} />
+            <Route path="/usuario" element={<PaginaUsuario />} />
             <Route path="/cuna" element={<PaginaCuna />} />
             <Route path="/bebes" element={<PaginaBebesDispositivos />} />
             <Route path="/colchon" element={<PaginaColchon />} />
+            <Route path="/colchon-pico" element={<Navigate to="/colchon" replace />} />
             <Route path="/figuras" element={<PaginaFiguras />} />
             <Route path="/alimentacion" element={<PaginaAlimentacion />} />
             <Route path="/habitacion" element={<PaginaHabitacion />} />

@@ -1,50 +1,67 @@
 .panel-lampara {
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 16px 20px;
 }
 
 .panel-lampara h2 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
-.panel-lampara label {
-  display: block;
+/* Control a la izquierda (perilla grande) y estado de la última orden a la derecha. */
+.panel-lampara-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px 28px;
   margin-top: 8px;
-  font-size: 0.95rem;
+}
+
+.panel-lampara-control,
+.panel-lampara-control form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .panel-lampara-fila {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  margin-top: 4px;
 }
 
-.panel-lampara input {
+.panel-lampara-fila button {
+  min-width: 110px;
+}
+
+.panel-lampara-control form button[type='submit'] {
+  min-width: 200px;
+}
+
+.pagina .panel-lampara .panel-lampara-elegido {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.panel-lampara-resumen {
+  align-self: center;
   min-width: 0;
-  width: 8rem;
-  min-height: 44px;
-  padding: 0 8px;
-  font: inherit;
+  padding: 14px 16px;
+  background: var(--bg-suave);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 
-.panel-lampara button {
-  min-height: 44px;
-  padding: 0 16px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.panel-lampara button:disabled {
-  cursor: not-allowed;
+.panel-lampara-resumen p {
+  margin: 0;
 }
 
 .panel-lampara-estado {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: 4px 12px;
-  margin: 12px 0 0;
+  gap: 6px 12px;
+  margin: 0;
   font-size: 0.95rem;
 }
 
@@ -54,6 +71,12 @@
 
 .panel-lampara-estado dd {
   margin: 0;
+}
+
+.pagina .panel-lampara .panel-lampara-nota {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 @media (max-width: 400px) {

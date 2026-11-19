@@ -3,7 +3,7 @@ import type { LecturaAmbiental } from '../models/contrato.ts'
 import { useServicios } from './useServicios.ts'
 import { useSesion } from './useSesion.ts'
 
-export const INTERVALO_CONSULTA_MS = 10_000
+export const INTERVALO_CONSULTA_MS = 2_000
 
 export type UltimaAmbiental = {
   /** false cuando no hay consulta real (maqueta o sin sesión). */

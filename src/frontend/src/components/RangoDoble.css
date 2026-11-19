@@ -1,0 +1,108 @@
+.rango {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  background: var(--bg-suave);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.rango-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.rango-cabecera h3 {
+  font-size: 1rem;
+}
+
+.pagina .rango .rango-valores {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.rango-guion {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* La pista es alta para que sea fácil de tocar; el riel visible es fino. */
+.rango-pista {
+  position: relative;
+  height: 44px;
+  margin: 0 14px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.rango-riel,
+.rango-relleno {
+  position: absolute;
+  top: calc(50% - 6px);
+  height: 12px;
+  border-radius: 999px;
+}
+
+.rango-riel {
+  left: -14px;
+  right: -14px;
+  background: var(--border);
+  box-shadow: inset 0 1px 3px rgb(94 72 36 / 18%);
+}
+
+.rango-relleno {
+  background: linear-gradient(90deg, #e2a45a, var(--accent));
+}
+
+.rango-sin-elegir .rango-relleno {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--dot) 0 6px,
+    transparent 6px 12px
+  );
+  opacity: 0.45;
+}
+
+.rango-tirador {
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  background: #fff;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(94 72 36 / 30%);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+
+.rango-sin-elegir .rango-tirador {
+  border-color: var(--dot);
+}
+
+.rango-tirador:hover {
+  transform: scale(1.08);
+}
+
+.rango-escala {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 2px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pagina .rango .rango-aviso {
+  margin: 0;
+  font-size: 0.78rem;
+}
