@@ -10,14 +10,17 @@ Funciones:
 
 Secuencias: "chase" (un LED recorre la fila), "alternate" (alternados),
 "blink_all" (todos parpadean). El intervalo minimo es de 2 s para evitar
-destellos bruscos.
+destellos bruscos. Cada LED pasa de un brillo al otro con una rampa de
+LED_RAMPA_MS (PWM), asi que nunca hay un salto brusco. SIN PROBAR EN HARDWARE.
 """
 import time
-from machine import Pin
+from machine import Pin, PWM
 
 import config
+import rampa
 
-_leds = [Pin(pin, Pin.OUT, value=0) for pin in config.PINES_LEDS]
+_leds = [PWM(Pin(pin), freq=config.LED_PWM_HZ, duty_u16=0) for pin in config.PINES_LEDS]
+_rampa = rampa.Rampa(len(_leds), config.LED_RAMPA_MS)
 
 # Datos de la secuencia en curso (guardados juntos para no usar muchas globales)
 _estado = {
@@ -29,10 +32,16 @@ _estado = {
 
 
 def encender_led(indice, encendido):
+    """Enciende o apaga UN LED sin tocar los demas (varias figuras a la vez).
+
+    Si hay una secuencia en curso, el control manual la reemplaza: se detiene y
+    todo se apaga antes de aplicar el cambio, para no mezclar ambos modos.
+    """
     if indice < 0 or indice >= len(_leds):
         raise ValueError("indice_invalido")
-    detener_secuencia()
-    _leds[indice].value(1 if encendido else 0)
+    if _estado["nombre"] is not None:
+        detener_secuencia()
+    _rampa.objetivo(indice, encendido)
 
 
 def todos(encendido):
@@ -41,8 +50,7 @@ def todos(encendido):
 
 
 def _poner_todos(encendido):
-    for led in _leds:
-        led.value(1 if encendido else 0)
+    _rampa.todos(encendido)
 
 
 def iniciar_secuencia(nombre, intervalo_s):
@@ -63,12 +71,26 @@ def detener_secuencia():
     _poner_todos(False)
 
 
+def apagar():
+    """Apagado inmediato, sin rampa: para cerrar el programa.
+
+    Con el programa detenido ya nadie avanza las rampas, y el PWM sigue con el
+    ultimo brillo; por eso se escribe cero en cada LED directamente.
+    """
+    _estado["nombre"] = None
+    _rampa.apagar()
+    for led in _leds:
+        led.duty_u16(0)
+
+
 def secuencia_actual():
     return _estado["nombre"]
 
 
 def actualizar():
-    """Avanza la secuencia si ya toca. No bloquea: vuelve enseguida."""
+    """Avanza la secuencia y las rampas. No bloquea: vuelve enseguida."""
+    for indice, nivel in _rampa.paso(time.ticks_ms()):
+        _leds[indice].duty_u16(nivel)
     if _estado["nombre"] is None:
         return
     transcurrido = time.ticks_diff(time.ticks_ms(), _estado["ultimo_cambio"])
@@ -81,11 +103,11 @@ def actualizar():
 
 def _aplicar_paso(nombre, paso):
     cantidad = len(_leds)
-    for posicion, led in enumerate(_leds):
+    for posicion in range(cantidad):
         if nombre == "chase":
             encendido = (posicion == paso % cantidad)
         elif nombre == "alternate":
             encendido = ((posicion + paso) % 2 == 0)
         else:                                   # "blink_all"
             encendido = (paso % 2 == 0)
-        led.value(1 if encendido else 0)
+        _rampa.objetivo(posicion, encendido)

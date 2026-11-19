@@ -17,6 +17,9 @@ HX711_SCK = 12  # GP12, pin fisico 16
 
 # Boton fisico
 BUTTON_PIN = 19  # GP19, pin fisico 25
+# True: el boton une el pin con GND (pull-up, se lee 0 al pulsar). False: lo une con 3V3
+# (pull-down, se lee 1 al pulsar). Si el boton no responde, ejecuta buscar_boton.py: dice el pin.
+BUTTON_ACTIVE_LOW = True
 
 # Transistor NPN y buzzer pasivo
 BUZZER_PIN = 18  # GP18, pin fisico 24
@@ -47,6 +50,9 @@ REQUIRED_READINGS = 3
 # Intervalo entre mediciones (milisegundos)
 READING_INTERVAL = 1000
 
+# Dos flancos del boton mas juntos que esto cuentan como uno (rebote del contacto)
+BUTTON_DEBOUNCE_MS = 50
+
 
 # ==========================================
 # 3. INICIALIZACION DE COMPONENTES
@@ -57,12 +63,35 @@ hx711_dt = Pin(HX711_DT, Pin.IN, Pin.PULL_UP)
 hx711_sck = Pin(HX711_SCK, Pin.OUT)
 hx711_sck.value(0)
 
-# Boton con resistencia pull-up interna
-button = Pin(BUTTON_PIN, Pin.IN, Pin.PULL_UP)
+# Boton con resistencia interna: pull-up si va a GND, pull-down si va a 3V3
+button = Pin(BUTTON_PIN, Pin.IN, Pin.PULL_UP if BUTTON_ACTIVE_LOW else Pin.PULL_DOWN)
 
-# Salida PWM hacia la base del transistor, apagada al iniciar
+# Salida hacia la base del transistor. Mientras suena es PWM; en silencio el PWM se elimina
+# (deinit) y el pin queda como GPIO normal en BAJO, como hacia el firmware anterior
+# (BuzzerPasivo): asi el silencio no depende de dejar el PWM con duty 0.
 buzzer_pin = Pin(BUZZER_PIN, Pin.OUT, value=0)
-buzzer = PWM(buzzer_pin, freq=BUZZER_FREQ_HZ, duty_u16=0)
+buzzer = None          # objeto PWM, solo mientras suena
+
+# La pulsacion se guarda por interrupcion (flanco al pulsar). El ciclo principal hace
+# llamadas de red que bloquean varios segundos: si el boton solo se leyera por sondeo,
+# una pulsacion corta durante ese bloqueo se perderia. La interrupcion ademas silencia
+# el buzzer al instante, sin esperar a que el ciclo vuelva a correr.
+_pulsado = [False]
+_ultimo_flanco = [0]
+
+
+def _al_pulsar(pin):
+    ahora = time.ticks_ms()
+    if time.ticks_diff(ahora, _ultimo_flanco[0]) > BUTTON_DEBOUNCE_MS:
+        _pulsado[0] = True
+        buzzer_off()
+    _ultimo_flanco[0] = ahora
+
+
+button.irq(trigger=Pin.IRQ_FALLING if BUTTON_ACTIVE_LOW else Pin.IRQ_RISING, handler=_al_pulsar)
+
+print("Boton: GP%d (%s), nivel=%d, interrupcion activa"
+      % (BUTTON_PIN, "a GND" if BUTTON_ACTIVE_LOW else "a 3V3", button.value()))
 
 
 # ==========================================
@@ -137,24 +166,55 @@ def get_weight(raw_value, reference):
 # ==========================================
 
 def buzzer_on():
-    buzzer.duty_u16(32768)  # Ciclo de trabajo del 50 %
+    global buzzer
+    if buzzer is None:
+        buzzer = PWM(buzzer_pin, freq=BUZZER_FREQ_HZ, duty_u16=32768)  # ciclo de trabajo del 50 %
+    else:
+        buzzer.duty_u16(32768)
 
 
 def buzzer_off():
-    buzzer.duty_u16(0)
+    """Silencia el buzzer: elimina el PWM y deja el GPIO en bajo. Se puede llamar las veces que sea."""
+    global buzzer
+    pwm = buzzer
+    buzzer = None
+    if pwm is not None:
+        try:
+            pwm.deinit()
+        except Exception:
+            pass
+        print("Buzzer: apagado (GP%d en bajo)" % BUZZER_PIN)
+    buzzer_pin.init(Pin.OUT, value=0)
+    buzzer_pin.value(0)
 
 
 # ==========================================
 # 7. CONTROL DEL BOTON
 # ==========================================
 
-def button_pressed():
+def _pulsado_ahora():
+    """True si el boton esta pulsado en este instante (segun a donde este cableado)."""
+    return button.value() == (0 if BUTTON_ACTIVE_LOW else 1)
 
-    if button.value() == 0:
+
+def button_pressed():
+    """True si el boton se pulso desde la ultima vez (guardado por interrupcion) o esta pulsado ahora."""
+    if _pulsado[0]:
+        _pulsado[0] = False
+        print("Boton: pulsado")
+        return True
+
+    if _pulsado_ahora():
 
         time.sleep_ms(30)
 
-        if button.value() == 0:
+        if _pulsado_ahora():
+            print("Boton: pulsado")
             return True
 
     return False
+
+
+def button_clear():
+    """Descarta una pulsacion guardada (p. ej. la de un momento en que no habia nada que detener)."""
+    _pulsado[0] = False

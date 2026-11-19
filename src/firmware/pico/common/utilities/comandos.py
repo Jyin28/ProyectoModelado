@@ -1,25 +1,114 @@
-"""comandos.py (PICO) - Ejecuta ordenes y devuelve una confirmacion.
+"""comandos.py - Ejecuta ordenes y devuelve una confirmacion.
 
 Una orden es un diccionario:
-    {"command_id": "abc1", "command": "led_all", "params": {"on": true}}
+    {"command_id": "abc1", "command": "lamp_set", "params": {"level": 40}}
 
 ejecutar(orden) devuelve la confirmacion:
-    {"command_id": "abc1", "command": "led_all", "ok": True,  "result": {...}}
-    {"command_id": "abc1", "command": "led_all", "ok": False, "error": "..."}
+    {"command_id": "abc1", "command": "lamp_set", "ok": True,  "result": {...}}
+    {"command_id": "abc1", "command": "lamp_set", "ok": False, "error": "..."}
 
-Las ordenes las genera demo.py y, mas adelante, llegaran desde la web.
-(Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
+Por ahora las ordenes las genera demo.py. Mas adelante llegaran desde la
+web. (Nombres de comandos PROVISIONALES: validar con el equipo de backend.)
 
-Figuras:  led_set, led_all, led_sequence, led_stop
-Colchon:  scale_tare, scale_calibrate, mattress_reference, mattress_start,
-          mattress_stop, alarm_stop
-General:  get_status
+Comandos: lamp_set, led_set, led_all, led_sequence, led_stop, motion_set, room_monitor_set,
+feeding_weigh, get_status
+
+Solo se aceptan los del modulo conectado (config.MODULO, ver modulo.py): lamp_set,
+motion_set y audio_* en "cuna", led_* en "figuras",
+scale_tare, scale_calibrate, mattress_reference, mattress_start, mattress_stop y alarm_stop
+en "colchon",
+room_monitor_set {sensor: puerta|movimiento, enabled} en "habitacion",
+feeding_weigh {toma_id, momento: inicial|control|final} en "alimentacion". Uno de otro modulo
+se rechaza con el error "comando_de_otro_modulo:<modulo>" sin tocar ningun pin.
+get_status sirve siempre e incluye el campo "modulo".
+
+Comandos locales del audio (se pueden invocar sin red; solo funcionan si main.py
+los registro con conectar_audio, es decir, si AUDIO_HABILITADO esta en True):
+    audio_play {sound}, audio_stop, audio_status
+
+Comandos del colchon (colchon/peso.py y colchon/monitoreo.py; los pide la web por
+nube.leer_comandos):
+    scale_tare, scale_calibrate {known_g}, mattress_reference {reference_g?},
+    mattress_start {duration_s?, tolerance_pct?, alarm_s?, reference_g?},
+    mattress_stop, alarm_stop
 """
+import time
+
 import config
-import figuras
-import monitoreo
-import peso
-import setup_colchon
+import modulo
+
+_audio = None
+_voz = None
+_habitacion = None
+_alimentacion = None
+_monitoreo_movimiento = False   # arranca apagado; solo lo cambia motion_set
+
+
+def conectar_habitacion(control):
+    """Registra el control de la habitacion (o None para desconectarlo)."""
+    global _habitacion
+    _habitacion = control
+
+
+def conectar_alimentacion(control):
+    """Registra el control de la alimentacion (o None para desconectarlo)."""
+    global _alimentacion
+    _alimentacion = control
+
+
+def conectar_audio(reproductor):
+    """Registra el reproductor de audio (o None para desconectarlo)."""
+    global _audio
+    _audio = reproductor
+
+
+def conectar_voz(voz):
+    """Registra la sesion de voz (o None). Mientras hay voz no se reproduce audio local."""
+    global _voz
+    _voz = voz
+
+
+def monitoreo_movimiento():
+    """True si una orden confirmada activo el monitoreo de movimiento."""
+    return _monitoreo_movimiento
+
+
+def _lampara():
+    """Importa lampara.py solo cuando hace falta: al importarse configura el PWM."""
+    import lampara
+    return lampara
+
+
+def _figuras():
+    """Importa figuras.py solo cuando hace falta: al importarse configura los LED."""
+    import figuras
+    return figuras
+
+
+def _colchon():
+    """Importa los modulos del colchon solo cuando hacen falta: setup_colchon crea los pines al importarse."""
+    import monitoreo
+    import peso
+    import setup_colchon
+    return monitoreo, peso, setup_colchon
+
+
+def _habitacion_activa():
+    if _habitacion is None:
+        raise ValueError("habitacion_no_habilitada")
+    return _habitacion
+
+
+def _alimentacion_activa():
+    if _alimentacion is None:
+        raise ValueError("alimentacion_no_habilitada")
+    return _alimentacion
+
+
+def _audio_activo():
+    if _audio is None:
+        raise ValueError("audio_no_habilitado")
+    return _audio
 
 
 def _numero(params, clave, minimo, maximo, defecto=None):
@@ -37,12 +126,58 @@ def _numero(params, clave, minimo, maximo, defecto=None):
     return valor
 
 
+def _booleano(params, clave):
+    """Saca un booleano de params; un texto como "false" o un 0/1 se rechaza."""
+    valor = params.get(clave)
+    if not isinstance(valor, bool):
+        raise ValueError("parametro_invalido:" + clave)
+    return valor
+
+
 def estado():
-    """Resumen de lo que esta pasando ahora."""
-    return {"sequence": figuras.secuencia_actual(),
-            "mattress": monitoreo.resumen(),
-            "scale_ready": peso.tiene_tara(),
-            "scale_factor": peso.factor()}
+    """Resumen de lo que hay encendido ahora."""
+    resumen = {"modulo": config.MODULO,
+               "lampara": _lampara().nivel() if modulo.usa("lampara") else None,
+               "secuencia": _figuras().secuencia_actual() if modulo.usa("figuras") else None,
+               "colchon": _colchon()[0].resumen() if modulo.usa("colchon") else None,
+               "audio": _audio.estado()["estado"] if _audio is not None else None}
+    if modulo.usa("habitacion") and _habitacion is not None:
+        resumen["habitacion"] = _habitacion.estado()   # solo aparece en ese modulo
+    if modulo.usa("alimentacion") and _alimentacion is not None:
+        resumen["alimentacion"] = _alimentacion.estado(time.ticks_ms())   # solo en ese modulo
+    return resumen
+
+
+def estado_para_nube():
+    """Estado que la Pico informa al servidor al conectarse o reconectarse.
+
+    Solo claves del contrato reportar_estado_modulo (src/shared/contracts/ordenes.md):
+    monitoreo, monitoreo_puerta, monitoreo_movimiento y secuencia. Lo que este
+    apagado se informa apagado: asi el servidor no sigue mostrando un monitoreo
+    que se perdio al reiniciar. El colchon no usa este informe: avisa su estado
+    con los eventos de colchon/monitoreo.py. No lleva lecturas ni fotos.
+    """
+    informe = {}
+    if modulo.usa("movimiento"):
+        informe["monitoreo"] = bool(_monitoreo_movimiento)
+    if modulo.usa("habitacion") and _habitacion is not None:
+        actual = _habitacion.estado()
+        informe["monitoreo_puerta"] = bool(actual.get("monitoreo_puerta"))
+        informe["monitoreo_movimiento"] = bool(actual.get("monitoreo_movimiento"))
+    if modulo.usa("figuras"):
+        nombre = _figuras().secuencia_actual()
+        informe["secuencia"] = nombre if _nombre_valido(nombre) else None
+    return informe
+
+
+def _nombre_valido(nombre):
+    """Nombre de secuencia aceptado por el servidor: 1 a 40 letras minusculas o _."""
+    if not isinstance(nombre, str) or not 1 <= len(nombre) <= 40:
+        return False
+    for caracter in nombre:
+        if not ("a" <= caracter <= "z" or caracter == "_"):
+            return False
+    return True
 
 
 def ejecutar(orden):
@@ -56,34 +191,44 @@ def ejecutar(orden):
     except ValueError as error:
         confirmacion["ok"] = False
         confirmacion["error"] = str(error)
-    except OSError as error:                  # p. ej. el HX711 no responde
-        confirmacion["ok"] = False
-        confirmacion["error"] = "hardware:" + str(error)
     return confirmacion
 
 
 def _ejecutar(nombre, params):
-    # ---------- Figuras LED ----------
+    global _monitoreo_movimiento
+    necesario = modulo.periferico_de(nombre)
+    if necesario is not None and not modulo.usa(necesario):
+        raise ValueError("comando_de_otro_modulo:%s" % (config.MODULO,))
+
+    if nombre == "lamp_set":
+        lampara = _lampara()
+        lampara.poner_nivel(_numero(params, "level", 0, 100))
+        return {"level": lampara.nivel()}
+
     if nombre == "led_set":
         indice = int(_numero(params, "index", 0, len(config.PINES_LEDS) - 1))
-        figuras.encender_led(indice, bool(params.get("on")))
+        _figuras().encender_led(indice, _booleano(params, "on"))
         return {}
 
     if nombre == "led_all":
-        figuras.todos(bool(params.get("on")))
+        _figuras().todos(_booleano(params, "on"))
         return {}
 
     if nombre == "led_sequence":
         intervalo = _numero(params, "step_s", config.LED_INTERVALO_MINIMO_S, 3600)
+        figuras = _figuras()
         figuras.iniciar_secuencia(params.get("name"), intervalo)
         return {"sequence": figuras.secuencia_actual()}
 
     if nombre == "led_stop":
-        figuras.todos(False)
+        _figuras().todos(False)
         return {}
 
-    # ---------- Colchon ----------
+    if nombre == "get_status":
+        return estado()
+
     if nombre == "scale_tare":
+        monitoreo, peso, _ = _colchon()
         if monitoreo.activo():
             raise ValueError("monitoreo_activo")
         if not peso.tomar_tara():
@@ -91,18 +236,21 @@ def _ejecutar(nombre, params):
         return {}
 
     if nombre == "scale_calibrate":
+        monitoreo, peso, _ = _colchon()
         if monitoreo.activo():
             raise ValueError("monitoreo_activo")
         conocido = _numero(params, "known_g", 1, 5000)
         return {"factor": peso.calibrar(conocido)}
 
     if nombre == "mattress_reference":
+        monitoreo, _, _ = _colchon()
         if "reference_g" in params and params["reference_g"] is not None:
             ref = _numero(params, "reference_g", 1, 20000)
             return {"reference_g": monitoreo.fijar_referencia(ref)}
         return {"reference_g": monitoreo.capturar_referencia()}
 
     if nombre == "mattress_start":
+        monitoreo, _, setup_colchon = _colchon()
         duracion = _numero(params, "duration_s", 1, 86400, setup_colchon.MONITORING_TIME)
         tolerancia = _numero(params, "tolerance_pct", 1, 50, config.TOLERANCIA_PESO_PCT)
         alarma = _numero(params, "alarm_s", 1, 600, config.ALARMA_S)
@@ -110,23 +258,65 @@ def _ejecutar(nombre, params):
             ref = _numero(params, "reference_g", 1, 20000)
             monitoreo.fijar_referencia(ref)
         monitoreo.iniciar(duracion, tolerancia, alarma)
-        return {"duration_s": duracion, "tolerance_pct": tolerancia, "alarm_s": alarma, "reference_g": monitoreo._s["referencia_g"]}
+        return {"duration_s": duracion, "tolerance_pct": tolerancia, "alarm_s": alarma,
+                "reference_g": monitoreo._s["referencia_g"]}
 
     if nombre == "mattress_stop":
+        monitoreo, _, _ = _colchon()
         if not monitoreo.detener("web"):
             monitoreo.notificar_inactivo("web_sync")
             return {"stopped": True, "already_idle": True}
         return {}
 
     if nombre == "alarm_stop":
+        monitoreo, _, _ = _colchon()
         if monitoreo.estado() != monitoreo.ALARMA:
             monitoreo.notificar_inactivo("web_sync")
             return {"alarm_stopped": True, "already_idle": True}
         monitoreo.detener("web")
         return {}
 
-    # ---------- General ----------
-    if nombre == "get_status":
-        return estado()
+    if nombre == "motion_set":
+        activo = params.get("enabled")
+        if not isinstance(activo, bool):
+            raise ValueError("parametro_invalido:enabled")
+        # config.py dice si el PIR esta cableado y habilitado; la orden solo lo enciende o apaga.
+        if not config.MONITOREO_MOVIMIENTO_HABILITADO:
+            raise ValueError("movimiento_no_habilitado")
+        _monitoreo_movimiento = activo
+        return {"enabled": activo}
+
+    if nombre == "room_monitor_set":
+        sensor = params.get("sensor")
+        if sensor not in ("puerta", "movimiento"):
+            raise ValueError("parametro_invalido:sensor")
+        activo = params.get("enabled")
+        if not isinstance(activo, bool):
+            raise ValueError("parametro_invalido:enabled")
+        return _habitacion_activa().fijar_monitoreo(sensor, activo)
+
+    if nombre == "feeding_weigh":
+        toma_id = params.get("toma_id")
+        momento = params.get("momento")
+        if not isinstance(toma_id, str):
+            raise ValueError("parametro_invalido:toma_id")
+        if not isinstance(momento, str):
+            raise ValueError("parametro_invalido:momento")
+        # El control valida el formato; el peso llega despues como evento.
+        return _alimentacion_activa().pesar(toma_id, momento, time.ticks_ms())
+
+    if nombre == "audio_play":
+        sonido = params.get("sound")
+        if not isinstance(sonido, str):
+            raise ValueError("parametro_invalido:sound")
+        if _voz is not None and _voz.activa():
+            raise ValueError("voz_en_curso")
+        return _audio_activo().iniciar(sonido)
+
+    if nombre == "audio_stop":
+        return _audio_activo().detener()
+
+    if nombre == "audio_status":
+        return _audio_activo().estado()
 
     raise ValueError("comando_desconocido")

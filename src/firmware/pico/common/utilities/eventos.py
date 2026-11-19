@@ -7,30 +7,56 @@ import time
 
 _hora_sincronizada = False
 
+# ntptime espera solo 1 s a UN servidor por defecto; con el hotspot del telefono eso suele
+# dar ETIMEDOUT (Errno 110). Se da mas tiempo y se rotan varios servidores: cada llamada
+# prueba hasta _INTENTOS y la siguiente sigue con el servidor que toca, asi todos se usan.
+_SERVIDORES = ("pool.ntp.org", "time.google.com", "time.cloudflare.com", "time.nist.gov")
+_TIMEOUT_S = 4
+_INTENTOS = 2
+_siguiente = 0
+
 
 def sincronizar_hora():
     """Sincroniza el reloj mediante NTP y valida que la hora sea razonable."""
-    global _hora_sincronizada
+    global _hora_sincronizada, _siguiente
 
     _hora_sincronizada = False
 
     try:
         import ntptime
-        ntptime.settime()
-
-        t = time.gmtime()
-
-        if t[0] < 2024:
-            raise RuntimeError("La fecha obtenida por NTP no es valida.")
-
-        _hora_sincronizada = True
-
-        print("Hora UTC sincronizada:", ahora_iso())
-        return True
-
-    except Exception as error:
-        print("No se pudo sincronizar la hora:", error)
+    except ImportError:
+        print("No se pudo sincronizar la hora: falta el modulo ntptime.")
         return False
+
+    probados = []
+    ultimo_error = None
+
+    for _ in range(_INTENTOS):
+        servidor = _SERVIDORES[_siguiente % len(_SERVIDORES)]
+        _siguiente += 1
+        probados.append(servidor)
+
+        try:
+            ntptime.host = servidor
+            ntptime.timeout = _TIMEOUT_S
+            ntptime.settime()
+
+            t = time.gmtime()
+
+            if t[0] < 2024:
+                raise RuntimeError("La fecha obtenida por NTP no es valida.")
+
+            _hora_sincronizada = True
+
+            print("Hora UTC sincronizada (%s): %s" % (servidor, ahora_iso()))
+            return True
+
+        except Exception as error:
+            ultimo_error = error
+
+    print("No se pudo sincronizar la hora (%s): %s"
+          % (", ".join(probados), ultimo_error))
+    return False
 
 
 def hora_valida():

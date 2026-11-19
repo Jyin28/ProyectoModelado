@@ -48,7 +48,12 @@ _eventos = []
 
 
 def _evento(tipo, datos=None):
-    _eventos.append(eventos.crear(tipo, datos))
+    try:
+        _eventos.append(eventos.crear(tipo, datos))
+    except RuntimeError:
+        # Sin hora UTC no se pueden crear eventos; eso no debe impedir parar la alarma.
+        print("Sin hora UTC: no se registra el evento", tipo)
+        return
     while len(_eventos) > 20:
         _eventos.pop(0)
 
@@ -128,12 +133,28 @@ def iniciar(duracion_s, tolerancia_pct, alarma_s):
     _s["inicio_ms"] = time.ticks_ms()
     _s["cuenta"] = 0
     _s["fallos"] = 0
+    setup_colchon.button_clear()              # una pulsacion anterior no debe detener este monitoreo
     _s["estado"] = MONITOREANDO
     _evento("monitoring_started", {
         "reference_g": _s["referencia_g"], "tolerance_pct": tolerancia_pct,
         "duration_s": duracion_s, "alarm_s": alarma_s})
     print("Monitoreo iniciado. Referencia: %.1f g, umbral: %.1f g"
           % (_s["referencia_g"], umbral_g()))
+
+
+def emitir_latido():
+    """Repite monitoring_started para que la web sepa que la Pico sigue monitoreando.
+
+    Solo en estado "monitoring". En alarma NO: la web toma el estado del ultimo evento, y un
+    monitoring_started la haria mostrar "monitoreando" con el buzzer todavia sonando.
+    Devuelve True si emitio el evento.
+    """
+    if _s["estado"] != MONITOREANDO:
+        return False
+    _evento("monitoring_started", {
+        "reference_g": _s["referencia_g"], "tolerance_pct": _s["tolerancia_pct"],
+        "duration_s": _s["duracion_s"], "alarm_s": _s["alarma_s"]})
+    return True
 
 
 def procesar_lectura(gramos):
@@ -170,6 +191,7 @@ def _disparar(gramos):
 def vigilar():
     """Boton y temporizadores. Llamar en cada vuelta del ciclo (no bloquea)."""
     if _s["estado"] == DETENIDO:
+        setup_colchon.button_clear()          # sin nada que detener, la pulsacion se descarta
         return
     ahora = time.ticks_ms()
     if _s["estado"] == ALARMA:
@@ -180,7 +202,10 @@ def vigilar():
         detener("duration")
         return
     if setup_colchon.button_pressed():
+        en_alarma = _s["estado"] == ALARMA
         detener("button")
+        if en_alarma:
+            print("Alarma detenida con el boton")
 
 
 def detener(motivo):
